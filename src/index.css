@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.ant-select-item-option-selected {
+  @apply bg-blue-50 !important;
+}
+
+.ant-select-item-option-active {
+  @apply bg-gray-100 !important;
+}
+
+.ant-select-selection-item {
+  @apply text-gray-800 !important;
+}
+
+.ant-tag {
+  @apply inline-flex items-center !important;
+}
