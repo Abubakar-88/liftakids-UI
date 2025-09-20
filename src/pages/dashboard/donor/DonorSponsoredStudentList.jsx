@@ -236,7 +236,7 @@ const DonorSponsoredStudentList = () => {
                       key={sponsorship.id}
                       sponsorship={sponsorship}
                       onViewDetails={handleViewDetails}
-                      onSponsorAgain={handleContactSponsor}
+                      onSponsorPay={handleContactSponsor}
                     />
                   ))}
                 </div>
@@ -334,7 +334,7 @@ const DonorSponsoredStudentList = () => {
 };
 
 // Component for sponsorship card
-const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorAgain }) => {
+const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorPay }) => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'COMPLETED':
@@ -398,7 +398,7 @@ const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorAgain }) => {
           
           <div className="mt-1">
             <p className="text-sm text-gray-600">
-              Class {grade || "N/A"} | Financial Rank: {financialRank || 'N/A'}
+              Class {grade || "N/A"} | Financial Rank:<span className='text-red-500 font-medium'> {financialRank || 'N/A'}</span>
             </p>
             <p className="text-sm text-gray-600">
               Monthly Requirement: ৳{monthlyAmount?.toLocaleString()}
@@ -459,7 +459,7 @@ const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorAgain }) => {
           View Details
         </button>
         <button
-          onClick={() => onSponsorAgain(sponsorship)}
+          onClick={() => onSponsorPay(sponsorship)}
           className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
         >
           Pay Now

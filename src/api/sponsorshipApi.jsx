@@ -159,6 +159,27 @@ export const fetchSponsorships = async (params) => {
   }
 };
 
+export const getDonorPayments = async (donorId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/sponsorships/donor/${donorId}/payments`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching donor payments:', error);
+    throw error;
+  }
+};
+
+
+
+
+
+
 export const sponsorshipStatusOptions = [
   { value: 'ACTIVE', label: 'Active', color: 'green' },
   { value: 'COMPLETED', label: 'Completed', color: 'blue' },

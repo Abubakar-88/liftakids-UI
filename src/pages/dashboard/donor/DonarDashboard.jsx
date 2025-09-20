@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { FaUserPlus, FaHandHoldingHeart, FaGraduationCap, FaCog, FaMoneyCheckAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaUserPlus, FaLock, FaHandHoldingHeart, FaGraduationCap, FaCog, FaMoneyCheckAlt, FaSignOutAlt } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
 const DonarDashboard = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const [donorData, setDonorData] = useState(null);
       setDonorData(JSON.parse(data));
     }
   }, []);
+  const donorId = donorData ? donorData.donorId : null;
 
   // Safe way to access donorId
   //const donor = JSON.parse(localStorage.getItem('donor'));
@@ -20,7 +21,7 @@ const [donorData, setDonorData] = useState(null);
       {/* Title */}
        <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
                 <FaHandHoldingHeart className="mr-2" /> Donor Portal
-              </h1>
+        </h1>
 
       {/* Welcome Card */}
       <div className="bg-blue-700 text-white rounded-xl p-4 w-full max-w-sm mb-6">
@@ -53,30 +54,42 @@ const [donorData, setDonorData] = useState(null);
         </div>
 
         <div
-          onClick={() => navigate('/donar/settings')}
+          onClick={() => navigate(`/donar/settings/${donorId}`)}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
           <FaCog className="text-blue-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Settings</span>
         </div>
 
-        <div
-          onClick={() => navigate('/donar/payment-history')}
-          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
+       <div
+          onClick={() => navigate(`/donor/sponsored-students/${donorId}/payments`)}
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
         >
           <FaMoneyCheckAlt className="text-blue-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Payment History</span>
         </div>
       </div>
-
-      {/* Logout Button */}
+       
+ <div className="grid grid-cols-2 gap-6 mb-6 w-full max-w-xs">
+    {/* Logout Button  and password change*/}
+         <div
+          onClick={() => navigate(`/donor/password-change/${donorId}`)}
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100  w-30"
+        >
+          <FaLock  className="text-blue-700 text-4xl mb-2" />
+          <span className="text-sm text-black text-center">Password Change</span>
+        </div>
       <div
         onClick={() => navigate('/')}
-        className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 w-24"
+        className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 w-30"
       >
         <FaSignOutAlt className="text-blue-700 text-2xl mb-2" />
         <span className="text-sm text-black text-center">Logout</span>
       </div>
+ </div>
+
+  
+     
     </div>
   );
 };

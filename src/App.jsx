@@ -32,6 +32,8 @@ import SponsorshipManage from './pages/dashboard/admin/SponsorshipManage';
 import SponsoredStudents from './pages/dashboard/institution/SponsoredStudents';
 import StudentListForSponsor from './pages/dashboard/donor/StudentListForSponsor';
 import DonorSponsoredStudentList from './pages/dashboard/donor/DonorSponsoredStudentList';
+import DonorPaymentHistory from './pages/dashboard/donor/DonorPaymentHistory';
+import DonorSettings from './pages/dashboard/donor/DonorSettings';
 
 
 function App() {
@@ -73,6 +75,10 @@ function App() {
         <Route path="/donor/dashboard" element={<DonarDashboard />} />
         <Route path="/donor/student-list-for-sponsor" element={<StudentListForSponsor />} />
         <Route path="/donar/sponsored-students" element={<DonorSponsoredStudentList />} />
+        <Route path="/donor/sponsored-students/:donorId/payments" element={<DonorPaymentHistory />} />
+        <Route path="/donar/settings/:donorId" element={<DonorSettings />} />
+
+
 
       </Routes>
   <ToastContainer 

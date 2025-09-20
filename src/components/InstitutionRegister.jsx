@@ -12,6 +12,8 @@ const InstitutionRegister = () => {
     email: '',
     password: '',
     phone: '',
+    teacherName: '',
+    designation: '',
     divisionId: '',
     districtId: '',
     thanaId: '',
@@ -169,6 +171,8 @@ const handleSubmit = async (e) => {
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
+        teacherName: formData.teacherName,
+        designation: formData.designation,
         divisionId: parseInt(formData.divisionId), 
         districtId: parseInt(formData.districtId), 
         thanaId: parseInt(formData.thanaId), 
@@ -191,6 +195,8 @@ const handleSubmit = async (e) => {
         email: '',
         password: '',
         phone: '',
+        teacherName: '',
+        designation: '',
         divisionId: '',
         districtId: '',
         thanaId: '',
@@ -343,6 +349,28 @@ const handleSubmit = async (e) => {
               type="tel"
               name="phone"
               value={formData.phone}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+           <div>
+            <label className="block mb-2 font-medium text-justify">Teacher Name*</label>
+            <input
+              type="text"
+              name="teacherName"
+              value={formData.teacherName}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+             <div>
+            <label className="block mb-2 font-medium text-justify">Designation*</label>
+            <input
+              type="text"
+              name="designation"
+              value={formData.designation}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               required

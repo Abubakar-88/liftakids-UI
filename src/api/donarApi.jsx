@@ -119,7 +119,7 @@ export const fetchSponsoredStudents = async (donorId) => {
 
   export const updateDonor = async (donorId, donorData) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/donors/${donorId}`, donorData);
+    const response = await axios.put(`${API_BASE_URL}/donors/update/${donorId}`, donorData);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Failed to update donor');

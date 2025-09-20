@@ -105,7 +105,7 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
                 </h3>
                 <p className="text-[12px] text-gray-600 mt-0.5">
                   Class {student.grade || "N/A"} | Financial Rank:{" "}
-                  <span className="font-medium text-red-500">{financialRank}</span>
+                  <span className="font-medium text-red-700">{financialRank}</span>
                 </p>
               </div>
             </div>
@@ -186,7 +186,7 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
                             paymentStatus.paidUpTo && 
                             (new Date(paymentStatus.paidUpTo) >= new Date().setDate(1))
                               ? "text-green-600 font-medium"
-                              : "text-amber-800"
+                              : " text-red-600 font-medium"
                           }>
                             {paymentStatus.paidUpTo || "Not paid yet"}
                           </div>
