@@ -125,7 +125,17 @@ export const fetchSponsoredStudents = async (donorId) => {
     throw new Error(error.response?.data?.message || 'Failed to update donor');
   }                     
   }
+  
+ export const changeDonorPassword = async (donorId, passwordData) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/donors/${donorId}/change-password`, passwordData);    
+    return response.data;
+  } catch (error) {
+    console.error('Error changing password:', error);
 
+    throw new Error(error.response?.data?.message || 'Failed to change password');
+  }
+};
 
 export const getDonorById = async (donorId) => {
   try {

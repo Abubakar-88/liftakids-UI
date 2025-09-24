@@ -34,6 +34,7 @@ import StudentListForSponsor from './pages/dashboard/donor/StudentListForSponsor
 import DonorSponsoredStudentList from './pages/dashboard/donor/DonorSponsoredStudentList';
 import DonorPaymentHistory from './pages/dashboard/donor/DonorPaymentHistory';
 import DonorSettings from './pages/dashboard/donor/DonorSettings';
+import PasswordChangeForm from './components/PasswordChangeForm';
 
 
 function App() {
@@ -77,6 +78,7 @@ function App() {
         <Route path="/donar/sponsored-students" element={<DonorSponsoredStudentList />} />
         <Route path="/donor/sponsored-students/:donorId/payments" element={<DonorPaymentHistory />} />
         <Route path="/donar/settings/:donorId" element={<DonorSettings />} />
+        <Route path="/donor/password-change/:donorId" element={<PasswordChangeForm/>} />
 
 
 

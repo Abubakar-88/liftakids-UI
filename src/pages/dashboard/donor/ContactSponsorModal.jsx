@@ -57,6 +57,7 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
   const required = Number(student.requiredMonthlySupport || student.monthlyAmount || 5000);
   const financialRank = student.financial_rank || student.financialRank || "Poor";
   const institutionName = student.institutionName || "Jamalul Madha";
+  const teacherName = student.institutions?.teacherName || student.institutionTeacherName || "Abdul Karim";
 
   const getProgressPercentage = () => {
     if (!required) return 0;
@@ -223,12 +224,12 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
               <div className="mb-3 text-sm text-justify">
                 <div className="flex">
                   <div className="w-32 text-gray-600">Contact Person</div>
-                  <div className="flex-1">{student.guardianName || "Abdul Karim"}</div>
+                  <div className="flex-1">{teacherName || "Abdul Karim"}</div>
                 </div>
 
                 <div className="flex mt-2">
                   <div className="w-32 text-gray-600">Designation</div>
-                  <div className="flex-1">{student.relationship || "Muhtamim"}</div>
+                  <div className="flex-1">{student.institutionTeacherDesignation || "Muhtamim"}</div>
                 </div>
 
                 <div className="flex mt-2 items-center">
