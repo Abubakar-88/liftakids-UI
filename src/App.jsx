@@ -41,7 +41,7 @@ function App() {
     <>
       <div className="App">
         {/* Navbar - conditional based on route if needed */}
-        <Navbar />
+        {/* <Navbar /> */}
         
         {/* Main Content */}
         <main>
