@@ -1,0 +1,13 @@
+<!-- Lift A Kids - Emblem (Minimal) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="emTitle">
+  <title id="emTitle">Lift A Kids emblem</title>
+  <desc>Minimal circular emblem showing a child silhouette and uplift arc</desc>
+
+  <circle cx="50" cy="50" r="48" fill="#2DBD8A"></circle>
+  <!-- uplift arc / hands simplified -->
+  <path d="M20 62 C35 40, 65 40, 80 62" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"></path>
+  <!-- child head -->
+  <circle cx="50" cy="40" r="7" fill="#ffffff"></circle>
+  <!-- child body (simple) -->
+  <path d="M46 50 L54 50 L52 60 L48 60 Z" fill="#ffffff"></path>
+</svg>
