@@ -15,8 +15,7 @@ const AddStudent = () => {
     requiredMonthlySupport: '',
     institutionsId: '',
     institutionName: 'Loading...',
-    bio: '',
-    photoUrl: null
+    bio: ''
   });
   const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -85,52 +84,115 @@ const AddStudent = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, image: file }));
+const handleImageChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setFormData(prev => ({ ...prev, image: file })); // Store as 'image' not 'photoUrl'
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+  // const handleImageChange = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     setFormData(prev => ({ ...prev, image: file }));
       
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       setPreviewImage(reader.result);
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors('');
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setErrors('');
 
-    // Validation
-    if (!formData.institutionsId) {
-      setErrors('Institution information is missing. Please login again.');
-      setLoading(false);
-      return;
-    }
+  //   // Validation
+  //   if (!formData.institutionsId) {
+  //     setErrors('Institution information is missing. Please login again.');
+  //     setLoading(false);
+  //     return;
+  //   }
 
-    try {
-      const formDataToSend = new FormData();
+  //   try {
+  //     const formDataToSend = new FormData();
       
-      // Append all form data
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== null && formData[key] !== undefined) {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
+  //     // Append all form data
+  //     Object.keys(formData).forEach(key => {
+  //       if (formData[key] !== null && formData[key] !== undefined) {
+  //         formDataToSend.append(key, formData[key]);
+  //       }
+  //     });
 
-      await addStudent(formDataToSend);
-      navigate('/institution/student-list', { 
-        state: { success: 'Student added successfully' } 
-      });
-    } catch (err) {
-      setErrors(err.response?.data?.message || err.message || 'Failed to add student');
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     await addStudent(formDataToSend);
+  //     navigate('/institution/student-list', { 
+  //       state: { success: 'Student added successfully' } 
+  //     });
+  //   } catch (err) {
+  //     setErrors(err.response?.data?.message || err.message || 'Failed to add student');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setErrors('');
+
+  // Validation
+  if (!formData.institutionsId) {
+    setErrors('Institution information is missing. Please login again.');
+    setLoading(false);
+    return;
+  }
+
+  // Add image validation
+  if (!formData.image) {
+    setErrors('Student image is required');
+    setLoading(false);
+    return;
+  }
+
+  try {
+    const formDataToSend = new FormData();
+    
+    // Create studentData object without the image
+    const studentData = {
+      studentName: formData.studentName,
+      guardianName: formData.guardianName,
+      dob: formData.dob,
+      gender: formData.gender,
+      address: formData.address,
+      contactNumber: formData.contactNumber,
+      financial_rank: formData.financial_rank,
+      requiredMonthlySupport: formData.requiredMonthlySupport,
+      institutionsId: formData.institutionsId,
+      bio: formData.bio
+    };
+
+    // Append as two separate parts
+    formDataToSend.append('studentData', new Blob([JSON.stringify(studentData)], {
+      type: 'application/json'
+    }));
+    formDataToSend.append('image', formData.image);
+
+    await addStudent(formDataToSend);
+    navigate('/institution/student-list', { 
+      state: { success: 'Student added successfully' } 
+    });
+  } catch (err) {
+    setErrors(err.response?.data?.message || err.message || 'Failed to add student');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -293,9 +355,41 @@ const AddStudent = () => {
             className="w-full p-2 border border-gray-300 rounded"
           />
         </div>
-
+          {/* Image Upload */}
+          <div>
+            <label className="block text-gray-700 mb-1 text-justify">Student Image*</label>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <input
+                  type="file"
+                  name="image" // Changed from photoUrl to image
+                  id="image-upload"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  required
+                />
+                <label
+                  htmlFor="image-upload" // Fixed the htmlFor to match id
+                  className="inline-block px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
+                >
+                  Choose Image
+                </label>
+              </div>
+              {previewImage && (
+                <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-200">
+                  <img 
+                    src={previewImage} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 mt-1">Image is required</p>
+          </div>
         {/* Image Upload */}
-        <div>
+        {/* <div>
           <label className="block text-gray-700 mb-1 text-justify">Student Image</label>
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -324,7 +418,7 @@ const AddStudent = () => {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         <button
           type="submit"

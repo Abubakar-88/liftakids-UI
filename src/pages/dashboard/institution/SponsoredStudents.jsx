@@ -80,25 +80,65 @@ const SponsoredStudents = () => {
   };
 
   // Function to get student thumbnail
-  const getStudentThumbnail = (student) => {
-    if (student.photoUrl) {
-      return student.photoUrl;
-    }
-    
-    const name = student.studentName || "S";
-    const initials = name.charAt(0).toUpperCase();
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-red-500', 
-      'bg-purple-500', 'bg-orange-500', 'bg-teal-500'
-    ];
-    const color = colors[initials.charCodeAt(0) % colors.length];
-    
+    // Get student thumbnail - WITH ERROR HANDLING
+const getStudentThumbnail = (student) => {
+  if (student.photoUrl) {
     return (
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${color}`}>
-        {initials}
+      <div className="relative">
+        <img 
+          src={student.photoUrl} 
+          alt={student.studentName}
+          className="w-20 h-35 rounded-full object-cover border border-gray-200"
+          onError={(e) => {
+            // If image fails to load, show fallback
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'flex';
+          }}
+        />
+        {/* Fallback avatar - hidden by default */}
+        <div 
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gray-400 hidden`}
+        >
+          {(student.studentName?.charAt(0) || 'S').toUpperCase()}
+        </div>
       </div>
     );
-  };
+  }
+  
+  // No photoUrl - show colored avatar
+  const name = student.studentName || "S";
+  const initials = name.charAt(0).toUpperCase();
+  const colors = [
+    'bg-blue-500', 'bg-green-500', 'bg-red-500', 
+    'bg-purple-500', 'bg-orange-500', 'bg-teal-500'
+  ];
+  const color = colors[initials.charCodeAt(0) % colors.length];
+  
+  return (
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${color}`}>
+      {initials}
+    </div>
+  );
+};
+  // const getStudentThumbnail = (student) => {
+  //   if (student.photoUrl) {
+  //     return student.photoUrl;
+  //   }
+    
+  //   const name = student.studentName || "S";
+  //   const initials = name.charAt(0).toUpperCase();
+  //   const colors = [
+  //     'bg-blue-500', 'bg-green-500', 'bg-red-500', 
+  //     'bg-purple-500', 'bg-orange-500', 'bg-teal-500'
+  //   ];
+  //   const color = colors[initials.charCodeAt(0) % colors.length];
+    
+  //   return (
+  //     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${color}`}>
+  //       {initials}
+  //     </div>
+  //   );
+  // };
 
   // Format date with red color if expired
   const formatDateWithExpiry = (dateString) => {
@@ -265,28 +305,28 @@ const SponsoredStudents = () => {
               </div>
 
           {/* Financial Info */}
-<div className="bg-gray-50 p-3 rounded-lg mb-3">
-  <div className="flex justify-between items-center mb-2">
-    <span className="text-xs font-medium">Monthly Need: ৳{student.requiredMonthlySupport}</span>
-    <span className="text-xs font-medium text-green-600">Received: ৳{student.sponsoredAmount}</span>
-  </div>
-  <div className="w-full bg-gray-200 h-2 rounded mb-1">
-    <div
-      className="bg-blue-600 h-2 rounded transition-all duration-300"
-      style={{ 
-        width: `${Math.min((student.sponsoredAmount / student.requiredMonthlySupport) * 100, 100)}%` 
-      }}
-    ></div>
-  </div>
-  <div className="flex justify-between items-center">
-    <span className="text-xs text-gray-500">
-      {Math.min((student.sponsoredAmount / student.requiredMonthlySupport) * 100, 100).toFixed(1)}% Funded
-    </span>
-    {student.sponsoredAmount >= student.requiredMonthlySupport && (
-      <span className="text-xs font-bold text-green-600">✓ Fully Funded</span>
-    )}
-  </div>
-</div>
+              <div className="bg-gray-50 p-3 rounded-lg mb-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-medium">Monthly Need: ৳{student.requiredMonthlySupport}</span>
+                  <span className="text-xs font-medium text-green-600">Received: ৳{student.sponsoredAmount}</span>
+                </div>
+                <div className="w-full bg-gray-200 h-2 rounded mb-1">
+                  <div
+                    className="bg-blue-600 h-2 rounded transition-all duration-300"
+                    style={{ 
+                      width: `${Math.min((student.sponsoredAmount / student.requiredMonthlySupport) * 100, 100)}%` 
+                    }}
+                  ></div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">
+                    {Math.min((student.sponsoredAmount / student.requiredMonthlySupport) * 100, 100).toFixed(1)}% Funded
+                  </span>
+                  {student.sponsoredAmount >= student.requiredMonthlySupport && (
+                    <span className="text-xs font-bold text-green-600">✓ Fully Funded</span>
+                  )}
+                </div>
+              </div>
 
              {/* Sponsor Info */}
                 {student.sponsors && student.sponsors.length > 0 && (

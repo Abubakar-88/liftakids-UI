@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUpload, FaTimes } from 'react-icons/fa';
-import { fetchStudents, submitResults } from '../../../api/studentApi';
+import { getStudentsByInstitution, submitResults } from '../../../api/studentApi';
 
 const StudentResultForm = () => {
   const navigate = useNavigate();
@@ -17,11 +17,30 @@ const StudentResultForm = () => {
   });
   const [loading, setLoading] = useState({ students: true, submission: false });
   const [error, setError] = useState('');
+  const [institutionData, setInstitutionData] = useState(null);
 
+  // Load institution data from localStorage
+  useEffect(() => {
+    const data = localStorage.getItem('institutionData');
+    if (data) {
+      setInstitutionData(JSON.parse(data));
+    }
+  }, []);
+
+  const institutionsId = institutionData ? institutionData.institutionsId : null;
+  console.log('Institution ID:', institutionsId);
+
+  // Load students when institutionId is available
   useEffect(() => {
     const loadStudents = async () => {
+      if (!institutionsId) {
+        setLoading(prev => ({ ...prev, students: false }));
+        return; // Don't load students if institutionId is not available
+      }
+
       try {
-        const data = await fetchStudents();
+        setLoading(prev => ({ ...prev, students: true }));
+        const data = await getStudentsByInstitution(institutionsId);
         setStudents(data);
       } catch {
         setError('Failed to load students');
@@ -29,8 +48,9 @@ const StudentResultForm = () => {
         setLoading(prev => ({ ...prev, students: false }));
       }
     };
+    
     loadStudents();
-  }, []);
+  }, [institutionsId]); // Add institutionsId as dependency
 
   const handleFileChange = (e, terminal) => {
     const file = e.target.files[0];
@@ -92,7 +112,11 @@ const StudentResultForm = () => {
         <div>
           <label className="block text-sm text-gray-700 mb-1 text-justify">Select Student *</label>
           {loading.students ? (
-            <div className="p-2 bg-gray-100 text-sm text-center rounded">Loading...</div>
+            <div className="p-2 bg-gray-100 text-sm text-center rounded">Loading students...</div>
+          ) : !institutionsId ? (
+            <div className="p-2 bg-yellow-100 text-sm text-center rounded">Institution data not available</div>
+          ) : students.length === 0 ? (
+            <div className="p-2 bg-gray-100 text-sm text-center rounded">No students found</div>
           ) : (
             <select
               value={selectedStudent}
@@ -102,8 +126,8 @@ const StudentResultForm = () => {
             >
               <option value="">-- Select Student --</option>
               {students.map(student => (
-                <option key={student.id} value={student.id}>
-                  {student.fullName}
+                <option key={student.studentId} value={student.studentId}>
+                  {student.studentName} (ID: {student.studentId})
                 </option>
               ))}
             </select>

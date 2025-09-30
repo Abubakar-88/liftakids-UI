@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaEye, FaEdit, FaTrash, FaTimes, FaUserGraduate, FaUser, FaSave, FaFileAlt, FaSearch } from 'react-icons/fa';
+import { FaEye, FaEdit, FaTrash, FaPrint, FaTimes, FaUserGraduate, FaUser, FaSave, FaFileAlt, FaSearch } from 'react-icons/fa';
 
 import { fetchStudentLists, fetchStudentResults, deleteStudent, updateStudent } from '../../../api/studentApi';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ const StudentList = () => {
   const [results, setResults] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [updating, setUpdating] = useState(false);
   const [pagination, setPagination] = useState({
     page: 0,
     size: 10,
@@ -21,16 +22,19 @@ const StudentList = () => {
     totalElements: 0
   });
 
-  const [editForm, setEditForm] = useState({
-    studentName: '',
-    contactNumber: '',
-    dob: '',
-    bio: '',
-    financial_rank: '',
-    requiredMonthlySupport: '',
-    address: '',
-    guardianName: ''
-  });
+ const [editForm, setEditForm] = useState({
+  studentName: '',
+  contactNumber: '',
+  dob: '',
+  bio: '',
+  financial_rank: '',
+  requiredMonthlySupport: '',
+  address: '',
+  guardianName: '',
+  image: null 
+});
+const [previewImage, setPreviewImage] = useState(null);
+const [currentImage, setCurrentImage] = useState(null);
     const [institutionName, setInstitutionName] = useState('');
 
 // useEffect এর মধ্যে institution data fetch করুন
@@ -129,26 +133,66 @@ const handleSearch = async () => {
     }
   };
 
-  // Get student thumbnail
-  const getStudentThumbnail = (student) => {
-    if (student.photoUrl) {
-      return student.photoUrl;
-    }
-    
-    const name = student.studentName || "S";
-    const initials = name.charAt(0).toUpperCase();
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-red-500', 
-      'bg-purple-500', 'bg-orange-500', 'bg-teal-500'
-    ];
-    const color = colors[initials.charCodeAt(0) % colors.length];
-    
+  
+  // Get student thumbnail - WITH ERROR HANDLING
+const getStudentThumbnail = (student) => {
+  if (student.photoUrl) {
     return (
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${color}`}>
-        {initials}
+      <div className="relative">
+        <img 
+          src={student.photoUrl} 
+          alt={student.studentName}
+          className="w-20 h-20 rounded-full object-cover border border-gray-200"
+          onError={(e) => {
+            // If image fails to load, show fallback
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'flex';
+          }}
+        />
+        {/* Fallback avatar - hidden by default */}
+        <div 
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gray-400 hidden`}
+        >
+          {(student.studentName?.charAt(0) || 'S').toUpperCase()}
+        </div>
       </div>
     );
-  };
+  }
+  
+  // No photoUrl - show colored avatar
+  const name = student.studentName || "S";
+  const initials = name.charAt(0).toUpperCase();
+  const colors = [
+    'bg-blue-500', 'bg-green-500', 'bg-red-500', 
+    'bg-purple-500', 'bg-orange-500', 'bg-teal-500'
+  ];
+  const color = colors[initials.charCodeAt(0) % colors.length];
+  
+  return (
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${color}`}>
+      {initials}
+    </div>
+  );
+};
+  // const getStudentThumbnail = (student) => {
+  //   if (student.photoUrl) {
+  //     return student.photoUrl;
+  //   }
+    
+  //   const name = student.studentName || "S";
+  //   const initials = name.charAt(0).toUpperCase();
+  //   const colors = [
+  //     'bg-blue-500', 'bg-green-500', 'bg-red-500', 
+  //     'bg-purple-500', 'bg-orange-500', 'bg-teal-500'
+  //   ];
+  //   const color = colors[initials.charCodeAt(0) % colors.length];
+    
+  //   return (
+  //     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${color}`}>
+  //       {initials}
+  //     </div>
+  //   );
+  // };
 
   // Handle view results
   const handleViewResults = async (student) => {
@@ -161,33 +205,85 @@ const handleSearch = async () => {
       console.error('Error loading results:', error);
     }
   };
+// Grade calculation functions
+const calculateGrade = (averageMarks) => {
+  if (averageMarks >= 80) return 'A+';
+  if (averageMarks >= 70) return 'A';
+  if (averageMarks >= 60) return 'A-';
+  if (averageMarks >= 50) return 'B';
+  if (averageMarks >= 40) return 'C';
+  return 'F';
+};
 
+const calculateSubjectGrade = (marks) => {
+  if (marks >= 80) return 'A';
+  if (marks >= 70) return 'B';
+  if (marks >= 60) return 'C';
+  if (marks >= 50) return 'D';
+  if (marks >= 40) return 'E';
+  return 'F';
+};
+
+const calculateRemarks = (averageMarks) => {
+  if (averageMarks >= 80) return 'Excellent';
+  if (averageMarks >= 70) return 'Very Good';
+  if (averageMarks >= 60) return 'Good';
+  if (averageMarks >= 50) return 'Average';
+  if (averageMarks >= 40) return 'Pass';
+  return 'Needs Improvement';
+};
   // Handle view details
-  const handleViewDetails = (student) => {
-    setSelectedStudent(student);
-    setEditForm({
-      studentName: student.studentName || '',
-      contactNumber: student.contactNumber || '',
-      dob: student.dob ? student.dob.split('T')[0] : '',
-      bio: student.bio || '',
-      financial_rank: student.financial_rank || student.financial_rank || 'POOR',
-      requiredMonthlySupport: student.requiredMonthlySupport || 0,
-      address: student.address || '',
-      guardianName: student.guardianName || ''
-    });
-    setShowDetailsModal(true);
-  };
+  // const handleViewDetails = (student) => {
+  //   setSelectedStudent(student);
+  //   setEditForm({
+  //     studentName: student.studentName || '',
+  //     contactNumber: student.contactNumber || '',
+  //     dob: student.dob ? student.dob.split('T')[0] : '',
+  //     bio: student.bio || '',
+  //     financial_rank: student.financial_rank || student.financial_rank || 'POOR',
+  //     requiredMonthlySupport: student.requiredMonthlySupport || 0,
+  //     address: student.address || '',
+  //     guardianName: student.guardianName || ''
+  //   });
+  //   setShowDetailsModal(true);
+  // };
 
+  const handleViewDetails = (student) => {
+  setSelectedStudent(student);
+  setEditForm({
+    studentName: student.studentName || '',
+    contactNumber: student.contactNumber || '',
+    dob: student.dob ? student.dob.split('T')[0] : '',
+    bio: student.bio || '',
+    financial_rank: student.financial_rank || 'POOR',
+    requiredMonthlySupport: student.requiredMonthlySupport || 0,
+    address: student.address || '',
+    guardianName: student.guardianName || '',
+    image: null
+  });
+  setCurrentImage(student.photoUrl); // Set current image for display
+  setPreviewImage(null); // Reset preview
+  setShowDetailsModal(true);
+};
+const handlePrint = () => {
+  const printContent = document.getElementById('printable-result');
+  const originalContent = document.body.innerHTML;
+  
+  document.body.innerHTML = printContent.innerHTML;
+  window.print();
+  document.body.innerHTML = originalContent;
+  window.location.reload(); // Page refresh to restore original state
+};
   // Handle edit
-  const handleEdit = (student) => {
-    setEditingId(student.studentId);
-    setEditForm({
-      studentName: student.studentName,
-      contactNumber: student.contactNumber,
-      dob: student.dob.split('T')[0],
-      bio: student.bio || ''
-    });
-  };
+  // const handleEdit = (student) => {
+  //   setEditingId(student.studentId);
+  //   setEditForm({
+  //     studentName: student.studentName,
+  //     contactNumber: student.contactNumber,
+  //     dob: student.dob.split('T')[0],
+  //     bio: student.bio || ''
+  //   });
+  // };
 
   // Handle edit change
   const handleEditChange = (e) => {
@@ -219,12 +315,36 @@ const handleSave = async (studentId) => {
   }
 };
 
-// Handle update details
+// haldle image change function
+const handleImageChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setEditForm(prev => ({ ...prev, image: file }));
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+// Remove image selection
+const handleRemoveImage = () => {
+  setEditForm(prev => ({ ...prev, image: null }));
+  setPreviewImage(null);
+};
+
+// haldle update details function
 const handleUpdateDetails = async () => {
   if (!selectedStudent) return;
   
+  setUpdating(true); // Start loading
   try {
-    const updatedData = {
+    const formDataToSend = new FormData();
+    
+    // Create studentData object
+    const studentData = {
       studentName: editForm.studentName,
       contactNumber: editForm.contactNumber,
       dob: editForm.dob,
@@ -235,9 +355,19 @@ const handleUpdateDetails = async () => {
       guardianName: editForm.guardianName
     };
 
-    await updateStudent(selectedStudent.studentId, updatedData);
+    // Append student data as JSON
+    formDataToSend.append('studentData', new Blob([JSON.stringify(studentData)], {
+      type: 'application/json'
+    }));
+
+    // Append image if selected
+    if (editForm.image) {
+      formDataToSend.append('image', editForm.image);
+    }
+
+    await updateStudent(selectedStudent.studentId, formDataToSend);
     
-    // Refresh the student list with correct institution ID
+    // Refresh the student list
     const institutionData = localStorage.getItem('institutionData');
     const parsedInstitutionData = JSON.parse(institutionData);
     const institutionId = parsedInstitutionData.institutionsId || parsedInstitutionData.id;
@@ -249,10 +379,48 @@ const handleUpdateDetails = async () => {
     
     setEditingId(null);
     setShowDetailsModal(false);
+    setPreviewImage(null);
   } catch (error) {
     console.error('Error updating student details:', error);
+  } finally {
+    setUpdating(false); // Stop loading
   }
 };
+
+// Handle update details
+// const handleUpdateDetails = async () => {
+//   if (!selectedStudent) return;
+  
+//   try {
+//     const updatedData = {
+//       studentName: editForm.studentName,
+//       contactNumber: editForm.contactNumber,
+//       dob: editForm.dob,
+//       bio: editForm.bio,
+//       financial_rank: editForm.financial_rank,
+//       requiredMonthlySupport: Number(editForm.requiredMonthlySupport),
+//       address: editForm.address,
+//       guardianName: editForm.guardianName
+//     };
+
+//     await updateStudent(selectedStudent.studentId, updatedData);
+    
+//     // Refresh the student list with correct institution ID
+//     const institutionData = localStorage.getItem('institutionData');
+//     const parsedInstitutionData = JSON.parse(institutionData);
+//     const institutionId = parsedInstitutionData.institutionsId || parsedInstitutionData.id;
+    
+//     const response = await fetchStudentLists(institutionId, pagination.page, pagination.size);
+//     if (response && response.content) {
+//       setStudents(response.content);
+//     }
+    
+//     setEditingId(null);
+//     setShowDetailsModal(false);
+//   } catch (error) {
+//     console.error('Error updating student details:', error);
+//   }
+// };
   // Handle delete
   const handleDelete = async (studentId) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
@@ -276,9 +444,32 @@ const handleUpdateDetails = async () => {
 
   // Handle cancel edit
   const handleCancelEdit = () => {
-    setEditingId(null);
-  };
-
+  setEditingId(null);
+  setPreviewImage(null);
+  // Reset form to original values
+  if (selectedStudent) {
+    setEditForm({
+      studentName: selectedStudent.studentName || '',
+      contactNumber: selectedStudent.contactNumber || '',
+      dob: selectedStudent.dob ? selectedStudent.dob.split('T')[0] : '',
+      bio: selectedStudent.bio || '',
+      financial_rank: selectedStudent.financial_rank || 'POOR',
+      requiredMonthlySupport: selectedStudent.requiredMonthlySupport || 0,
+      address: selectedStudent.address || '',
+      guardianName: selectedStudent.guardianName || '',
+      image: null
+    });
+  }
+};
+  // const handleCancelEdit = () => {
+  //   setEditingId(null);
+  // };
+const handleCloseModal = () => {
+  setShowDetailsModal(false);
+  setEditingId(null);
+  setPreviewImage(null);
+  setUpdating(false); 
+};
   // Filter students based on search term
   const filteredStudents = students.filter(student =>
     student.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -606,32 +797,206 @@ const handleUpdateDetails = async () => {
       </div>
 
       {/* Result Modal */}
-      {showResultModal && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 bg-white z-10">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  {selectedStudent.institutionName} - {selectedStudent.studentName}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Student ID: #{selectedStudent.studentId}
-                </p>
+{showResultModal && selectedStudent && results.length > 0 && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 bg-white z-10">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {selectedStudent.studentName} - {results[0].studentClass}
+          </h3>
+          <p className="text-sm text-gray-500">
+            Student ID: #{selectedStudent.studentId}
+          </p>
+          <p className="text-sm text-gray-500">
+            Class Name: {results[0].studentClass}
+          </p>
+        </div>
+        <button 
+          onClick={() => setShowResultModal(false)}
+          className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+        >
+          <FaTimes />
+        </button>
+      </div>
+      
+      <div className="p-6">
+        {/* Main Result Card */}
+        <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-gray-200 rounded-lg p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Exam Information */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-3 text-sm">Exam Information</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Exam:</span>
+                  <span className="font-medium">{results[0].examName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Term:</span>
+                  <span className="font-medium">{results[0].term}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Date:</span>
+                  <span className="font-medium">{new Date(results[0].examDate).toLocaleDateString()}</span>
+                </div>
               </div>
-              <button 
-                onClick={() => setShowResultModal(false)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
-              >
-                <FaTimes />
-              </button>
             </div>
-            
-            <div className="p-6">
-              {/* Result content remains the same */}
+
+            {/* Performance Summary */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-3 text-sm">Performance Summary</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Total Marks:</span>
+                  <span className="font-medium">{results[0].subjectMarks.length * 100}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Obtained:</span>
+                  <span className="font-medium">
+                    {results[0].subjectMarks.reduce((total, subject) => total + subject.obtainedMark, 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Percentage:</span>
+                  <span className="font-medium">
+                    {((results[0].subjectMarks.reduce((total, subject) => total + subject.obtainedMark, 0) / 
+                      (results[0].subjectMarks.length * 100)) * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Grade Information */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-3 text-sm">Grade Information</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Grade:</span>
+                  <span className="font-medium text-green-600">
+                    {calculateGrade(
+                      results[0].subjectMarks.reduce((total, subject) => total + subject.obtainedMark, 0) / 
+                      results[0].subjectMarks.length
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Position:</span>
+                  <span className="font-medium">-</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Remarks:</span>
+                  <span className="font-medium text-blue-600">
+                    {calculateRemarks(
+                      results[0].subjectMarks.reduce((total, subject) => total + subject.obtainedMark, 0) / 
+                      results[0].subjectMarks.length
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
+
+         {/* Subjects Table - Mobile Responsive */}
+<div className="bg-white rounded-lg shadow-sm overflow-hidden">
+  {/* Desktop Table (md screen এবং উপরে) */}
+  <div className="hidden md:block">
+    <table className="w-full text-sm">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="text-left p-3 font-semibold text-gray-700">SUBJECT</th>
+          <th className="text-center p-3 font-semibold text-gray-700">FULL MARKS</th>
+          <th className="text-center p-3 font-semibold text-gray-700">PASS MARKS</th>
+          <th className="text-center p-3 font-semibold text-gray-700">OBTAINED</th>
+          <th className="text-center p-3 font-semibold text-gray-700">GRADE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {results[0].subjectMarks.map((subject, index) => (
+          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+            <td className="p-3 font-medium text-gray-800">{subject.subjectName}</td>
+            <td className="p-3 text-center text-gray-600">100</td>
+            <td className="p-3 text-center text-gray-600">40</td>
+            <td className="p-3 text-center font-semibold text-gray-800">{subject.obtainedMark}</td>
+            <td className="p-3 text-center font-semibold">
+              <span className={`px-2 py-1 rounded-full text-xs ${
+                subject.obtainedMark >= 80 ? 'bg-green-100 text-green-800' :
+                subject.obtainedMark >= 60 ? 'bg-blue-100 text-blue-800' :
+                subject.obtainedMark >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {calculateSubjectGrade(subject.obtainedMark)}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+    {/* Scrollable Table for Mobile */}
+<div className="bg-white rounded-lg shadow-sm overflow-hidden">
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm min-w-[600px]">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">SUBJECT</th>
+          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">FULL MARKS</th>
+          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">PASS MARKS</th>
+          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">OBTAINED</th>
+          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">GRADE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {results[0].subjectMarks.map((subject, index) => (
+          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+            <td className="p-3 font-medium text-gray-800 whitespace-nowrap">{subject.subjectName}</td>
+            <td className="p-3 text-center text-gray-600 whitespace-nowrap">100</td>
+            <td className="p-3 text-center text-gray-600 whitespace-nowrap">40</td>
+            <td className="p-3 text-center font-semibold text-gray-800 whitespace-nowrap">{subject.obtainedMark}</td>
+            <td className="p-3 text-center font-semibold whitespace-nowrap">
+              <span className={`px-2 py-1 rounded-full text-xs ${
+                subject.obtainedMark >= 80 ? 'bg-green-100 text-green-800' :
+                subject.obtainedMark >= 60 ? 'bg-blue-100 text-blue-800' :
+                subject.obtainedMark >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {calculateSubjectGrade(subject.obtainedMark)}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
         </div>
-      )}
+
+        {/* Action Buttons */}
+        <div className="flex justify-center space-x-4 mt-6">
+          <button
+          onClick={handlePrint} 
+           className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">
+            <FaPrint className="text-sm" />
+            <span>Print Results</span>
+          </button>
+          <button 
+            onClick={() => setShowResultModal(false)}
+            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg text-sm font-medium"
+          >
+            <FaTimes className="text-sm" />
+            <span>Close</span>
+          </button>
+          <button className="flex items-center space-x-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg text-sm font-medium">
+            <FaUser className="text-sm" />
+            <span>View Full Profile</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
     {/* Student Details Modal */}
       {showDetailsModal && selectedStudent && (
@@ -652,19 +1017,84 @@ const handleUpdateDetails = async () => {
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left Column - Basic Info */}
               <div className="md:col-span-1">
-                <div className="flex justify-center mb-4 text-jusfify">
-                  {selectedStudent.photolrl ? (
-                    <img 
-                      src={selectedStudent.photolrl} 
-                      alt={selectedStudent.studentName}
-                      className="h-32 w-32 rounded-full object-cover border-4 border-blue-100"
-                    />
-                  ) : (
-                    <div className="h-32 w-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-blue-100">
-                      <FaUser className="text-gray-500 text-4xl" />
+              {/* Image Upload Section in Details Modal */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-semibold">Student Image</h4>
+                </div>
+                
+                <div className="flex items-center justify-center space-x-6">
+                  {/* Current Image Display */}
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-2">Current Image</p>
+                    {currentImage ? (
+                      <img 
+                        src={currentImage} 
+                        alt="Current" 
+                        className="h-24 w-24 rounded-full object-cover border-2 border-gray-200 mx-auto"
+                      />
+                    ) : (
+                      <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-200 mx-auto">
+                        <FaUser className="text-gray-400 text-2xl" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* New Image Preview */}
+                  {previewImage && (
+                    <div className="text-center">
+                      <p className="text-sm text-gray-500 mb-2">New Image</p>
+                      <div className="relative">
+                        <img 
+                          src={previewImage} 
+                          alt="Preview" 
+                          className="h-24 w-24 rounded-full object-cover border-2 border-blue-200 mx-auto"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* File Input - Only show when editing */}
+                  {editingId === selectedStudent?.studentId && (
+                    <div className="text-center">
+                      <p className="text-sm text-gray-500 mb-2">Change Image</p>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          id="image-upload-details"
+                          onChange={handleImageChange}
+                          accept="image/*"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <label
+                          htmlFor="image-upload-details"
+                          className="inline-block px-3 py-2 bg-blue-100 text-blue-700 rounded-lg cursor-pointer hover:bg-blue-200 text-sm"
+                        >
+                          {currentImage ? 'Change Image' : 'Upload Image'}
+                        </label>
+                      </div>
                     </div>
                   )}
                 </div>
+                
+                {editingId === selectedStudent?.studentId && (
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    {previewImage 
+                      ? 'New image will replace current one' 
+                      : currentImage 
+                        ? 'Upload new image to replace current one'
+                        : 'Upload student profile image'
+                    }
+                  </p>
+                )}
+              </div>
 
                 <div className="space-y-3">
                   <div>
@@ -832,39 +1262,57 @@ const handleUpdateDetails = async () => {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 p-4 flex justify-end sticky bottom-0 bg-white">
-              {editingId === selectedStudent.studentId ? (
-                <>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 mr-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleUpdateDetails}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Save Changes
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowDetailsModal(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 mr-2"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={() => setEditingId(selectedStudent.studentId)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Edit Profile
-                  </button>
-                </>
-              )}
-            </div>
+           <div className="border-t border-gray-200 p-4 flex justify-end sticky bottom-0 bg-white">
+            {editingId === selectedStudent.studentId ? (
+              <>
+                <button
+                  onClick={() => setEditingId(null)}
+                  disabled={updating}
+                  className={`px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 mr-2 ${
+                    updating ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateDetails}
+                  disabled={updating}
+                  className={`px-4 py-2 bg-blue-600 text-white rounded flex items-center justify-center min-w-24 ${
+                    updating 
+                      ? 'opacity-50 cursor-not-allowed bg-blue-400' 
+                      : 'hover:bg-blue-700'
+                  }`}
+                >
+                  {updating ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={handleCloseModal}
+                  className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+                >
+                  <FaTimes />
+                </button>
+                <button
+                  onClick={() => setEditingId(selectedStudent.studentId)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Edit Profile
+                </button>
+              </>
+            )}
+          </div>
           </div>
         </div>
       )}

@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar';
@@ -35,66 +34,75 @@ import DonorSponsoredStudentList from './pages/dashboard/donor/DonorSponsoredStu
 import DonorPaymentHistory from './pages/dashboard/donor/DonorPaymentHistory';
 import DonorSettings from './pages/dashboard/donor/DonorSettings';
 import PasswordChangeForm from './components/PasswordChangeForm';
-
-
+import InstallPrompt from './components/InstallPrompt'; 
 function App() {
   
    return (
-<>
-   
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/benefits" element={<Benefits />} />
-        <Route path="/login/:role" element={<Login />} />
-        <Route path="/register/:role" element={<DynamicRegister />} />
-        <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
-        <Route path="/institution/add-student" element={<AddStudent />} />
-         <Route path="/institution/result-upload" element={<StudentResultForm />} />
-        <Route path="/results/confirmation" element={<ResultConfirmation />} />
-        <Route path="institution/student-list" element={<StudentList />} />
-       
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/division-manage" element={<DivisionManage />} />
-        <Route path="/admin/district-manage" element={<DistrictManage />} />
-        <Route path="/admin/thana-manage" element={<ThanaManage />} />
-        <Route path="/admin/union-or-area-manage" element={<UnionManage />} />
-        <Route path="/admin/institution-manage" element={<InstitutionManage />} />
-        <Route path="/admin/student-manage" element={<StudentManage />} />
-        <Route path="/admin/donar-manage" element={<DonorManagement />} />
-        <Route path="/admin/sponsorships/new" element={<SponsorshipForm />} />
-        <Route path="/admin/sponsor-manage" element={<SponsorshipManage />} />
-        <Route path="/sponsorships/:id" element={<SponsorshipForm />}/>
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/chose-option" element={<RoleSelection />} />
-        <Route path="/contact" element={<Contact />} />
-        //Institution dashboard
-        <Route path="/institution/sponsored-students" element={<SponsoredStudents />} />
-        {/* Add more routes as needed */}
-       //Donor Dashboard
-        <Route path="/donor/dashboard" element={<DonarDashboard />} />
-        <Route path="/donor/student-list-for-sponsor" element={<StudentListForSponsor />} />
-        <Route path="/donar/sponsored-students" element={<DonorSponsoredStudentList />} />
-        <Route path="/donor/sponsored-students/:donorId/payments" element={<DonorPaymentHistory />} />
-        <Route path="/donar/settings/:donorId" element={<DonorSettings />} />
-        <Route path="/donor/password-change/:donorId" element={<PasswordChangeForm/>} />
+    <>
+      <div className="App">
+        {/* Navbar - conditional based on route if needed */}
+        <Navbar />
+        
+        {/* Main Content */}
+        <main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/benefits" element={<Benefits />} />
+            <Route path="/login/:role" element={<Login />} />
+            <Route path="/register/:role" element={<DynamicRegister />} />
+            <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
+            <Route path="/institution/add-student" element={<AddStudent />} />
+            <Route path="/institution/result-upload" element={<StudentResultForm />} />
+            <Route path="/results/confirmation" element={<ResultConfirmation />} />
+            <Route path="/institution/student-list" element={<StudentList />} />
+           
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/division-manage" element={<DivisionManage />} />
+            <Route path="/admin/district-manage" element={<DistrictManage />} />
+            <Route path="/admin/thana-manage" element={<ThanaManage />} />
+            <Route path="/admin/union-or-area-manage" element={<UnionManage />} />
+            <Route path="/admin/institution-manage" element={<InstitutionManage />} />
+            <Route path="/admin/student-manage" element={<StudentManage />} />
+            <Route path="/admin/donar-manage" element={<DonorManagement />} />
+            <Route path="/admin/sponsorships/new" element={<SponsorshipForm />} />
+            <Route path="/admin/sponsor-manage" element={<SponsorshipManage />} />
+            <Route path="/sponsorships/:id" element={<SponsorshipForm />}/>
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/chose-option" element={<RoleSelection />} />
+            <Route path="/contact" element={<Contact />} />
+            
+            {/* Institution dashboard */}
+            <Route path="/institution/sponsored-students" element={<SponsoredStudents />} />
+            
+            {/* Donor Dashboard */}
+            <Route path="/donor/dashboard" element={<DonarDashboard />} />
+            <Route path="/donor/student-list-for-sponsor" element={<StudentListForSponsor />} />
+            <Route path="/donar/sponsored-students" element={<DonorSponsoredStudentList />} />
+            <Route path="/donor/sponsored-students/:donorId/payments" element={<DonorPaymentHistory />} />
+            <Route path="/donar/settings/:donorId" element={<DonorSettings />} />
+            <Route path="/donor/password-change/:donorId" element={<PasswordChangeForm/>} />
+          </Routes>
+        </main>
 
+        {/* PWA Install Prompt */}
+        <InstallPrompt />
 
-
-      </Routes>
-  <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      </>
+        {/* Toast Notifications */}
+        <ToastContainer 
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+      </div>
+    </>
   );
 }
 

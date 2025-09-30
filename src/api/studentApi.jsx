@@ -3,15 +3,15 @@ import axios from 'axios';
 const API_BASE_URL = 'http://localhost/LiftAKids/api';
 
 
-// After (fixed)
-export const addStudent = async (studentData) => {
+// After (fixed for multipart form data)
+export const addStudent = async (formData) => {
   try {
     const response = await axios.post(
       `${API_BASE_URL}/students/addStudent`, 
-      studentData,
+      formData,
       {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       }
     );
@@ -115,20 +115,23 @@ export const searchStudents = (params) =>
   axios.get(`${API_BASE_URL}/students/search`, { params });
 
 // Add other student-related API calls here
+// Add other student-related API calls here
 export const submitResults = async (studentId, files) => {
   const formData = new FormData();
   formData.append('studentId', studentId);
   
   if (files.firstTerminalFile) {
-    formData.append('firstTerminal', files.firstTerminalFile);
+    formData.append('resultImage', files.firstTerminalFile);
   }
   if (files.secondTerminalFile) {
-    formData.append('secondTerminal', files.secondTerminalFile);
+    formData.append('resultImage', files.secondTerminalFile);
   }
 
-  const response = await fetch(`${API_BASE_URL}/students/results/submit`, {
+  // Fix the endpoint URL to match your backend
+  const response = await fetch(`${API_BASE_URL}/results/upload`, {
     method: 'POST',
     body: formData
+    // Note: Don't set Content-Type header for FormData - browser will set it automatically
   });
   
   if (!response.ok) {
@@ -188,7 +191,7 @@ export const fetchStudentList = async () => {
 };
 
 export const fetchStudentResults = async (studentId) => {
-  const response = await fetch(`${API_BASE_URL}/students/${studentId}/results`);
+  const response = await fetch(`${API_BASE_URL}/results/student/${studentId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch results');
   }
@@ -218,19 +221,36 @@ export const deleteStudent = async (studentId) => {
   // Successful deletion returns no content
   return null;
 };
-export const updateStudent = async (studentId, data) => {
-  const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data)
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update student');
+export const updateStudent = async (studentId, formData) => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/students/updateStudent/${studentId}`, 
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Update student error:', error.response?.data);
+    throw error;
   }
-  return await response.json();
-};
+}
+// export const updateStudent = async (studentId, data) => {
+//   const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
+//     method: 'PUT',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify(data)
+//   });
+//   if (!response.ok) {
+//     throw new Error('Failed to update student');
+//   }
+//   return await response.json();
+// };
 
 
 export const updateStudentBio = async (studentId, bio) => {
