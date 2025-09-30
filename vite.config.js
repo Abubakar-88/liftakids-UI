@@ -15,12 +15,12 @@ export default defineConfig({
         theme_color: '#2563eb',
         icons: [
           {
-            src: '/vite.svg',
+            src: '/liftakdis.svg',
             sizes: '192x192',
             type: 'image/svg+xml'
           },
           {
-            src: '/vite.svg',
+            src: '/liftakdis.svg',
             sizes: '512x512', 
             type: 'image/svg+xml'
           }
