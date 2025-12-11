@@ -2,10 +2,11 @@ import { FaBook, FaGraduationCap, FaRobot, FaUtensils, FaUserPlus, FaSearch,
     FaHandHoldingHeart, FaChevronDown,FaChevronUp,FaChevronRight,FaTimes   } from 'react-icons/fa';
 import { MdMedicalServices } from 'react-icons/md';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar'; // Adjust the import path as necessary
 export default function Home() {
 const [expandedQuestion , setExpandedQuestion] = useState([]);
-
+ const navigate = useNavigate();
 //   const toggleQuestion = (id) => {
 //     setExpandedQuestions(prev =>
 //       prev.includes(id) 
@@ -97,7 +98,9 @@ const donationPosts = [
     }
   ];
 
-
+const handleDonorClick = () => {
+    navigate("/login/donor");
+  };
 
   return (
     <div className="max-w-screen-xl mx-auto p-4">
@@ -114,7 +117,9 @@ const donationPosts = [
               className="w-full h-auto md:h-96 object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-              <button className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
+              <button
+              onClick={handleDonorClick}
+               className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
                 Be Part of Lift A Kids
               </button>
             </div>
@@ -136,7 +141,9 @@ const donationPosts = [
               <p className="text-teal-600 text-sm md:text-base mt-2 md:mt-4">
                 MONTHLY REQUIREMENT: <span className="font-bold">৳ 3500</span>
               </p>
-              <button className="mt-4 md:mt-6 bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors w-full md:w-auto">
+              <button
+                onClick={handleDonorClick}
+               className="mt-4 md:mt-6 bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors w-full md:w-auto">
                 Donate Now
               </button>
             </div>
@@ -356,12 +363,6 @@ const donationPosts = [
           ))}
         </div>
       </div>
-
-
-
-
-
-
 
 
 

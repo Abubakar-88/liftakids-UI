@@ -1,7 +1,25 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost/LiftAKids/api';
+const API_BASE_URL = 'http://localhost:8081/LiftAKids/api';
 
+
+// const fetchApi = async (endpoint, options = {}) => {
+//   const url = `${API_BASE_URL}${endpoint}`;
+  
+//   const defaultOptions = {
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//   };
+
+//   const response = await fetch(url, { ...defaultOptions, ...options });
+  
+//   if (!response.ok) {
+//     throw new Error(`HTTP error! status: ${response.status}`);
+//   }
+  
+//   return response.json();
+// };
 
 // After (fixed for multipart form data)
 export const addStudent = async (formData) => {
@@ -197,6 +215,27 @@ export const fetchStudentResults = async (studentId) => {
   }
   return await response.json();
 };
+
+export const checkStudentPendingStatus = async (studentId) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/students/${studentId}/pending-sponsorships?days=3`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          // Add auth header if needed
+          // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error checking pending status:', error);
+    return [];
+  }
+};
+
+
 export const deleteStudent = async (studentId) => {
   const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {
     method: 'DELETE',

@@ -24,7 +24,7 @@ const [donorData, setDonorData] = useState(null);
         </h1>
 
       {/* Welcome Card */}
-      <div className="bg-blue-700 text-white rounded-xl p-4 w-full max-w-sm mb-6">
+      <div className="bg-teal-600 text-white rounded-xl p-4 w-full max-w-sm mb-6">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">Welcome {donorData ? donorData.name : 'Donor'}</h2>
           <span className="text-xl">→</span>
@@ -36,12 +36,12 @@ const [donorData, setDonorData] = useState(null);
       </div>
 
       {/* Menu Items */}
-      <div className="grid grid-cols-2 gap-6 mb-6 w-full max-w-xs">
+      <div className="grid grid-cols-3 gap-3 mb-6 w-full max-w-md">
         <div
           onClick={() => navigate('/donor/student-list-for-sponsor')}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
-          <FaUserPlus className="text-blue-700 text-4xl mb-2" />
+          <FaUserPlus className="text-teal-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Add Sponsor</span>
         </div>
 
@@ -49,7 +49,7 @@ const [donorData, setDonorData] = useState(null);
           onClick={() => navigate('/donar/sponsored-students')}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
-          <FaGraduationCap className="text-blue-700 text-4xl mb-2" />
+          <FaGraduationCap className="text-teal-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Sponsored Student</span>
         </div>
 
@@ -57,7 +57,7 @@ const [donorData, setDonorData] = useState(null);
           onClick={() => navigate(`/donar/settings/${donorId}`)}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
-          <FaCog className="text-blue-700 text-4xl mb-2" />
+          <FaCog className="text-teal-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Settings</span>
         </div>
 
@@ -65,31 +65,74 @@ const [donorData, setDonorData] = useState(null);
           onClick={() => navigate(`/donor/sponsored-students/${donorId}/payments`)}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
         >
-          <FaMoneyCheckAlt className="text-blue-700 text-4xl mb-2" />
+          <FaMoneyCheckAlt className="text-teal-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Payment History</span>
         </div>
-      </div>
-       
- <div className="grid grid-cols-2 gap-6 mb-6 w-full max-w-xs">
-    {/* Logout Button  and password change*/}
          <div
           onClick={() => navigate(`/donor/password-change/${donorId}`)}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100  w-30"
         >
-          <FaLock  className="text-blue-700 text-4xl mb-2" />
+          <FaLock  className="text-teal-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Password Change</span>
         </div>
       <div
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/login/donor')}
         className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 w-30"
       >
-        <FaSignOutAlt className="text-blue-700 text-2xl mb-2" />
+        <FaSignOutAlt className="text-teal-700 text-2xl mb-2" />
         <span className="text-sm text-black text-center">Logout</span>
       </div>
- </div>
+      </div>
+       
+ {/* <div className="grid grid-cols-2 gap-6 mb-6 w-full max-w-xs">
+    {/* Logout Button  and password change*/}
+         {/* <div
+          onClick={() => navigate(`/donor/password-change/${donorId}`)}
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100  w-30"
+        >
+          <FaLock  className="text-teal-700 text-4xl mb-2" />
+          <span className="text-sm text-black text-center">Password Change</span>
+        </div>
+      <div
+        onClick={() => navigate('/login/donor')}
+        className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 w-30"
+      >
+        <FaSignOutAlt className="text-teal-700 text-2xl mb-2" />
+        <span className="text-sm text-black text-center">Logout</span>
+      </div>
+ </div> */} 
 
-  
-     
+    
+     {/* Donor Info Summary */}
+      {donorData && (
+        <div className="w-full max-w-sm bg-teal-50 rounded-lg p-4 mt-4 border border-teal-200">
+          <h3 className="text-lg font-semibold text-center mb-2 text-teal-800">Donor Information</h3>
+          <div className="text-sm space-y-2">
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Name:</span>
+              <span>{donorData.name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Type:</span>
+              <span>{donorData.type}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Email:</span>
+              <span>{donorData.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Phone:</span>
+              <span>{donorData.phone}</span>
+            </div>
+            {donorData.address && (
+              <div className="flex justify-between">
+                <span className="font-medium text-teal-700">Address:</span>
+                <span className="text-right">{donorData.address}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import PaymentModal from "../donor/PaymentModal";
+///import PaymentModal from "../donor/PaymentModal";
+import { createSponsorship } from "../../../api/sponsorshipApi";
+import PaymentModalManual from "../donor/PaymentModalManual";
 
 const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  //const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentModalManualOpen, setPaymentModalManualOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState({});
   const [isExistingSponsor, setIsExistingSponsor] = useState(false);
@@ -15,12 +18,18 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
       
       if (existingSponsor) {
         // Calculate payment status based on current date and last payment
-        const currentDate = new Date();
-        const paidUpTo = student.paidUpTo ? new Date(student.paidUpTo) : new Date('2025-03-31');
-        
+        const now = new Date();
+        const currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        // Paid up to date (default March 2025 if missing)
+        const paidUpTo = student.paidUpTo 
+          ? new Date(student.paidUpTo) 
+          : new Date(2025, 2, 31); // March = month index 2
+
+        // Convert paidUpTo to start of that month
+        const paidMonth = new Date(paidUpTo.getFullYear(), paidUpTo.getMonth(), 1);
         // Calculate months between dates
-        const monthDiff = (currentDate.getFullYear() - paidUpTo.getFullYear()) * 12 + 
-                         (currentDate.getMonth() - paidUpTo.getMonth());
+        const monthDiff = (currentDate.getFullYear() - paidMonth.getFullYear()) * 12 + 
+                         (currentDate.getMonth() - paidMonth.getMonth());
         
         // Determine payment status
         let statusText = "Awaiting Payment";
@@ -29,9 +38,6 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
         if (monthDiff > 0) {
           unpaidText = `${monthDiff} month(s) unpaid including current month`;
           statusText = "Payment Due";
-        } else if (monthDiff === 0) {
-          statusText = "Payment Due";
-          unpaidText = "Current month unpaid";
         } else {
           statusText = "Payment Completed";
           unpaidText = "All payments up to date";
@@ -44,11 +50,24 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
           unpaidMonths: unpaidText,
           amount: student.requiredMonthlySupport || 5000
         });
-      }else{
-        {student.sponsored ? 'Fully Sponsored' : 'Not Sponsored'}
       }
     }
   }, [student]);
+
+  // Get current donor ID 
+  const getCurrentDonorId = () => {
+    const donorData = localStorage.getItem('donorData');
+    if (donorData) {
+      const parsedData = JSON.parse(donorData);
+      return parsedData.donorId || parsedData.id;
+    }
+    return 1; // Fallback for testing
+  };
+
+  const handleSponsorClick = () => {
+    setSelectedStudent(student);
+    setPaymentModalManualOpen(true);
+  };
 
   if (!student) return null;
 
@@ -80,9 +99,7 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
   const normalizeForWhatsApp = (num) => {
     if (!num) return "#";
     let digits = num.replace(/\D/g, "");
-    // Quick Bangladesh helper: if starts with 0 => convert to 88 + rest
     if (digits.startsWith("0")) digits = "88" + digits.slice(1);
-    // If no country code and length looks local, still send as-is (user should ensure international)
     return `https://wa.me/${digits}`;
   };
 
@@ -111,29 +128,12 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
               </div>
             </div>
 
-        {/* Status pill */}
-        {isExistingSponsor ? (
-                <span
-                  className="absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm bg-green-600 text-white"
-                >
-                  Sponsored
-                </span>
-              ) : (
-                <span
-                  className="absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm bg-red-400 text-white"
-                >
-                  Not Sponsored
-                </span>
-              )}
-            {/* {isExistingSponsor ? (
+            {/* Status pill */}
+           {isExistingSponsor ? (
               <span
-                className={`absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm ${
-                  student.sponsored === "Sponored"
-                    ? "bg-green-600 text-white"
-                    : "bg-amber-500 text-white"
-                }`}
+                className="absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm bg-green-600 text-white"
               >
-                {student.sponsored || "Awaiting Payment"}
+                Sponsored
               </span>
             ) : (
               <span
@@ -141,7 +141,7 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
               >
                 Not Sponsored
               </span>
-            )} */}
+            )}
           </div>
 
           {/* Body */}
@@ -171,42 +171,43 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
                 </div>
               </div>
             </div>
-                {/* Payment Status - Only show for existing sponsors */}
-                {isExistingSponsor && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
-                    <div className="flex items-start mb-2">
-                      <div className="text-amber-800 text-sm w-full">
-                        <div className="font-medium mb-1">Payment Status</div>
-                        <div className="text-xs mb-2">{paymentStatus.unpaidMonths || "April Month remains unpaid"}</div>
-                        
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex items-center">
-                            <span className="text-amber-700 font-medium">Paid Upto:</span>
-                          </div>
-                          <div className={
-                            paymentStatus.paidUpTo && 
-                            (new Date(paymentStatus.paidUpTo) >= new Date().setDate(1))
-                              ? "text-green-600 font-medium"
-                              : " text-red-600 font-medium"
-                          }>
-                            {paymentStatus.paidUpTo || "Not paid yet"}
-                          </div>
-                          
-                          <div className="flex items-center">
-                            <span className="text-amber-700 font-medium">Current Date:</span>
-                          </div>
-                          <div className="text-amber-800">
-                            {new Date().toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric', 
-                              year: 'numeric' 
-                            })}
-                          </div>
-                        </div>
+
+            {/* Payment Status - Only show for existing sponsors */}
+            {isExistingSponsor && (
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
+                <div className="flex items-start mb-2">
+                  <div className="text-amber-800 text-sm w-full">
+                    <div className="font-medium mb-1">Payment Status</div>
+                    <div className="text-xs mb-2">{paymentStatus.unpaidMonths || "April Month remains unpaid"}</div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center">
+                        <span className="text-amber-700 font-medium">Paid Upto:</span>
+                      </div>
+                      <div className={
+                        paymentStatus.paidUpTo && 
+                        (new Date(paymentStatus.paidUpTo) >= new Date().setDate(1))
+                          ? "text-green-600 font-medium"
+                          : " text-red-600 font-medium"
+                      }>
+                        {paymentStatus.paidUpTo || "Not paid yet"}
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <span className="text-amber-700 font-medium">Current Date:</span>
+                      </div>
+                      <div className="text-amber-800">
+                        {new Date().toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
+              </div>
+            )}
 
             {/* Contact Information block */}
             <div className="pt-2 pb-1 border-t border-gray-100">
@@ -250,7 +251,6 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
                       className="ml-1 inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500 hover:opacity-90"
                       aria-label="Open WhatsApp"
                     >
-                      {/* WhatsApp SVG (white) */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -308,10 +308,7 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
             </button>
 
             <button
-              onClick={() => {
-                  setSelectedStudent(student);
-                  setPaymentModalOpen(true);
-              }}
+              onClick={handleSponsorClick}
               className="flex-1 px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
             >
               {isExistingSponsor ? "Pay This Student" : "Sponsor This Student"}
@@ -321,12 +318,13 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
       </div>
 
       {/* Payment Modal */}
-      {paymentModalOpen && (
-        <PaymentModal
+      {paymentModalManualOpen && (
+        <PaymentModalManual
           student={selectedStudent}
           isExistingSponsor={isExistingSponsor}
-          onClose={() => setPaymentModalOpen(false)}
+          onClose={() => setPaymentModalManualOpen(false)}
           onPayment={onSponsor}
+          getCurrentDonorId={getCurrentDonorId} // ✅ Pass the function
         />
       )}
     </>

@@ -4,14 +4,16 @@ import { getAllStudents, getStudentsByInstitution, searchStudents, getStudentByI
 import { getDivisions, getDistrictsByDivision, getThanasByDistrict, getUnionsByThanaId } from '../../../api/areaApi';
 import { FaHandHoldingHeart } from 'react-icons/fa';
 import ContactSponsorModal from '../donor/ContactSponsorModal';
-import PaymentModal from '../donor/PaymentModal';
-import PaymentCheckoutPage from '../donor/PaymentCheckoutPage';
+import PaymentModalManual from '../donor/PaymentModalManual';
+//import PaymentCheckoutPage from '../donor/PaymentCheckoutPage';
 import { useNavigate } from 'react-router-dom';
+import { checkStudentPendingStatus } from '../../../api/studentApi';
 const StudentListForSponsor = () => {
   // State management
   const [contactModalOpen, setContactModalOpen] = useState(false);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  //const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentModalManualOpen, setPaymentModalManualOpen] = useState(false);
+  //const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
  const navigate = useNavigate();
   const [students, setStudents] = useState([]);
@@ -43,6 +45,7 @@ const StudentListForSponsor = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
+  const [pendingStatusMap, setPendingStatusMap] = useState({});
 
   // Load initial data
   useEffect(() => {
@@ -96,63 +99,202 @@ const StudentListForSponsor = () => {
     }
   };
 
-  const fetchStudents = async () => {
-    try {
-      setLoading(true);
-      let response;
-      
-      console.log('Fetching students with filters:', filters);
-      
-      // Case 1: Filter by institution
-      if (filters.institutionsId) {
-        response = await getStudentsByInstitution(filters.institutionsId);
-        console.log('Institution filter response:', response);
-        
-        // Handle different response structures
-        const studentsData = response?.data || response || [];
-        setStudents(Array.isArray(studentsData) ? studentsData : []);
-        setPagination(prev => ({ 
-          ...prev, 
-          totalPages: 1, 
-          totalElements: Array.isArray(studentsData) ? studentsData.length : 0 
-        }));
-      }
-      // Case 2: Search
-      else if (filters.search) {
-        response = await searchStudents(filters.search);
-        console.log('Search response:', response);
-        
-        const studentsData = response?.data || response || [];
-        setStudents(Array.isArray(studentsData) ? studentsData : []);
-        setPagination(prev => ({ 
-          ...prev, 
-          totalPages: 1, 
-          totalElements: Array.isArray(studentsData) ? studentsData.length : 0 
-        }));
-      }
-      // Case 3: Get all with pagination
-      else {
-        // Correct API call with proper parameters
-        response = await getAllStudents(pagination.page, pagination.size, 'studentName', 'asc');
-        console.log('All students response:', response);
-        
-        // Extract students from content array based on your API response structure
-        const studentsData = response?.content || [];
-        setStudents(studentsData);
-        setPagination(prev => ({
-          ...prev,
-          totalPages: response?.totalPages || 1,
-          totalElements: response?.totalElements || studentsData.length
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to load students:', error);
-      setStudents([]);
-      setPagination(prev => ({ ...prev, totalPages: 0, totalElements: 0 }));
-    } finally {
-      setLoading(false);
+const fetchStudents = async () => {
+  try {
+    setLoading(true);
+    let response;
+    let studentsData = [];
+    
+    console.log('Fetching students with filters:', filters);
+
+    // Case 1: Filter by institution
+    if (filters.institutionsId) {
+      response = await getStudentsByInstitution(filters.institutionsId);
+      studentsData = response?.data || response || [];
     }
-  };
+    // Case 2: Search
+    else if (filters.search) {
+      response = await searchStudents(filters.search);
+      studentsData = response?.data || response || [];
+    }
+    // Case 3: Get all with pagination
+    else {
+      response = await getAllStudents(pagination.page, pagination.size, 'studentName', 'asc');
+      studentsData = response?.content || [];
+      setPagination(prev => ({
+        ...prev,
+        totalPages: response?.totalPages || 1,
+        totalElements: response?.totalElements || studentsData.length
+      }));
+    }
+
+    // Process and set students
+    const processedStudents = studentsData.map(student => ({
+      ...student,
+      sponsors: student.sponsors || [] // Ensure sponsors array exists
+    }));
+    
+    setStudents(processedStudents);
+    console.log(` Loaded ${processedStudents.length} students`);
+
+    // Now check pending status for EACH student
+    const pendingStatuses = {};
+    
+    for (const student of processedStudents) {
+      console.log(`\n=== Checking student ${student.studentId}: ${student.studentName} ===`);
+      const pendingStatus = await checkPendingSponsorship(student.studentId);
+      pendingStatuses[student.studentId] = pendingStatus;
+      
+      // Log the result
+      if (pendingStatus.hasPending) {
+        console.log(`🎉 Student ${student.studentId} HAS pending sponsorship!`);
+      } else {
+        console.log(`📭 Student ${student.studentId} has NO pending sponsorship`);
+      }
+    }
+    
+    setPendingStatusMap(pendingStatuses);
+    console.log(' Final pendingStatusMap:', pendingStatuses);
+
+  } catch (error) {
+    console.error('Failed to load students:', error);
+    setStudents([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const checkPendingSponsorship = async (studentId) => {
+  try {
+    console.log(`🔍 Checking pending for student ${studentId}`);
+    
+    const pendingData = await checkStudentPendingStatus(studentId);
+    console.log('API response data:', pendingData);
+    
+    if (pendingData && pendingData.length > 0) {
+      const studentData = pendingData[0];
+      console.log('Student data from API:', studentData);
+      
+      if (studentData.sponsors && studentData.sponsors.length > 0) {
+        console.log('Sponsors found:', studentData.sponsors);
+        
+        const pendingSponsorship = studentData.sponsors.find(sponsor => {
+          console.log(`Checking sponsor: ${sponsor.status} === 'PENDING_PAYMENT'?`, 
+                     sponsor.status === 'PENDING_PAYMENT');
+          return sponsor.status === 'PENDING_PAYMENT';
+        });
+        
+        if (pendingSponsorship) {
+          console.log(' Found PENDING_PAYMENT sponsorship:', pendingSponsorship);
+          
+          const pendingDate = pendingSponsorship.sponsorStartDate || 
+                             pendingSponsorship.startDate || 
+                             new Date();
+          
+          console.log('Pending date:', pendingDate);
+          
+          const pendingTime = new Date(pendingDate);
+          const now = new Date();
+          const timeDiff = now.getTime() - pendingTime.getTime();
+          const daysDiff = timeDiff / (1000 * 3600 * 24);
+          
+          console.log(`Days difference: ${daysDiff}`);
+          
+          if (daysDiff < 3) {
+            const daysLeft = Math.ceil(3 - daysDiff);
+            console.log(`Will show processing for ${daysLeft} more days`);
+            return {
+              hasPending: true,
+              daysLeft: daysLeft,
+              sponsorship: pendingSponsorship
+            };
+          } else {
+            console.log(`Pending is ${daysDiff} days old (> 3 days)`);
+          }
+        } else {
+          console.log('❌ No PENDING_PAYMENT found in sponsors');
+        }
+      } else {
+        console.log('❌ No sponsors array in response');
+      }
+    } else {
+      console.log('❌ Empty response from API');
+    }
+    
+    return { hasPending: false };
+  } catch (error) {
+    console.error(`💥 Error checking pending status for student ${studentId}:`, error);
+    return { hasPending: false };
+  }
+};
+const getSponsorButtonStatus = (student) => {
+  if (!student || !student.studentId) {
+    console.log("❌ No student or studentId");
+    return { status: 'available' };
+  }
+  
+  const studentId = student.studentId;
+  
+  
+  // Check if student has COMPLETED sponsorship (not PENDING)
+  const hasCompletedSponsorship = student.sponsors?.some(
+    sponsor => sponsor.status === 'COMPLETED'
+  );
+  
+  console.log("Has completed sponsorship:", hasCompletedSponsorship);
+  
+  if (hasCompletedSponsorship) {
+    console.log("✅ Student has COMPLETED sponsorship, returning 'sponsored'");
+    return { status: 'sponsored' };
+  }
+  
+  // Now check for pending
+  if (pendingStatusMap[studentId] && pendingStatusMap[studentId].hasPending) {
+    console.log("🎯 Student has PENDING sponsorship, returning 'processing'");
+    return {
+      status: 'processing',
+      daysLeft: pendingStatusMap[studentId].daysLeft || 1,
+      sponsorship: pendingStatusMap[studentId].sponsorship
+    };
+  }
+  
+  console.log("✅ Student available for sponsorship");
+  return { status: 'available' };
+};
+
+  // Determine sponsor button status
+// const getSponsorButtonStatus = (student) => {
+//   // if student-of sponsors list has any sponsorship with PENDING_PAYMENT status
+//   if (student.sponsors && student.sponsors.length > 0) {
+//     // PENDING_PAYMENT status-of sponsorship 
+//     const pendingSponsorship = student.sponsors.find(sponsor => 
+//       sponsor.status === 'PENDING_PAYMENT'
+//     );
+    
+//     if (pendingSponsorship) {
+//       // sponsorStartDate বা startDate use করুন, না থাকলে current date use করুন
+//       const pendingDate = pendingSponsorship.sponsorStartDate || 
+//                          pendingSponsorship.startDate || 
+//                          new Date();
+      
+//       const pendingTime = new Date(pendingDate);
+//       const now = new Date();
+//       const timeDiff = now.getTime() - pendingTime.getTime();
+//       const daysDiff = timeDiff / (1000 * 3600 * 24);
+      
+//       // যদি 3 দিনের কম হয়, Processing show করবে
+//       if (daysDiff < 3) {
+//         return {
+//           status: 'processing',
+//           daysLeft: Math.ceil(3 - daysDiff),
+//           sponsorship: pendingSponsorship
+//         };
+//       }
+//     }
+//   }
+  
+//   return { status: 'available' };
+// };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -255,7 +397,7 @@ const StudentListForSponsor = () => {
     }
     return age;
   };
-
+ 
   // Load districts when division changes
   useEffect(() => {
     if (filters.divisionId) {
@@ -297,15 +439,25 @@ const StudentListForSponsor = () => {
     fetchStudents();
   }, [filters, pagination.page]);
 
-  const handleContactSponsor = (student) => {
+   // Check pending status when handling sponsor click
+  const handleContactSponsor = async (student) => {
+    // Check if student has pending sponsorship first
+    const pendingStatus = await checkPendingSponsorship(student.studentId);
+    
+    if (pendingStatus.hasPending) {
+      // Show message that sponsorship is processing
+      alert(`This student already has a pending sponsorship. Please wait ${pendingStatus.daysLeft} more day(s).`);
+      return;
+    }
+    
     setSelectedStudent(student);
     setContactModalOpen(true);
   };
   
-  // Handle payment data from PaymentModal
+  // Handle payment data from PaymentModalManual
   const handlePaymentSubmit = (paymentInfo) => {
     setPaymentData(paymentInfo);
-    setPaymentModalOpen(false);
+    setPaymentModalManualOpen(false);
     setCheckoutModalOpen(true);
   };
   
@@ -330,14 +482,28 @@ const StudentListForSponsor = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
-          <FaHandHoldingHeart className="mr-2" /> Donor Portal
-        </h1>
-        <p className="text-gray-600 italic">
-          Search and sponsor students in need of financial support
-        </p>
-      </div>
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                <FaHandHoldingHeart className="mr-2" /> Donor Portal
+              </h1>
+              <p className="text-gray-600 italic">
+                Search and sponsor students in need of financial support
+              </p>
+            </div>
+            
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-blue-600 hover:text-blue-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back
+            </button>
+          </div>
+        </div>
 
       {/* Search Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -595,6 +761,9 @@ const StudentListForSponsor = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {students.map(student => (
+
+
+
                   <tr key={student.studentId} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
@@ -635,24 +804,50 @@ const StudentListForSponsor = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {student.institutionName || 'Not specified'}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => handleViewDetails(student)}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
-                        >
-                          View Details
-                        </button>
-                        {!student.sponsored && (
-                            <button
-                            onClick={() => handleContactSponsor(student)}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-                        >
-                            Sponsor
-                        </button>
-                        )}
-                      </div>
-                    </td>
+                  <td className="px-6 py-4 text-right">
+  <div className="flex justify-end space-x-2">
+    <button
+      onClick={() => handleViewDetails(student)}
+      className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
+    >
+      View Details
+    </button>
+    
+    {!student.fullySponsored && (
+      (() => {
+        console.log(`🎯 Rendering button for student ${student.studentId}`);
+        const buttonStatus = getSponsorButtonStatus(student);
+        console.log(`Button status for ${student.studentId}:`, buttonStatus);
+        
+        if (buttonStatus.status === 'processing') {
+          console.log(`🎨 Showing PROCESSING button for ${student.studentId}`);
+          return (
+            <button
+              disabled
+              className="px-3 py-1 bg-yellow-500 text-white rounded text-sm cursor-not-allowed flex items-center"
+              title={`Payment Pending - Available in ${buttonStatus.daysLeft} day(s)`}
+            >
+              <svg className="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
+              </svg>
+              Processing ({buttonStatus.daysLeft}d)
+            </button>
+          );
+        } else {
+          console.log(`🎨 Showing SPONSOR button for ${student.studentId}`);
+          return (
+            <button
+              onClick={() => handleContactSponsor(student)}
+              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+            >
+              Sponsor
+            </button>
+          );
+        }
+      })()
+    )}
+  </div>
+</td>
                   </tr>
                 ))}
               </tbody>
@@ -1043,29 +1238,30 @@ const StudentListForSponsor = () => {
         onClose={() => setContactModalOpen(false)}
         onSponsor={() => {
           setContactModalOpen(false);
-          setPaymentModalOpen(true);
+          setPaymentModalManualOpen(true);
         }}
       />
     )}
     
-    {paymentModalOpen && (
-      <PaymentModal
+    {paymentModalManualOpen && (
+      <PaymentModalManual
         student={selectedStudent}
-        onClose={() => setPaymentModalOpen(false)}
+        onClose={() => setPaymentModalManualOpen(false)}
         onPayment={handlePaymentSubmit}
       />
     )}
-    
-    {checkoutModalOpen && (
+   
+    {/* {checkoutModalOpen && (
       <PaymentCheckoutPage
         sponsorshipData={paymentData}
         onBack={() => {
           setCheckoutModalOpen(false);
-          setPaymentModalOpen(true);
+          setPaymentModalManualOpen(true);
         }}
         onPaymentSuccess={handlePaymentSuccess}
       />
-    )}
+    )}  */}
+
    <div className="mt-4 text-center">
         <button 
           onClick={() => navigate('/donor/dashboard')}

@@ -62,7 +62,7 @@ const navigate = useNavigate();
                 </a>
                 <div className="border-t border-gray-200"></div>
                 <a 
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/login/admin')}
                   className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                 >
                   <FaSignOutAlt className="mr-2" />

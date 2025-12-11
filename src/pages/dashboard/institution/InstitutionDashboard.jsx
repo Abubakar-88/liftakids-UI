@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { FaUserPlus, FaGraduationCap, FaCreditCard, FaSignOutAlt, FaNotesMedical,FaUsers  } from 'react-icons/fa';
-import { PiExamFill } from 'react-icons/pi'; // If not available, replace with another icon from react-icons
+import { FaUserPlus, FaGraduationCap, FaCreditCard,FaMoneyBillWave, FaSignOutAlt, FaNotesMedical, FaUsers, FaCheckCircle } from 'react-icons/fa';
+import { PiExamFill } from 'react-icons/pi';
 import { useState, useEffect } from 'react';
+
 const InstitutionDashboard = () => {
   const navigate = useNavigate();
- const [institutionData, setInstitutionData] = useState(null);
+  const [institutionData, setInstitutionData] = useState(null);
 
   // Load institution data from localStorage
   useEffect(() => {
@@ -21,14 +22,13 @@ const InstitutionDashboard = () => {
     navigate('/login/institution');
   };
 
-
   return (
     <div className="min-h-screen bg-white p-4 font-sans flex flex-col items-center">
       {/* Title */}
       <h1 className="text-2xl font-bold text-center text-black mb-4">Institution Dashboard</h1>
 
       {/* Welcome Card with Institution Name */}
-      <div className="bg-blue-700 text-white rounded-xl p-4 w-full max-w-sm mb-6">
+      <div className="bg-teal-600 text-white rounded-xl p-4 w-full max-w-sm mb-6">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">
             Welcome {institutionData ? institutionData.institutionName : 'Institution'}
@@ -43,88 +43,141 @@ const InstitutionDashboard = () => {
         </p>
         
         {/* Display additional institution info if available */}
-        {institutionData && (
+        {/* {institutionData && (
           <div className="mt-2 text-xs">
             <p>Email: {institutionData.email}</p>
             <p>Phone: {institutionData.phone}</p>
             <p>Type: {institutionData.type}</p>
+           
           </div>
-        )}
+        )} */}
       </div>
 
-      {/* Menu Items */}
-      <div className="grid grid-cols-2 gap-6 mb-6 w-full max-w-xs">
+      {/* Menu Items - Now 3 columns for better layout */}
+      <div className="grid grid-cols-3 gap-4 mb-6 w-full max-w-md">
         {/* Sponsored */}
         <div
           onClick={() => navigate('/institution/sponsored-students')}
-          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
         >
-          <FaNotesMedical className="text-blue-700 text-4xl mb-2" />
-          <span className="text-sm text-black text-center">Sponsored</span>
+          <FaNotesMedical className="text-teal-700 text-3xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Sponsored Students</span>
+        </div>
+
+        {/* Payment Confirmation - NEW BUTTON */}
+        <div
+          onClick={() => navigate('/institution/payment-confirmation')}
+          className="flex flex-col items-center bg-green-50 p-4 rounded-xl cursor-pointer hover:bg-green-100 transition-colors border border-green-200"
+        >
+          <FaCheckCircle className="text-green-600 text-3xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Payment Confirmation</span>
         </div>
 
         {/* Result */}
         <div
           onClick={() => navigate('/institution/result-upload')}
-          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
         >
-          <PiExamFill className="text-blue-700 text-4xl mb-2" />
-          <span className="text-sm text-black text-center">Result</span>
+          <PiExamFill className="text-teal-700 text-3xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Result Upload</span>
         </div>
 
         {/* Add Student */}
         <div
           onClick={() => navigate('/institution/add-student')}
-          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
         >
-          <FaGraduationCap className="text-blue-700 text-4xl mb-2" />
-          <span className="text-sm text-black text-center">Add Student</span>
+          <FaGraduationCap className="text-teal-700 text-3xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Add Student</span>
         </div>
 
-        {/* Add Payment */}
-        <div
-          onClick={() => navigate('/institution/add-payment')}
-          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
-        >
-          <FaCreditCard className="text-black text-4xl mb-2" />
-          <span className="text-sm text-black text-center">Add Payment Method</span>
-        </div>
-
-    {/* Student List */}
+        {/* Student List */}
         <div
           onClick={() => navigate('/institution/student-list')}
-          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
         >
-          <FaUsers className="text-blue-700 text-4xl mb-2" />
-          <span className="text-sm text-black text-center">Student List</span>
+          <FaUsers className="text-teal-700 text-3xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Student List</span>
         </div>
-      
- {/* Logout */}
-       <div
+
+        {/* Add Payment Method */}
+        {/* <div
+          onClick={() => navigate('/institution/add-payment')}
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
+        >
+          <FaCreditCard className="text-teal-700 text-3xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Payment Methods</span>
+        </div> */}
+         {/* Manual Payment Entry */}
+        <div
+          onClick={() => navigate('/institution/manual-payment')}
+          className="flex flex-col items-center bg-green-50 p-4 rounded-xl cursor-pointer hover:bg-green-100 transition-colors border border-green-200"
+        >
+          <FaMoneyBillWave className="text-green-600 text-3xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Manual Payment</span>
+        </div>
+
+        {/* Logout */}
+        <div
           onClick={handleLogout}
-          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
+          className="flex flex-col items-center bg-red-50 p-4 rounded-xl cursor-pointer hover:bg-red-100 transition-colors col-span-3"
         >
-          <FaSignOutAlt className="text-blue-700 text-2xl mb-2" />
-          <span className="text-sm text-black text-center">Logout</span>
+          <FaSignOutAlt className="text-red-600 text-2xl mb-2" />
+          <span className="text-xs text-black text-center font-medium">Logout</span>
         </div>
- {/* Institution Info Summary
+      </div>
+
+      {/* Quick Stats Card (Optional) */}
+      <div className="w-full max-w-sm bg-gray-50 rounded-lg p-4 mt-4 border border-gray-200">
+        <h3 className="text-lg font-semibold text-center mb-3 text-gray-800">Quick Actions</h3>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div 
+            onClick={() => navigate('/institution/payment-confirmation')}
+            className="bg-white p-3 rounded-lg cursor-pointer hover:shadow-md transition-shadow text-center border border-green-200"
+          >
+            <div className="text-green-600 font-semibold">Confirm Payments</div>
+            <div className="text-xs text-gray-600 mt-1">Verify donor payments</div>
+          </div>
+          <div 
+            onClick={() => navigate('/institution/student-list')}
+            className="bg-white p-3 rounded-lg cursor-pointer hover:shadow-md transition-shadow text-center border border-blue-200"
+          >
+            <div className="text-blue-600 font-semibold">Manage Students</div>
+            <div className="text-xs text-gray-600 mt-1">View all students</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Institution Info Summary */}
       {institutionData && (
-        <div className="w-full max-w-sm bg-gray-50 rounded-lg p-4 mt-4">
-          <h3 className="text-lg font-semibold text-center mb-2">Institution Information</h3>
-          <div className="text-sm space-y-1">
-            <p><span className="font-medium">Name:</span> {institutionData.institutionName}</p>
-            <p><span className="font-medium">Type:</span> {institutionData.type}</p>
-            <p><span className="font-medium">Email:</span> {institutionData.email}</p>
-            <p><span className="font-medium">Phone:</span> {institutionData.phone}</p>
+        <div className="w-full max-w-sm bg-teal-50 rounded-lg p-4 mt-4 border border-teal-200">
+          <h3 className="text-lg font-semibold text-center mb-2 text-teal-800">Institution Information</h3>
+          <div className="text-sm space-y-2">
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Name:</span>
+              <span>{institutionData.institutionName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Type:</span>
+              <span>{institutionData.type}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Email:</span>
+              <span>{institutionData.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-teal-700">Phone:</span>
+              <span>{institutionData.phone}</span>
+            </div>
             {institutionData.villageOrHouse && (
-              <p><span className="font-medium">Address:</span> {institutionData.villageOrHouse}</p>
+              <div className="flex justify-between">
+                <span className="font-medium text-teal-700">Address:</span>
+                <span className="text-right">{institutionData.villageOrHouse}</span>
+              </div>
             )}
           </div>
         </div>
-      )} */}
-      </div>
-
-     
+      )}
     </div>
   );
 };

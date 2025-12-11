@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getSponsoredStudents } from "../../../api/institutionApi";
+import { FaUserGraduate} from 'react-icons/fa';
 import { SearchOutlined, ReloadOutlined,ExclamationCircleOutlined  } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 const SponsoredStudents = () => {
@@ -18,6 +19,27 @@ const SponsoredStudents = () => {
     last: true
   });
   const [isMobile, setIsMobile] = useState(false);
+   const [institutionName, setInstitutionName] = useState('');
+// useEffect এর মধ্যে institution data fetch করুন
+useEffect(() => {
+  const loadInstitutionData = () => {
+    try {
+      const institutionData = localStorage.getItem('institutionData');
+      const parsedInstitutionData = JSON.parse(institutionData);
+      if (institutionData) {
+        const parsedData = JSON.parse(institutionData);
+        setInstitutionName(parsedData.institutionName || parsedData.name || 'Your Institution');
+      }
+    } catch (error) {
+      console.error('Error loading institution data:', error);
+    }
+  };
+
+  loadInstitutionData();
+}, []);
+
+ const institutionData = localStorage.getItem('institutionData');
+ const parsedInstitutionData = JSON.parse(institutionData);
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -183,12 +205,41 @@ const getStudentThumbnail = (student) => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       {/* Header */}
-      <div className="bg-blue-600 text-white flex items-center justify-between px-4 py-3 rounded-t-lg">
+      {/* <div className="bg-blue-600 text-white flex items-center justify-between px-4 py-3 rounded-t-lg">
         <h1 className="font-semibold text-sm md:text-base">Institution Portal | Sponsored Students</h1>
         <button className="text-xs md:text-sm bg-white text-blue-600 px-3 py-1 rounded hover:bg-gray-100">
           Logout
         </button>
+      </div> */}
+{/* Option 3: Gradient Background */}
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                        <FaUserGraduate className="mr-2" /> Institution Portal
+                      </h1>
+      <div className="flex items-center justify-between">
+      
+        <div>
+        
+          <h1 className="text-gray-600">
+            Sponsored Student of <span className="font-semibold text-blue-700">{parsedInstitutionData.institutionName}</span>
+          </h1>
+        </div>
+         
+        <div className="bg-white p-3 rounded-lg shadow-xs border border-gray-200">
+          <div className="text-sm text-gray-500">Institution</div>
+          <div className="font-semibold text-gray-800">{parsedInstitutionData.institutionName}</div>
+        </div>
+          <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-blue-600 hover:text-blue-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back
+            </button>
       </div>
+    </div>
 
       <div className="space-y-4">
       {/* Stats Cards */}

@@ -29,14 +29,14 @@ const Login = () => {
       title: 'Donor Login',
       placeholder: 'Donor Email',
       defaultUsername: 'DON-',
-      color: 'blue',
+      color: 'teal',
       apiLogin: loginDonor // Donor login function
     },
     admin: {
       title: 'Admin Login',
       placeholder: 'Admin Username',
       defaultUsername: 'ADM-',
-      color: 'purple',
+      color: 'teal',
       apiLogin: null // Admin এর জন্য পরে implement করবেন
     }
   };

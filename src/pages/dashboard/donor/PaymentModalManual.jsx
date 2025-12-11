@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PaymentCheckoutPage from './PaymentCheckoutPage';
+import { createSponsorship } from '../../../api/sponsorshipApi';
 
-const PaymentModal = ({ student, onClose, onPayment, isExistingSponsor = false, sponsorshipId = null }) => {
+const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = false, sponsorshipId = null }) => {
     const [showCheckout, setShowCheckout] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
   const [validationError, setValidationError] = useState('');
   const [paidMonthsList, setPaidMonthsList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showPaymentInstructions, setShowPaymentInstructions] = useState(false);
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
@@ -20,6 +22,25 @@ const PaymentModal = ({ student, onClose, onPayment, isExistingSponsor = false, 
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [pickerFor, setPickerFor] = useState('from');
 
+  // Payment methods configuration
+  const paymentMethods = {
+    remitly: {
+      name: 'Remitly',
+      website: 'https://www.remitly.com',
+      instructions: 'Please send the exact recommended amount to avoid processing delays.'
+    },
+    taptap: {
+      name: 'TapTap Send',
+      website: 'https://www.taptapsend.com',
+      instructions: 'Ensure you send the recommended amount for proper sponsorship allocation.'
+    },
+    payment_link: {
+      name: 'Payment Link',
+      website: '#',
+      instructions: 'You will receive a payment link via email. Please complete the payment with the recommended amount.'
+    }
+  };
+
   // Calculate paid months based on paidUpTo date
   useEffect(() => {
     const fetchPaymentHistory = async () => {
@@ -30,9 +51,9 @@ const PaymentModal = ({ student, onClose, onPayment, isExistingSponsor = false, 
           let url = '';
           
           if (isExistingSponsor && sponsorshipId) {
-            url = `http://localhost/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
+            url = `http://localhost:8081/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
           } else if (student.id) {
-            url = `http://localhost/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
+            url = `http://localhost:8081/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
           }
           
           if (url) {
@@ -103,7 +124,8 @@ const calculatePaidMonths = (payments) => {
   };
 
   const totalMonths = getUnpaidMonthsCount();
-  const totalAmount = (student.requiredMonthlySupport || student.monthlyAmount || 0) * totalMonths;
+  const monthlyAmount = student.requiredMonthlySupport || student.monthlyAmount || 0;
+  const totalAmount = monthlyAmount * totalMonths;
 
   const formattedDate = currentDate.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -155,10 +177,64 @@ const calculatePaidMonths = (payments) => {
     }
     return true;
   };
+const getCurrentDonorId = () => {
+  const donorData = localStorage.getItem('donorData');
+  if (donorData) {
+    try {
+      const parsedData = JSON.parse(donorData);
+      return parsedData.donorId || parsedData.id || 1;
+    } catch (error) {
+      console.error('Error parsing donor data:', error);
+      return 1;
+    }
+  }
+  return 1; // Fallback for testing
+};
+// PaymentModalManual.jsx - complete handlePayNow function
+const handlePayNow = async () => {
+  if (!validateForm()) return;
 
-  const handlePayNow = () => {
-    if (!validateForm()) return;
+  try {
+    setLoading(true);
 
+    // ✅ Step 1: Create sponsorship if new sponsor
+    let currentSponsorshipId = sponsorshipId;
+    
+    if (!isExistingSponsor) {
+      const sponsorshipData = {
+        studentId: student.studentId,
+        donorId: getCurrentDonorId(),
+        startDate: `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`,
+        endDate: `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`,
+        monthlyAmount: monthlyAmount,
+        paymentMethod: 'MANUAL',
+        status: 'PENDING'
+      };
+
+      const response = await createSponsorship(sponsorshipData);
+      currentSponsorshipId = response.data.id; // Assuming API returns sponsorship ID
+      console.log('New sponsorship created:', currentSponsorshipId);
+    }
+
+    // ✅ Step 2: Show payment instructions
+    setShowPaymentInstructions(true);
+    
+  } catch (error) {
+    console.error('Error in payment process:', error);
+    alert('Failed to process sponsorship. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+//   const handlePayNow = () => {
+//     if (!validateForm()) return;
+
+//     // Show payment instructions instead of immediate redirect
+//     setShowPaymentInstructions(true);
+//   };
+
+  const handleProceedToPayment = () => {
     const paymentInfo = {
       student,
       months: totalMonths,
@@ -170,7 +246,20 @@ const calculatePaidMonths = (payments) => {
     };
 
     setPaymentData(paymentInfo);
-    setShowCheckout(true);
+    
+    // Redirect to payment website based on selected method
+    if (paymentMethod === 'remitly') {
+      window.open('https://www.remitly.com', '_blank');
+    } else if (paymentMethod === 'taptap') {
+      window.open('https://www.taptapsend.com', '_blank');
+    } else if (paymentMethod === 'payment_link') {
+      // For payment link, you might want to show a different message
+      // or handle it differently since it's not an immediate redirect
+      console.log('Payment link would be sent via email');
+    }
+    
+    //setShowCheckout(true);
+    setShowPaymentInstructions(false);
   };
 
   const handlePaymentSuccess = (response) => {
@@ -182,6 +271,7 @@ const calculatePaidMonths = (payments) => {
 
   const handleClose = () => {
     setShowCheckout(false);
+    setShowPaymentInstructions(false);
     setPaymentData(null);
     setValidationError('');
     onClose();
@@ -192,10 +282,129 @@ const calculatePaidMonths = (payments) => {
     setPaymentData(null);
   };
 
+  const handleBackFromInstructions = () => {
+    setShowPaymentInstructions(false);
+  };
+
   const handlePaymentMethodChange = (method) => {
     setPaymentMethod(method);
     if (validationError) setValidationError('');
   };
+
+  // Payment Instructions Modal
+  if (showPaymentInstructions) {
+    return (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg w-full max-w-md mx-auto overflow-hidden shadow-xl">
+          {/* Header */}
+          <div className="bg-blue-50 p-5 border-b">
+            <h2 className="text-xl font-bold text-gray-800 text-center">
+              Payment Instructions - {paymentMethods[paymentMethod]?.name}
+            </h2>
+            {/* <p className="text-sm text-gray-600 text-center mt-1">
+            For: <span className="font-semibold text-blue-700">{student.studentName || student.name}</span>
+          </p> */}
+          </div>
+
+        <div className="p-5">
+          {/* Student Name - Copyable */}
+          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-semibold text-gray-700 text-sm mb-1">Student Name</h3>
+                <p className="text-lg font-bold text-blue-700">{student.studentName || student.name}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Include this name in payment reference/notes
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(student.studentName || student.name);
+                  // Optional: Show a success message
+                  const copyBtn = document.getElementById('copyStudentNameBtn');
+                  if (copyBtn) {
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+                    setTimeout(() => {
+                      copyBtn.innerHTML = originalText;
+                    }, 2000);
+                  }
+                }}
+                id="copyStudentNameBtn"
+                className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm"
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copy
+              </button>
+            </div>
+          </div>
+          </div>
+          {/* Content */}
+          <div className="p-5">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <h3 className="font-semibold text-yellow-800 text-sm mb-1">Important Notice</h3>
+                  <p className="text-yellow-700 text-sm">
+                    {paymentMethods[paymentMethod]?.instructions}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-green-800 text-sm mb-2">Recommended Amount</h3>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600 mb-1">
+                  ৳{totalAmount.toLocaleString()}
+                </div>
+                <div className="text-sm text-green-700">
+                  For {totalMonths} month{totalMonths > 1 ? 's' : ''} ({formatMonthDisplay(selectedMonths.from)} to {formatMonthDisplay(selectedMonths.to)})
+                </div>
+                <div className="text-xs text-green-600 mt-1">
+                  Monthly: ৳{monthlyAmount.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-800 text-sm mb-2">Next Steps</h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• You will be redirected to {paymentMethods[paymentMethod]?.name}</li>
+                <li>• Send exactly <strong>৳{totalAmount.toLocaleString()}</strong></li>
+                <li>• Include student name in payment reference</li>
+                <li>• Keep your transaction receipt</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="bg-gray-50 px-5 py-4 flex justify-between">
+            <button
+              onClick={handleBackFromInstructions}
+              className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleProceedToPayment}
+              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Proceed to {paymentMethods[paymentMethod]?.name}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
 return (
   <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
@@ -310,7 +519,7 @@ return (
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Amount:</span>
                 <span className="font-bold text-blue-700 flex-1 font-medium p-2 border border-gray-300 rounded-md flex items-center ml-2">
-                  {totalAmount.toLocaleString()} Taka
+                  ৳{totalAmount.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -329,7 +538,7 @@ return (
 
           {/* Payment Methods */}
           <div className="mb-6">
-            <h3 className="font-medium text-gray-700 mb-3">Payment Methods</h3>
+            <h3 className="font-medium text-gray-700 mb-3">Select Payment Method</h3>
             <div className="space-y-2">
               <label className="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50">
                 <input
@@ -340,29 +549,40 @@ return (
                   onChange={() => handlePaymentMethodChange('remitly')}
                   className="mr-3"
                 />
-                <span>Remitly</span>
+                <div>
+                  <span className="font-medium">Remitly</span>
+                  <p className="text-xs text-gray-500 mt-1">Send money through Remitly platform</p>
+                </div>
               </label>
+              
               <label className="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50">
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="CREDIT_CARD"
-                  checked={paymentMethod === 'CREDIT_CARD'}
-                  onChange={() => handlePaymentMethodChange('CREDIT_CARD')}
+                  value="taptap"
+                  checked={paymentMethod === 'taptap'}
+                  onChange={() => handlePaymentMethodChange('taptap')}
                   className="mr-3"
                 />
-                <span>Debit or Credit Card</span>
+                <div>
+                  <span className="font-medium">TapTap Send</span>
+                  <p className="text-xs text-gray-500 mt-1">Transfer via TapTap Send service</p>
+                </div>
               </label>
+              
               <label className="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50">
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="paypal"
-                  checked={paymentMethod === 'paypal'}
-                  onChange={() => handlePaymentMethodChange('paypal')}
+                  value="payment_link"
+                  checked={paymentMethod === 'payment_link'}
+                  onChange={() => handlePaymentMethodChange('payment_link')}
                   className="mr-3"
                 />
-                <span>Paypal</span>
+                <div>
+                  <span className="font-medium">Payment Link</span>
+                  <p className="text-xs text-gray-500 mt-1">Receive payment link via email</p>
+                </div>
               </label>
             </div>
           </div>
@@ -380,7 +600,7 @@ return (
             onClick={handleClose}
             className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
           >
-            Back
+            Cancel
           </button>
           <button
             onClick={handlePayNow}
@@ -475,4 +695,4 @@ return (
 );
 };
 
-export default PaymentModal;
+export default PaymentModalManual;

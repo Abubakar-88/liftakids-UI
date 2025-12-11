@@ -1,7 +1,7 @@
 // api/institutionApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost/LiftAKids/api';
+const API_BASE_URL = 'http://localhost:8081/LiftAKids/api';
 
 export const registerInstitution = async (institutionData) => {
   try {
@@ -110,7 +110,7 @@ export const getStudentCount = async (institutionId) => {
 // Get students by institution (paginated)
 export const getStudentsByInstitution = async (institutionId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/institution/${institutionId}`);
+    const response = await axios.get(`${API_BASE_URL}/students/institution/${institutionId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching students:', error.response?.data || error.message);
@@ -170,21 +170,150 @@ export const getSponsoredStudents = async (page = 0, size = 10) => {
 };
 //Address Hierarchy APIs
 export const getDivisions = async () => {
-  const response = await api.get('/divisions');
+  const response = await api.get('${API_BASE_URL}/divisions');
   return response.data;
 };
 
 export const getDistricts = async (divisionId) => {
-  const response = await api.get(`/districts?divisionId=${divisionId}`);
+  const response = await api.get(`${API_BASE_URL}/districts?divisionId=${divisionId}`);
   return response.data;
 };
 
 export const getThanas = async (districtId) => {
-  const response = await api.get(`/thanas?districtId=${districtId}`);
+  const response = await api.get(`${API_BASE_URL}/thanas?districtId=${districtId}`);
   return response.data;
 };
 
 export const getUnionsOrAreas = async (thanaId) => {
-  const response = await api.get(`/unions-or-areas?thanaId=${thanaId}`);
+  const response = await api.get(`${API_BASE_URL}/unions-or-areas?thanaId=${thanaId}`);
   return response.data;
+};
+
+// Search all donors
+    export const searchAllDonors = async (searchTerm) => {
+    const response = await axios.get(`${API_BASE_URL}/donors/by/search?searchTerm=${encodeURIComponent(searchTerm)}`);
+    return response.data;
+  }
+  
+  // Get all donors
+  export const getAllDonors = async () => {
+    const response = await axios.get(`${API_BASE_URL}/donors`);
+    return response.data;
+  }
+
+  // Search students
+   export const searchStudents = async (institutionId, searchTerm) => {
+    const response = await axios.get(`${API_BASE_URL}/students/search?institutionId=${institutionId}&name=${searchTerm}`);
+    return response.data;
+  }
+export const getPendingPaymentSponsorships = async (institutionId) => {
+  try {
+    console.log('🚀 API Call: Getting pending sponsorships for', institutionId);
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/institution/payments/pending-payment-sponsorships?institutionId=${institutionId}`
+    );
+    
+    console.log('✅ API Response Status:', response.status);
+    console.log('✅ API Response Data:', response.data);
+    console.log('✅ Response Length:', response.data?.length);
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ API Error:', error);
+    console.error('Error Details:', error.response?.data);
+    throw error;
+  }
+};
+
+export const getSponsorshipStats = async (institutionId) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/institution/payments/sponsorship-stats?institutionId=${institutionId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching sponsorship stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch sponsorship stats');
+  }
+};
+export const getCompletedPaymentsByInstitution = async (institutionId) => {
+   try {
+    console.log('🚀 API Call: Getting completed payments for', institutionId);
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/institution/payments/completed-payments?institutionId=${institutionId}`
+    );
+    console.log('✅ Completed Payments API Response:', response.data);
+    console.log('✅ API Response Status:', response.status);
+    console.log('✅ API Response Data:', response.data);
+    console.log('✅ Response Length:', response.data?.length);
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ API Error:', error);
+    console.error('Error Details:', error.response?.data);
+    throw error;
+  }
+};
+// api/institutionApi.js - existing method ব্যবহার করুন
+export const getPaymentHistoryByStudent = async (studentId, institutionId) => {
+  try {
+    console.log('🚀 Getting payment history for student:', studentId, 'institution:', institutionId);
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/institution/payments/student/${studentId}?institutionId=${institutionId}`
+    );
+    
+    console.log('✅ Student Payment History:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Student payment history error:', error);
+    throw error;
+  }
+};
+//  export const getPendingPayments = async (institutionId) => {
+//     const response = await axios.get(`${API_BASE_URL}/institution/payments/pending?institutionId=${institutionId}`);
+//     return response.data;
+//   }
+
+  // Confirm payment
+  export const confirmPayment = async (confirmationData) => {
+    const response = await axios.post(`${API_BASE_URL}/institution/payments/confirm`, confirmationData);
+    return response.data;
+  }
+// Process manual payment
+export const processManualPayment = async (paymentData) => {
+ try {
+    const response = await axios.post(`${API_BASE_URL}/institution/payments/manual`, paymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Manual payment API error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to process manual payment');
+  }
+};
+
+// file upload for receipt
+export const uploadReceiptFile = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', 'receipts');
+
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/institution/payments/upload-receipt`, 
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          // 'Authorization': `Bearer ${localStorage.getItem('institutionToken')}` // যদি প্রয়োজন হয়
+        }
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw new Error(error.response?.data?.message || 'File upload failed');
+  }
 };

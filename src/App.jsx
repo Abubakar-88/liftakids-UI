@@ -35,6 +35,18 @@ import DonorPaymentHistory from './pages/dashboard/donor/DonorPaymentHistory';
 import DonorSettings from './pages/dashboard/donor/DonorSettings';
 import PasswordChangeForm from './components/PasswordChangeForm';
 import InstallPrompt from './components/InstallPrompt'; 
+import PageManage from './pages/dashboard/admin/PageManage';
+import EditPage from './pages/dashboard/admin/EditPage';
+import CreatePage from './pages/dashboard/admin/CreatePage';
+import ContactPageManagement from './pages/dashboard/admin/ContactPageManagement';
+import DynamicPage from './pages/DynamicPage';
+import BlogPage from './pages/Blog';
+import ContactMessages from './pages/dashboard/admin/ContactMessages';
+import SentEmailsHistory from './components/SentEmailsHistory';
+import InstitutionPaymentConfirmation from './components/institutions/InstitutionPaymentConfirmation';
+import InstitutionManualPayment from './pages/dashboard/institution/InstitutionManualPayment';
+
+
 function App() {
   
    return (
@@ -48,8 +60,13 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/benefits" element={<Benefits />} />
+          <Route path="/about-us" element={<DynamicPage />} /> {/* Dynamic about page */}
+          <Route path="/benefit-for-sponsor" element={<DynamicPage />} /> {/* Dynamic benefits page */}
+          <Route path="/blog" element={<BlogPage />} />
+           <Route path="/contact" element={<DynamicPage />}/>
+              {/* Catch-all route for dynamic pages */}
+          <Route path="/pages/:slug" element={<DynamicPage />} />
+
             <Route path="/login/:role" element={<Login />} />
             <Route path="/register/:role" element={<DynamicRegister />} />
             <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
@@ -75,7 +92,8 @@ function App() {
             
             {/* Institution dashboard */}
             <Route path="/institution/sponsored-students" element={<SponsoredStudents />} />
-            
+            <Route path="/institution/payment-confirmation" element={<InstitutionPaymentConfirmation />} />
+            <Route path="/institution/manual-payment" element={<InstitutionManualPayment />} />
             {/* Donor Dashboard */}
             <Route path="/donor/dashboard" element={<DonarDashboard />} />
             <Route path="/donor/student-list-for-sponsor" element={<StudentListForSponsor />} />
@@ -83,6 +101,16 @@ function App() {
             <Route path="/donor/sponsored-students/:donorId/payments" element={<DonorPaymentHistory />} />
             <Route path="/donar/settings/:donorId" element={<DonorSettings />} />
             <Route path="/donor/password-change/:donorId" element={<PasswordChangeForm/>} />
+
+
+
+            {/* PageManage */}
+                 <Route path="/admin/pages" element={<PageManage />} />
+                <Route path="/admin/pages/edit/:slug" element={<EditPage />} />
+                <Route path="/admin/pages/create" element={<CreatePage />} />
+                 <Route path="/admin/contact-management" element={<ContactPageManagement />} />
+                 <Route path="/admin/contact/messages" element={<ContactMessages />} />
+                 <Route path="/admin/sent-emails" element={<SentEmailsHistory />} />
           </Routes>
         </main>
 

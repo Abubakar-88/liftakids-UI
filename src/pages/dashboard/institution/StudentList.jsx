@@ -502,12 +502,26 @@ const handleCloseModal = () => {
             Manage and monitor all students of <span className="font-semibold text-blue-700">{parsedInstitutionData.institutionName}</span>
           </p>
         </div>
+    
         <div className="bg-white p-3 rounded-lg shadow-xs border border-gray-200">
+          
           <div className="text-sm text-gray-500">Institution</div>
           <div className="font-semibold text-gray-800">{parsedInstitutionData.institutionName}</div>
         </div>
-      </div>
+          <div className="mt-4 text-right flex items-center justify-between"> 
+           <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-blue-600 hover:text-blue-800 "
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back
+            </button>
+            </div>
     </div>
+      </div>
+      
 
       {/* Search Bar */}
       <div className="mb-6 flex gap-4">
@@ -814,12 +828,11 @@ const handleCloseModal = () => {
         </div>
         <button 
           onClick={() => setShowResultModal(false)}
-          className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
-        >
+          className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100">
           <FaTimes />
         </button>
       </div>
-      
+
       <div className="p-6">
         {/* Main Result Card */}
         <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-gray-200 rounded-lg p-6 mb-6">
@@ -896,10 +909,9 @@ const handleCloseModal = () => {
               </div>
             </div>
           </div>
-
-         {/* Subjects Table - Mobile Responsive */}
+{/* Subjects Table - Mobile Responsive */}
 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-  {/* Desktop Table (md screen এবং উপরে) */}
+  {/* Desktop View */}
   <div className="hidden md:block">
     <table className="w-full text-sm">
       <thead className="bg-gray-50">
@@ -934,42 +946,42 @@ const handleCloseModal = () => {
     </table>
   </div>
 
-    {/* Scrollable Table for Mobile */}
-<div className="bg-white rounded-lg shadow-sm overflow-hidden">
-  <div className="overflow-x-auto">
-    <table className="w-full text-sm min-w-[600px]">
-      <thead className="bg-gray-50">
-        <tr>
-          <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">SUBJECT</th>
-          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">FULL MARKS</th>
-          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">PASS MARKS</th>
-          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">OBTAINED</th>
-          <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">GRADE</th>
-        </tr>
-      </thead>
-      <tbody>
-        {results[0].subjectMarks.map((subject, index) => (
-          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-            <td className="p-3 font-medium text-gray-800 whitespace-nowrap">{subject.subjectName}</td>
-            <td className="p-3 text-center text-gray-600 whitespace-nowrap">100</td>
-            <td className="p-3 text-center text-gray-600 whitespace-nowrap">40</td>
-            <td className="p-3 text-center font-semibold text-gray-800 whitespace-nowrap">{subject.obtainedMark}</td>
-            <td className="p-3 text-center font-semibold whitespace-nowrap">
-              <span className={`px-2 py-1 rounded-full text-xs ${
-                subject.obtainedMark >= 80 ? 'bg-green-100 text-green-800' :
-                subject.obtainedMark >= 60 ? 'bg-blue-100 text-blue-800' :
-                subject.obtainedMark >= 40 ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
-              }`}>
-                {calculateSubjectGrade(subject.obtainedMark)}
-              </span>
-            </td>
+  {/* Mobile View */}
+  <div className="md:hidden">
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[600px]">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">SUBJECT</th>
+            <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">FULL MARKS</th>
+            <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">PASS MARKS</th>
+            <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">OBTAINED</th>
+            <th className="text-center p-3 font-semibold text-gray-700 whitespace-nowrap">GRADE</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {results[0].subjectMarks.map((subject, index) => (
+            <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <td className="p-3 font-medium text-gray-800 whitespace-nowrap">{subject.subjectName}</td>
+              <td className="p-3 text-center text-gray-600 whitespace-nowrap">100</td>
+              <td className="p-3 text-center text-gray-600 whitespace-nowrap">40</td>
+              <td className="p-3 text-center font-semibold text-gray-800 whitespace-nowrap">{subject.obtainedMark}</td>
+              <td className="p-3 text-center font-semibold whitespace-nowrap">
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  subject.obtainedMark >= 80 ? 'bg-green-100 text-green-800' :
+                  subject.obtainedMark >= 60 ? 'bg-blue-100 text-blue-800' :
+                  subject.obtainedMark >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {calculateSubjectGrade(subject.obtainedMark)}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
 </div>
         </div>
 

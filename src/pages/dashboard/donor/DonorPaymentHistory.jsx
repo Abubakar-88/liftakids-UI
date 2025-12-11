@@ -10,6 +10,8 @@ const DonorPaymentHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedStudents, setExpandedStudents] = useState({});
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   useEffect(() => {
     if (donorId) {
@@ -63,6 +65,18 @@ const DonorPaymentHistory = () => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const viewReceipt = (receiptUrl) => {
+    if (!receiptUrl) return;
+    
+    setSelectedReceipt(receiptUrl);
+    setShowReceiptModal(true);
+  };
+
+  const closeReceiptModal = () => {
+    setShowReceiptModal(false);
+    setSelectedReceipt(null);
   };
 
   // Calculate total for a student
@@ -221,8 +235,8 @@ const DonorPaymentHistory = () => {
                   <div className="divide-y divide-gray-200">
                     {studentPayments.map((payment) => (
                       <div key={payment.id} className="px-6 py-4">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="flex-1">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 text-justify-start">
+                          <div className="flex-1 text-justify">
                             <div className="flex items-center gap-3 mb-2">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 payment.status === 'COMPLETED' 
@@ -236,19 +250,42 @@ const DonorPaymentHistory = () => {
                               </span>
                             </div>
                             
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-500 text-justify">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-500">
                               <div>
-                                <span className="font-medium text-justify">Period:</span> {payment.paidPeriod}
+                                <span className="font-medium">Period:</span> {payment.paidPeriod}
                               </div>
                               <div>
-                                <span className="font-medium text-justify">Method:</span> {payment.paymentMethod.replace('_', ' ')}
+                                <span className="font-medium">Method:</span> {payment.paymentMethod.replace('_', ' ')}
                               </div>
                               {payment.transactionId && (
-                                <div className="sm:col-span-2">
+                                <div>
                                   <span className="font-medium">Transaction ID:</span> 
                                   <span className="font-mono ml-1 bg-gray-100 px-2 py-1 rounded text-xs">
                                     {payment.transactionId}
                                   </span>
+                                </div>
+                              )}
+                              <div>
+                                <span className="font-medium">Receipt Number:</span> {payment.receiptNumber}
+                              </div>
+                              <div>
+                                 <span className="font-medium">Confirmed By:</span> {payment.confirmedBy ? payment.confirmedBy : 'N/A'}
+                              </div>
+                              <div>
+                                <span className="font-medium">Received Amount:</span> {payment.receivedAmount ? formatCurrency(payment.receivedAmount) : 'N/A'}
+                              </div>
+                              {payment.receiptUrl && (
+                                <div className="sm:col-span-2">
+                                  <button
+                                    onClick={() => viewReceipt(payment.receiptUrl)}
+                                    className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    View Receipt
+                                  </button>
                                 </div>
                               )}
                             </div>
@@ -272,6 +309,77 @@ const DonorPaymentHistory = () => {
           )}
         </div>
       </div>
+
+      {/* Receipt Modal */}
+      {showReceiptModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Receipt</h3>
+              <button
+                onClick={closeReceiptModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-auto max-h-[calc(90vh-120px)]">
+              {selectedReceipt ? (
+                <div className="space-y-4">
+                  {/* Display image if it's an image URL */}
+                  {selectedReceipt.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                    <div className="flex justify-center">
+                      <img 
+                        src={selectedReceipt} 
+                        alt="Receipt" 
+                        className="max-w-full h-auto rounded shadow"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/400x500?text=Receipt+Image+Not+Found';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    /* Display PDF viewer if it's a PDF */
+                    <div className="h-[500px]">
+                      <iframe 
+                        src={selectedReceipt} 
+                        className="w-full h-full border-0"
+                        title="Receipt PDF"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Download button */}
+                  <div className="flex justify-center">
+                    <a
+                      href={selectedReceipt}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      Download Receipt
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="mt-2 text-gray-500">Receipt not available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,12 +4,16 @@ import {
   FaHome,
   FaUserGraduate,
   FaSchool,
+  FaFile, 
+  FaNewspaper ,
+  FaEnvelope ,
   FaHandHoldingUsd,
   FaBriefcase,
   FaHandHoldingHeart,
   FaFileAlt,
   FaChartBar,
   FaCog,
+  FaInbox ,
   FaDrawPolygon,
   FaChevronDown,
   FaChevronUp
@@ -24,7 +28,27 @@ const AdminSidebar = () => {
   const toggleMenu = (menu) => {
     setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
   };
-
+const AdvancedNavItem = ({ to, icon, text, exact = false, badgeCount = 0 }) => (
+  <NavLink
+    to={to}
+    end={exact}
+    className={({ isActive }) => 
+      `flex items-center justify-between p-2 rounded mb-1 hover:bg-gray-700 transition-colors ${
+        isActive ? 'bg-gray-700 border-l-4 border-teal-500' : ''
+      }`
+    }
+  >
+    <div className="flex items-center">
+      {icon && <span className="mr-3">{icon}</span>}
+      <span>{text}</span>
+    </div>
+    {badgeCount > 0 && (
+      <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-6 text-center">
+        {badgeCount > 99 ? '99+' : badgeCount}
+      </span>
+    )}
+  </NavLink>
+);
   return (
     <div className=" bg-gray-800 text-white h-screen">
       <div className="p-4 border-b border-gray-700 h-16 flex items-center">
@@ -35,46 +59,7 @@ const AdminSidebar = () => {
         <NavItem to="/admin/dashboard" icon={<FaHome />} text="Dashboard" exact />
          <NavItem to="/admin/institution-manage" icon={<FaSchool />} text="Institution Management" />
         <NavItem to="/admin/student-manage" icon={<FaUserGraduate />} text="Student Management" />
-        {/* Institution Dropdown */}
-        <div className="mb-2">
-          <button 
-            onClick={() => toggleMenu('institution')}
-            className="flex items-center justify-between w-full p-2 hover:bg-gray-700 rounded"
-          >
-            <div className="flex items-center">
-              <FaSchool className="mr-3" />
-              <span>Institution</span>
-            </div>
-            {openMenus.institution ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
-          {openMenus.institution && (
-            <div className="ml-8 mt-1">
-              <NavItem to="/admin/institutions" text="Institution List" />
-              <NavItem to="/admin/institutions/add" text="Add Institution" />
-            </div>
-          )}
-        </div>
 
-        {/* Student Dropdown */}
-        <div className="mb-2">
-          <button 
-            onClick={() => toggleMenu('student')}
-            className="flex items-center justify-between w-full p-2 hover:bg-gray-700 rounded"
-          >
-            <div className="flex items-center">
-              <FaUserGraduate className="mr-3" />
-              <span>Student</span>
-            </div>
-            {openMenus.student ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
-          {openMenus.student && (
-            <div className="ml-8 mt-1">
-              <NavItem to="/admin/students" text="Student List" />
-              <NavItem to="/admin/students/add" text="Add Student" />
-              <NavItem to="/admin/students/sponsors" text="Sponsor List" />
-            </div>
-          )}
-        </div>
 
          {/* Area Manage Dropdown */}
         <div className="mb-2">
@@ -112,6 +97,35 @@ const AdminSidebar = () => {
         <NavItem to="/admin/results" icon={<FaFileAlt />} text="Results" />
         <NavItem to="/admin/reports" icon={<FaChartBar />} text="Reports" />
         <NavItem to="/admin/settings" icon={<FaCog />} text="Settings" />
+
+    {/* Content Management Dropdown */}
+        <div className="mb-2">
+          <button 
+            onClick={() => toggleMenu('content')}
+            className="flex items-center justify-between w-full p-2 hover:bg-gray-700 rounded"
+          >
+            <div className="flex items-center">
+              <FaFile className="mr-3" />
+              <span>Content Manage</span>
+            </div>
+            {openMenus.content ? <FaChevronUp /> : <FaChevronDown />}
+          </button>
+          {openMenus.content && (
+            <div className="ml-8 mt-1">
+              <NavItem to="/admin/pages" text="Static Pages" />
+              <NavItem to="/admin/pages/create" text="Create New Page" />
+              <NavItem to="/admin/articles" text="Articles/Blog" />
+              <NavItem to="/admin/contact-management" text="Contact Manage" />
+            </div>
+          )}
+        </div>
+
+<AdvancedNavItem 
+  to="/admin/contact/messages" 
+  icon={<FaInbox />} 
+  text="Contact Messages" 
+  badgeCount={5} // Dynamic count backend থেকে fetch করে set করতে পারবেন
+/>
       </nav>
     </div>
   );

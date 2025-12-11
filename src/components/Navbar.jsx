@@ -1,31 +1,69 @@
-import { useState } from 'react';
+// Navbar.jsx - Updated version
+import { useState, useEffect } from 'react';
 import { FaTimes, FaHome, FaSearch, FaInfoCircle, FaHandHoldingHeart, FaUser, FaBlog, FaEnvelope } from 'react-icons/fa';
-import { Link } from 'react-router-dom';  // Assuming you're using Next.js for routing
-
+import { Link } from 'react-router-dom';
+import { getAllPages } from '../api/pageApi'; // আপনার existing API
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
- const [showSearch, setShowSearch] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-    const toggleSearch = () => {
+  const [dynamicPages, setDynamicPages] = useState([]);
+
+  // Load dynamic pages on component mount
+  useEffect(() => {
+    loadDynamicPages();
+  }, []);
+
+  const loadDynamicPages = async () => {
+    try {
+      const pages = await getAllPages();
+      // Filter only published pages for navigation
+      const publishedPages = pages.filter(page => page.published);
+      setDynamicPages(publishedPages);
+    } catch (error) {
+      console.error('Error loading dynamic pages:', error);
+    }
+  };
+
+  const toggleSearch = () => {
     setShowSearch(!showSearch);
     if (showSearch) {
       setSearchQuery(''); // Clear search when closing
     }
   };
-  const navItems = [
+
+  // Static navigation items
+  const staticNavItems = [
     { name: 'Home', path: '/', icon: <FaHome /> },
     { name: 'Search for Sponsor', path: '/search', icon: <FaSearch /> },
-    { name: 'About Us', path: '/about', icon: <FaInfoCircle /> },
-    { name: 'Benefit for sponsor', path: '/benefits', icon: <FaHandHoldingHeart /> },
     { name: 'Register/Login', path: '/chose-option', icon: <FaUser /> },
-    { name: 'Blog', path: '/blog', icon: <FaBlog /> },
-    { name: 'Contact Us', path: '/contact', icon: <FaEnvelope /> }
+    { name: 'Blog', path: '/blog', icon: <FaBlog /> }
   ];
+
+  // Dynamic navigation items from database
+  const dynamicNavItems = dynamicPages.map(page => ({
+    name: page.title,
+    path: `/${page.slug}`,
+    icon: getIconForPage(page.slug)
+  }));
+
+  // Combine static and dynamic navigation items
+  const allNavItems = [...staticNavItems, ...dynamicNavItems];
+
+  // Helper function to get icons for dynamic pages
+  function getIconForPage(slug) {
+    const iconMap = {
+      'about-us': <FaInfoCircle />,
+      'contact': <FaEnvelope />,
+      'benefit-for-sponsor': <FaHandHoldingHeart />,
+    };
+    return iconMap[slug] || <FaInfoCircle />; // Default icon
+  }
 
   return (
     <>
-         {/* Top Navigation Bar */}
+      {/* Top Navigation Bar */}
       <div className="flex justify-between items-center mb-4 md:mb-8 p-4 bg-white shadow-sm">
         <button 
           className="text-3xl font-bold hover:text-teal-600 transition-colors"
@@ -75,9 +113,8 @@ const Navbar = () => {
         </div>
         <nav className="mt-4">
           <ul className="space-y-2">
-            {navItems.map((item) => (
+            {allNavItems.map((item) => (
               <li key={item.name}>
-                {/* For React Router */}
                 <Link
                   to={item.path}
                   className="flex items-center px-4 py-3 text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors"
@@ -86,16 +123,6 @@ const Navbar = () => {
                   <span className="mr-3 text-teal-500">{item.icon}</span>
                   <span>{item.name}</span>
                 </Link>
-                
-                {/* For Next.js use this instead: */}
-                {/* <Link
-                  href={item.path}
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <span className="mr-3 text-teal-500">{item.icon}</span>
-                  <span>{item.name}</span>
-                </Link> */}
               </li>
             ))}
           </ul>
@@ -104,4 +131,5 @@ const Navbar = () => {
     </>
   );
 };
+
 export default Navbar;

@@ -423,7 +423,7 @@ const handleSubmit = async (e) => {
           type="submit"
           disabled={loading}
           className={`w-full py-2 px-4 rounded text-white font-medium ${
-            loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+            loading ? 'bg-teal-400' : 'bg-teal-600 hover:bg-teal-700'
           }`}
         >
           {loading ? 'Registering...' : 'Register Institution'}
