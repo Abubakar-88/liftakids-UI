@@ -13,7 +13,7 @@ const InstitutionRegister = () => {
     password: '',
     phone: '',
     teacherName: '',
-    designation: '',
+    teacherDesignation: '',
     divisionId: '',
     districtId: '',
     thanaId: '',
@@ -172,7 +172,7 @@ const handleSubmit = async (e) => {
         password: formData.password,
         phone: formData.phone,
         teacherName: formData.teacherName,
-        designation: formData.designation,
+        teacherDesignation: formData.teacherDesignation,
         divisionId: parseInt(formData.divisionId), 
         districtId: parseInt(formData.districtId), 
         thanaId: parseInt(formData.thanaId), 
@@ -196,7 +196,7 @@ const handleSubmit = async (e) => {
         password: '',
         phone: '',
         teacherName: '',
-        designation: '',
+        teacherDesignation: '',
         divisionId: '',
         districtId: '',
         thanaId: '',
@@ -369,8 +369,8 @@ const handleSubmit = async (e) => {
             <label className="block mb-2 font-medium text-justify">Designation*</label>
             <input
               type="text"
-              name="designation"
-              value={formData.designation}
+              name="teacherDesignation"
+              value={formData.teacherDesignation}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               required
