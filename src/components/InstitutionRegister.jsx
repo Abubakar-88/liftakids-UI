@@ -70,8 +70,6 @@ const InstitutionRegister = () => {
 
 
 
-
-
  // Fetch districts when division changes
   useEffect(() => {
     if (formData.divisionId) {

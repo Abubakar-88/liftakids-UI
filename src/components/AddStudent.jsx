@@ -335,7 +335,7 @@ const handleSubmit = async (e) => {
             >
               <option value="">Select Option</option>
               <option value="Poor">Poor</option>
-              <option value="ORPHAN">Orphan</option>
+              <option value="Orphan">Orphan</option>
               <option value="Urgent">Urgent</option>
             </select>
           </div>
