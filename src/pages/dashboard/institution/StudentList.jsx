@@ -503,11 +503,11 @@ const handleCloseModal = () => {
           </p>
         </div>
     
-        <div className="bg-white p-3 rounded-lg shadow-xs border border-gray-200">
+        {/* <div className="bg-white p-3 rounded-lg shadow-xs border border-gray-200">
           
           <div className="text-sm text-gray-500">Institution</div>
           <div className="font-semibold text-gray-800">{parsedInstitutionData.institutionName}</div>
-        </div>
+        </div> */}
           <div className="mt-4 text-right flex items-center justify-between"> 
            <button
               onClick={() => navigate(-1)}
