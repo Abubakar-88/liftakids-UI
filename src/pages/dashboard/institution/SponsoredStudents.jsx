@@ -205,10 +205,10 @@ const fetchSponsoredStudents = async (page) => {
             </h1>
           </div>
           
-          <div className="bg-white p-3 rounded-lg shadow-xs border border-gray-200">
+          {/* <div className="bg-white p-3 rounded-lg shadow-xs border border-gray-200">
             <div className="text-sm text-gray-500">Institution</div>
             <div className="font-semibold text-gray-800">{parsedInstitutionData?.institutionName || 'Your Institution'}</div>
-          </div>
+          </div> */}
           <button
             onClick={() => navigate(-1)}
             className="flex items-center text-blue-600 hover:text-blue-800"
@@ -226,13 +226,13 @@ const fetchSponsoredStudents = async (page) => {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              {pagination?.totalElements || 24}
+              {pagination?.totalElements || 0}
             </div>
             <div className="text-sm text-gray-600">Total Sponsored</div>
           </div>
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              ৳ 25,250
+              ৳ 0
             </div>
             <div className="text-sm text-gray-600">Monthly Received</div>
             <div className="text-sm font-semibold text-green-600 mt-1">
@@ -240,7 +240,7 @@ const fetchSponsoredStudents = async (page) => {
           </div>
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              ৳ 39,250
+              ৳ 0
             </div>
             <div className="text-sm text-gray-600">Total Received</div>
             <div className="text-sm font-semibold text-green-600 mt-1">
