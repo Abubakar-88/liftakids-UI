@@ -1,22 +1,38 @@
-// Service Worker for Vite PWA
-const CACHE_NAME = 'lift-a-kids-v1';
+const CACHE_NAME = 'liftakids-v1'; // Version number  auto update 
 
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installed for Lift A Kids');
-  self.skipWaiting();
+  self.skipWaiting(); // version instantly active 
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/static/js/main.js',
+        // অন্যান্য assets
+      ]);
+    })
+  );
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activated');
-  self.clients.claim();
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName); //cache delete
+          }
+        })
+      );
+    })
+  );
+  return self.clients.claim(); // client version apply
 });
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      })
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
   );
 });

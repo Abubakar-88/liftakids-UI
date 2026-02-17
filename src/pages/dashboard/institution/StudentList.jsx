@@ -421,27 +421,28 @@ const handleUpdateDetails = async () => {
 //     console.error('Error updating student details:', error);
 //   }
 // };
-  // Handle delete
-  const handleDelete = async (studentId) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
-      try {
-        await deleteStudent(studentId);
-        
-        // Refresh the student list
-        const response = await fetchStudentLists(pagination.page, pagination.size);
-        if (response && response.content) {
-          setStudents(response.content);
-          setPagination(prev => ({
-            ...prev,
-            totalElements: response.totalElements
-          }));
-        }
-      } catch (error) {
-        console.error('Error deleting student:', error);
+ // Handle delete
+const handleDelete = async (studentId) => {
+  if (window.confirm('Are you sure you want to delete this student?')) {
+    try {
+      await deleteStudent(studentId);
+      
+      // Refresh the student list
+      const response = await fetchStudentLists(pagination.page, pagination.size);
+      if (response && response.content) {
+        setStudents(response.content);
+        setPagination(prev => ({
+          ...prev,
+          totalElements: response.totalElements
+        }));
       }
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      alert('Failed to delete student. Please try again.');
     }
-  };
-
+  }
+  loadStudents(); 
+};
   // Handle cancel edit
   const handleCancelEdit = () => {
   setEditingId(null);
