@@ -1,7 +1,7 @@
 // api/institutionApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://liftakids.onrender.com/LiftAKids/api';
+const API_BASE_URL = 'https://liftakids.koyeb.app/LiftAKids/api';
 
 export const registerInstitution = async (institutionData) => {
   try {

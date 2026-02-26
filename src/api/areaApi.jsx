@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = "https://liftakids.onrender.com/LiftAKids/api";
+const BASE = "https://liftakids.koyeb.app/LiftAKids/api";
 
 // ==================== Division ====================
 export const getDivisions = () => axios.get(`${BASE}/divisions`);
