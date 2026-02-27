@@ -1,7 +1,7 @@
 // api/institutionApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://liftakids.koyeb.app/LiftAKids/api';
+const API_BASE_URL = 'http://13.201.89.212:8081/LiftAKids/api';
 
 export const registerInstitution = async (institutionData) => {
   try {
