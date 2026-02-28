@@ -1,8 +1,33 @@
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminNavbar from './AdminNavbar';
+import { useEffect, useState } from 'react';
+import { getDashboardStats, getRecentActivities } from '../../../api/adminApi';
 
 const AdminDashboard = ({ children }) => {
+   const [stats, setStats] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+   useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsData, activitiesData] = await Promise.all([
+        getDashboardStats(),
+        getRecentActivities(5)
+      ]);
+      setStats(statsData);
+      setActivities(activitiesData);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex h-screen w-auto">
       {/* Fixed Sidebar */}

@@ -1,14 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
-import Navbar from './components/Navbar';
 import { ToastContainer } from 'react-toastify';
-import Search from './pages/Search';
 import RoleSelection from './pages/RoleSelection';
-import About from './pages/About';
-import Benefits from './pages/Benefits';
 import Login from './pages/Login';
-import Blog from './pages/Blog';
-import Contact from './pages/Contact';
 import InstitutionDashboard from './pages/dashboard/institution/InstitutionDashboard';
 import DonarDashboard from './pages/dashboard/donor/DonarDashboard'
 import DynamicRegister from './components/DynamicRegister';
@@ -45,93 +39,277 @@ import ContactMessages from './pages/dashboard/admin/ContactMessages';
 import SentEmailsHistory from './components/SentEmailsHistory';
 import InstitutionPaymentConfirmation from './components/institutions/InstitutionPaymentConfirmation';
 import InstitutionManualPayment from './pages/dashboard/institution/InstitutionManualPayment';
+import UserNotificationsPage from './pages/UserNotificationsPage';
+//import Settings from './pages/dashboard/admin/Settings';
+import AdminListPage from './pages/dashboard/admin/AdminListPage';
+import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
+import AdminNotificationsPage from './pages/dashboard/admin/AdminNotificationsPage';
 
+// Import AuthProvider and ProtectedRoute
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   
    return (
-    <>
-      <div className="App">
-        {/* Navbar - conditional based on route if needed */}
-        {/* <Navbar /> */}
-        
-        {/* Main Content */}
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/search" element={<Search />} />
-          <Route path="/about-us" element={<DynamicPage />} /> {/* Dynamic about page */}
-          <Route path="/benefit-for-sponsor" element={<DynamicPage />} /> {/* Dynamic benefits page */}
-          <Route path="/blog" element={<BlogPage />} />
-           <Route path="/contact" element={<DynamicPage />}/>
-              {/* Catch-all route for dynamic pages */}
-          <Route path="/pages/:slug" element={<DynamicPage />} />
+    
+      <AuthProvider>
+        <div className="App">
+          {/* Main Content */}
+          <main>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/chose-option" element={<RoleSelection />} />
+              <Route path="/login/:role" element={<Login />} />
+              <Route path="/register/:role" element={<DynamicRegister />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/contact" element={<DynamicPage />}/>
+              <Route path="/pages/:slug" element={<DynamicPage />} />
+              <Route path="/about-us" element={<DynamicPage />} />
+              <Route path="/benefit-for-sponsor" element={<DynamicPage />} />
 
-            <Route path="/login/:role" element={<Login />} />
-            <Route path="/register/:role" element={<DynamicRegister />} />
-            <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
-            <Route path="/institution/add-student" element={<AddStudent />} />
-            <Route path="/institution/result-upload" element={<StudentResultForm />} />
-            <Route path="/results/confirmation" element={<ResultConfirmation />} />
-            <Route path="/institution/student-list" element={<StudentList />} />
-           
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/division-manage" element={<DivisionManage />} />
-            <Route path="/admin/district-manage" element={<DistrictManage />} />
-            <Route path="/admin/thana-manage" element={<ThanaManage />} />
-            <Route path="/admin/union-or-area-manage" element={<UnionManage />} />
-            <Route path="/admin/institution-manage" element={<InstitutionManage />} />
-            <Route path="/admin/student-manage" element={<StudentManage />} />
-            <Route path="/admin/donar-manage" element={<DonorManagement />} />
-            <Route path="/admin/sponsorships/new" element={<SponsorshipForm />} />
-            <Route path="/admin/sponsor-manage" element={<SponsorshipManage />} />
-            <Route path="/sponsorships/:id" element={<SponsorshipForm />}/>
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/chose-option" element={<RoleSelection />} />
-            <Route path="/contact" element={<Contact />} />
-            
-            {/* Institution dashboard */}
-            <Route path="/institution/sponsored-students" element={<SponsoredStudents />} />
-            <Route path="/institution/payment-confirmation" element={<InstitutionPaymentConfirmation />} />
-            <Route path="/institution/manual-payment" element={<InstitutionManualPayment />} />
-            {/* Donor Dashboard */}
-            <Route path="/donor/dashboard" element={<DonarDashboard />} />
-            <Route path="/donor/student-list-for-sponsor" element={<StudentListForSponsor />} />
-            <Route path="/donar/sponsored-students" element={<DonorSponsoredStudentList />} />
-            <Route path="/donor/sponsored-students/:donorId/payments" element={<DonorPaymentHistory />} />
-            <Route path="/donar/settings/:donorId" element={<DonorSettings />} />
-            <Route path="/donor/password-change/:donorId" element={<PasswordChangeForm/>} />
+              {/* Institution Protected Routes */}
+              <Route path="/institution/dashboard" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <InstitutionDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/institution/add-student" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <AddStudent />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/institution/result-upload" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <StudentResultForm />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/results/confirmation" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <ResultConfirmation />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/institution/student-list" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <StudentList />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/institution/sponsored-students" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <SponsoredStudents />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/institution/payment-confirmation" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <InstitutionPaymentConfirmation />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/institution/manual-payment" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <InstitutionManualPayment />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/institution/notifications" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <UserNotificationsPage userType="INSTITUTION" />
+                </ProtectedRoute>
+              } />
 
+              {/* Donor Protected Routes */}
+              <Route path="/donor/dashboard" element={
+                <ProtectedRoute allowedRoles={['DONOR']}>
+                  <DonarDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/donor/student-list-for-sponsor" element={
+                <ProtectedRoute allowedRoles={['DONOR']}>
+                  <StudentListForSponsor />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/donar/sponsored-students" element={
+                <ProtectedRoute allowedRoles={['DONOR']}>
+                  <DonorSponsoredStudentList />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/donor/sponsored-students/:donorId/payments" element={
+                <ProtectedRoute allowedRoles={['DONOR']}>
+                  <DonorPaymentHistory />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/donar/settings/:donorId" element={
+                <ProtectedRoute allowedRoles={['DONOR']}>
+                  <DonorSettings />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/donor/password-change/:donorId" element={
+                <ProtectedRoute allowedRoles={['DONOR']}>
+                  <PasswordChangeForm />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/donor/notifications" element={
+                <ProtectedRoute allowedRoles={['DONOR']}>
+                  <UserNotificationsPage userType="DONOR" />
+                </ProtectedRoute>
+              } />
 
+              {/* Admin Protected Routes */}
+              <Route path="/admin/dashboard" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+                {/* Admin Management */}
+                <Route path="/admin/admin-manage" element={<AdminListPage />} />
+                <Route path="profile" element={<AdminProfilePage />} />
+                {/* <Route path="settings" element={<Settings />} /> */}
+                <Route path="/admin/notifications" element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminNotificationsPage />
+                  </ProtectedRoute>
+                } />
 
-            {/* PageManage */}
-                 <Route path="/admin/pages" element={<PageManage />} />
-                <Route path="/admin/pages/edit/:slug" element={<EditPage />} />
-                <Route path="/admin/pages/create" element={<CreatePage />} />
-                 <Route path="/admin/contact-management" element={<ContactPageManagement />} />
-                 <Route path="/admin/contact/messages" element={<ContactMessages />} />
-                 <Route path="/admin/sent-emails" element={<SentEmailsHistory />} />
-          </Routes>
-        </main>
+              <Route path="/admin/division-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <DivisionManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/district-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <DistrictManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/thana-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <ThanaManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/union-or-area-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <UnionManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/institution-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <InstitutionManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/student-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <StudentManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/donar-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <DonorManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/sponsorships/new" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <SponsorshipForm />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/sponsor-manage" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <SponsorshipManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/sponsorships/:id" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <SponsorshipForm />
+                </ProtectedRoute>
+              }/>
+              
+              <Route path="/admin/pages" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <PageManage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/pages/edit/:slug" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <EditPage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/pages/create" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <CreatePage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/contact-management" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <ContactPageManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/contact/messages" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <ContactMessages />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/sent-emails" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <SentEmailsHistory />
+                </ProtectedRoute>
+              } />
+              
+              {/* <Route path="/admin/notifications" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <NotificationsPage userType="ADMIN" />
+                </ProtectedRoute>
+              } /> */}
 
-        {/* PWA Install Prompt */}
-        <InstallPrompt />
+              {/* Generic notifications (fallback) */}
+              <Route path="/notifications" element={<UserNotificationsPage />} />
 
-        {/* Toast Notifications */}
-        <ToastContainer 
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-      </div>
-    </>
+            </Routes>
+          </main>
+
+          {/* PWA Install Prompt */}
+          <InstallPrompt />
+
+          {/* Toast Notifications */}
+          <ToastContainer 
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+        </div>
+      </AuthProvider>
+    
   );
 }
 
-export default App
+export default App;

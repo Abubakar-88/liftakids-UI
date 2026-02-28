@@ -8,6 +8,7 @@ import {
   FaNewspaper ,
   FaEnvelope ,
   FaHandHoldingUsd,
+  FaUsersCog,
   FaBriefcase,
   FaHandHoldingHeart,
   FaFileAlt,
@@ -56,6 +57,11 @@ const AdvancedNavItem = ({ to, icon, text, exact = false, badgeCount = 0 }) => (
       </div>
 
       <nav className="p-4 overflow-y-auto h-[calc(100vh-4rem)]">
+        <NavItem 
+            to="/admin/admin-manage" 
+            icon={<FaUsersCog />} 
+            text="Admin Management" 
+          />
         <NavItem to="/admin/dashboard" icon={<FaHome />} text="Dashboard" exact />
          <NavItem to="/admin/institution-manage" icon={<FaSchool />} text="Institution Management" />
         <NavItem to="/admin/student-manage" icon={<FaUserGraduate />} text="Student Management" />

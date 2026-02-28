@@ -1,20 +1,45 @@
 import { FaEye, FaEyeSlash, FaUser, FaLock } from 'react-icons/fa';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { loginInstitution } from '../api/institutionApi';
-import { loginDonor } from '../api/donarApi'; // Donor login API import করুন
+import { loginDonor } from '../api/donarApi';
+import { adminLogin } from '../api/adminApi';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from '../contexts/AuthContext'; // Import AuthContext
 
 const Login = () => {
   const { role } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, login } = useAuth(); // Use AuthContext
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user is already logged in - redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from || '/';
+      console.log('User already logged in, redirecting...', user.type);
+      
+      // Redirect based on user type
+      switch (user.type) {
+        case 'DONOR':
+          navigate('/donor/dashboard', { replace: true });
+          break;
+        case 'INSTITUTION':
+          navigate('/institution/dashboard', { replace: true });
+          break;
+        case 'ADMIN':
+          navigate('/admin/dashboard', { replace: true });
+          break;
+      }
+    }
+  }, [user, navigate, location]);
 
   // Role-specific configurations
   const roleConfig = {
@@ -23,21 +48,24 @@ const Login = () => {
       placeholder: 'Institution Email',
       defaultUsername: 'INST-',
       color: 'teal',
-      apiLogin: loginInstitution
+      apiLogin: loginInstitution,
+      userType: 'INSTITUTION'
     },
     donar: {
       title: 'Donor Login',
       placeholder: 'Donor Email',
       defaultUsername: 'DON-',
       color: 'teal',
-      apiLogin: loginDonor // Donor login function
+      apiLogin: loginDonor,
+      userType: 'DONOR'
     },
     admin: {
       title: 'Admin Login',
       placeholder: 'Admin Username',
       defaultUsername: 'ADM-',
       color: 'teal',
-      apiLogin: null // Admin এর জন্য পরে implement করবেন
+      apiLogin: null,
+      userType: 'ADMIN'
     }
   };
 
@@ -64,15 +92,15 @@ const Login = () => {
 
         if (response.success) {
           toast.success(response.message);
-          localStorage.setItem('institutionData', JSON.stringify(response.institution));
-          navigate('/institution/dashboard');
+          // Use AuthContext login instead of localStorage directly
+          login(currentRole.userType, response.institution);
         } else {
           setError(response.message);
           toast.error(response.message);
         }
       } 
       // Donor login
-      else if (role === 'donar') {
+      else if (role === 'donor') {
         const response = await loginDonor({
           email: username,
           password: password
@@ -80,26 +108,27 @@ const Login = () => {
 
         if (response.success) {
           toast.success(response.message);
-          localStorage.setItem('donorData', JSON.stringify(response.donor));
-          navigate('/donor/dashboard');
+          // Use AuthContext login
+          login(currentRole.userType, response.donor);
         } else {
           setError(response.message);
           toast.error(response.message);
         }
       }
-      // Admin login (temporary simulation)
+      // Admin login
       else if (role === 'admin') {
-        console.log(`Logging in as admin:`, username, password);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Temporary simulation for admin
-        if (username === 'admin' && password === 'admin123') {
-          toast.success('Admin login successful');
-          localStorage.setItem('adminData', JSON.stringify({ username: username }));
-          navigate('/admin/dashboard');
+        // Replace this with actual admin API call
+        //const response = await mockAdminLogin(username, password);
+          const response = await adminLogin({
+          username: username,
+          password: password
+        });
+        if (response.success) {
+          toast.success(response.message);
+          login(currentRole.userType, response.admin);
         } else {
-          throw new Error('Invalid admin credentials');
+          setError(response.message);
+          toast.error(response.message);
         }
       }
     } catch (err) {
@@ -111,6 +140,30 @@ const Login = () => {
     }
   };
 
+  // Mock admin login function (replace with actual API)
+  const mockAdminLogin = async (username, password) => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Temporary simulation for admin
+    if (username === 'admin' && password === 'admin123') {
+      return {
+        success: true,
+        message: 'Admin login successful',
+        admin: {
+          adminId: 1,
+          username: username,
+          name: 'System Admin',
+          email: 'admin@liftakids.com',
+          type: 'SUPER_ADMIN'
+        }
+      };
+    } else {
+      throw new Error('Invalid admin credentials');
+    }
+  };
+
+  // Your existing JSX remains the same
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
       {/* Logo */}

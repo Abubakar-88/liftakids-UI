@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { FaUserPlus, FaGraduationCap, FaCreditCard,FaMoneyBillWave, FaSignOutAlt, FaNotesMedical, FaUsers, FaCheckCircle } from 'react-icons/fa';
+import { FaUserPlus, FaUniversity, FaGraduationCap, FaCreditCard,FaMoneyBillWave, FaSignOutAlt, FaNotesMedical, FaUsers, FaCheckCircle } from 'react-icons/fa';
 import { PiExamFill } from 'react-icons/pi';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import NotificationBell from '../../../components/NotificationBell';
 
 const InstitutionDashboard = () => {
   const navigate = useNavigate();
   const [institutionData, setInstitutionData] = useState(null);
-
+const { logout } = useAuth();
   // Load institution data from localStorage
   useEffect(() => {
     const data = localStorage.getItem('institutionData');
@@ -16,16 +18,23 @@ const InstitutionDashboard = () => {
   }, []);
 
   const handleLogout = () => {
-    // Clear localStorage
-    localStorage.removeItem('institutionData');
-    // Redirect to login
-    navigate('/login/institution');
+    logout();
   };
 
   return (
     <div className="min-h-screen bg-white p-4 font-sans flex flex-col items-center">
-      {/* Title */}
-      <h1 className="text-2xl font-bold text-center text-black mb-4">Institution Dashboard</h1>
+
+       <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+                <FaUniversity className="mr-2" /> Institution Dashboard
+              </h1>
+              
+              {/* Notification Bell with Error Boundary */}
+              <div className="flex items-center space-x-4">
+                <NotificationBell />
+              </div>
+            </div>
+      
 
       {/* Welcome Card with Institution Name */}
       <div className="bg-teal-600 text-white rounded-xl p-4 w-full max-w-sm mb-6">
@@ -116,9 +125,8 @@ const InstitutionDashboard = () => {
           <FaMoneyBillWave className="text-green-600 text-3xl mb-2" />
           <span className="text-xs text-black text-center font-medium">Manual Payment</span>
         </div>
-
-        {/* Logout */}
-        <div
+          {/* Logout */}
+          <div
           onClick={handleLogout}
           className="flex flex-col items-center bg-red-50 p-4 rounded-xl cursor-pointer hover:bg-red-100 transition-colors col-span-3"
         >

@@ -51,9 +51,9 @@ const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = f
           let url = '';
           
           if (isExistingSponsor && sponsorshipId) {
-            url = `https://liftakids.onrender.com/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
+            url = `http://localhost:8081/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
           } else if (student.id) {
-            url = `https://liftakids.onrender.com/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
+            url = `http://localhost:8081/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
           }
           
           if (url) {

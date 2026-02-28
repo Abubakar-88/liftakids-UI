@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = "https://menboots.store/LiftAKids/api";
+const BASE = "http://localhost:8081/LiftAKids/api";
 
 // ==================== Division ====================
 export const getDivisions = () => axios.get(`${BASE}/divisions`);
@@ -18,15 +18,34 @@ export const getAllDistricts = (page = 0, size = 5) =>
 // export const getDistrictsByDivision = (divisionId) =>
 //     axios.get(`${BASE}/districts/divisions/${divisionId}/districts`);
 
-export const getDistrictsByDivision = (divisionId) => {
-  const url = `${BASE}/districts/divisions/${divisionId}/districts`;
-  console.log(" Fetching districts with divisionId:", divisionId);
-  console.log(" Full API URL:", url);
+// export const getDistrictsByDivision = (divisionId) => {
+//   const url = `${BASE}/districts/divisions/${divisionId}/districts`;
+//   console.log(" Fetching districts with divisionId:", divisionId);
+//   console.log(" Full API URL:", url);
 
-  return axios.get(url);
+//   return axios.get(url);
+// };
+
+export const getDistrictsByDivision = async (divisionId) => {
+  try {
+    console.log(`📡 [API] Fetching districts for division: ${divisionId}`);
+    console.log(`📡 [API] URL: ${BASE}/districts/divisions/${divisionId}/districts`);
+    
+    const response = await axios.get(`${BASE}/districts/divisions/${divisionId}/districts`);
+    
+    console.log(`✅ [API] Response received:`, response);
+    console.log(`✅ [API] Response data:`, response.data);
+    console.log(`✅ [API] Response status:`, response.status);
+    
+    // Return the full response object
+    return response;
+    
+  } catch (error) {
+    console.error(`❌ [API] Error fetching districts:`, error);
+    console.error(`❌ [API] Error response:`, error.response);
+    throw error;
+  }
 };
-
-
 
 export const createDistrict = (data) => {
   // Create payload with explicit type conversion

@@ -226,13 +226,13 @@ const fetchSponsoredStudents = async (page) => {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              {pagination?.totalElements || 0}
+              {pagination?.totalElements || 24}
             </div>
             <div className="text-sm text-gray-600">Total Sponsored</div>
           </div>
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              ৳ 0
+              ৳ 25,250
             </div>
             <div className="text-sm text-gray-600">Monthly Received</div>
             <div className="text-sm font-semibold text-green-600 mt-1">
@@ -240,7 +240,7 @@ const fetchSponsoredStudents = async (page) => {
           </div>
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              ৳ 0
+              ৳ 39,250
             </div>
             <div className="text-sm text-gray-600">Total Received</div>
             <div className="text-sm font-semibold text-green-600 mt-1">

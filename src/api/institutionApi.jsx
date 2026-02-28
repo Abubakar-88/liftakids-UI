@@ -1,7 +1,7 @@
 // api/institutionApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://menboots.store/LiftAKids/api';
+const API_BASE_URL = 'http://localhost:8081/LiftAKids/api';
 
 export const registerInstitution = async (institutionData) => {
   try {
@@ -28,6 +28,77 @@ export const loginInstitution = async (loginData) => {
     throw error.response.data;
   }
 };
+// Approve or Reject institution
+  export const updateInstitutionStatus = async (institutionId, action, adminId, reason = '') => {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/institutions/${institutionId}/status`, null, {
+        params: { action, adminId, reason }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error ${action} institution:`, error);
+      throw error;
+    }
+  };
+
+ export const bulkUpdateStatus = async (institutionId, action, adminId, reason = '') => {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/institutions/bulk/status`, {
+        institutionId,
+        action,
+        adminId,
+        reason
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error bulk ${action}:`, error);
+      throw error;
+    }
+  };
+  export const getStatusStatistics = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/institutions/statistics/status`);
+      
+      // Handle both response structures
+      const data = response.data;
+      
+      // If it's the DTO structure
+      if (data.total !== undefined) {
+        return data;
+      }
+      // If it's a plain object (alternative implementation)
+      else {
+        return {
+          total: data.total || 0,
+          approved: data.approved || 0,
+          pending: data.pending || 0,
+          rejected: data.rejected || 0,
+          suspended: data.suspended || 0
+        };
+      }
+      
+    } catch (error) {
+      console.error('Error fetching status statistics:', error);
+      
+      // Return default values on error
+      return {
+        total: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        suspended: 0
+      };
+    }
+};
+//  export const getStatusStatistics = async () => {
+//     try {
+//       const response = await axios.get(`${API_BASE_URL}/institutions/statistics/status`);
+//       return response.data;
+//     } catch (error) {
+//       console.error('Error fetching status statistics:', error);
+//       throw error;
+//     }
+//   }
 
 // Update institution
 export const updateInstitution = async (id, institutionData) => {
@@ -55,6 +126,7 @@ export const deleteInstitution = async (id) => {
 export const getInstitution = async (id) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/institutions/${id}`);
+    console.log('Institution data:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching institution:', error.response?.data || error.message);
@@ -75,6 +147,7 @@ export const getAllInstitutions = async (params = {}) => {
         sort: 'institutionName,asc'
       }
     });
+    console.log('Fetched institutions:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching institutions:', error);

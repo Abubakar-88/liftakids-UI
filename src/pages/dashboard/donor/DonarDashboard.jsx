@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { FaUserPlus, FaLock, FaHandHoldingHeart, FaGraduationCap, FaCog, FaMoneyCheckAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaUserPlus, FaLock, FaHandHoldingHeart, FaGraduationCap, FaCog, FaMoneyCheckAlt, FaSignOutAlt, FaBell  } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
+import NotificationBell from '../../../components/NotificationBell';
+import { useAuth } from '../../../contexts/AuthContext';
 const DonarDashboard = () => {
   const navigate = useNavigate();
 const [donorData, setDonorData] = useState(null);
-
+ const { logout } = useAuth();
   useEffect(() => {
     const data = localStorage.getItem('donorData');
     if (data) {
@@ -12,16 +14,30 @@ const [donorData, setDonorData] = useState(null);
     }
   }, []);
   const donorId = donorData ? donorData.donorId : null;
+ const handleLogout = () => {
+    logout(); // This will clear localStorage and redirect
+  };
 
   // Safe way to access donorId
   //const donor = JSON.parse(localStorage.getItem('donor'));
 
   return (
     <div className="min-h-screen bg-white p-4 font-sans flex flex-col items-center">
-      {/* Title */}
-       <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
-                <FaHandHoldingHeart className="mr-2" /> Donor Portal
+       {/* Top Bar with Notification */}
+     <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+          <FaHandHoldingHeart className="mr-2" /> Donor Portal
         </h1>
+        
+        {/* Notification Bell with Error Boundary */}
+        <div className="flex items-center space-x-4">
+          <NotificationBell />
+        </div>
+      </div>
+      {/* Title */}
+       {/* <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                <FaHandHoldingHeart className="mr-2" /> Donor Portal
+        </h1> */}
 
       {/* Welcome Card */}
       <div className="bg-teal-600 text-white rounded-xl p-4 w-full max-w-sm mb-6">
@@ -75,13 +91,15 @@ const [donorData, setDonorData] = useState(null);
           <FaLock  className="text-teal-700 text-4xl mb-2" />
           <span className="text-sm text-black text-center">Password Change</span>
         </div>
-      <div
-        onClick={() => navigate('/login/donor')}
-        className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 w-30"
-      >
-        <FaSignOutAlt className="text-teal-700 text-2xl mb-2" />
-        <span className="text-sm text-black text-center">Logout</span>
-      </div>
+       {/* Logout button */}
+        <div
+          onClick={handleLogout}
+          className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100 w-30"
+        >
+          <FaSignOutAlt className="text-teal-700 text-2xl mb-2" />
+          <span className="text-sm text-black text-center">Logout</span>
+        </div>
+     
       </div>
        
  {/* <div className="grid grid-cols-2 gap-6 mb-6 w-full max-w-xs">

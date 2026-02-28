@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'https://menboots.store/LiftAKids/api';
+const API_BASE_URL = 'http://localhost:8081/LiftAKids/api';
 
 // Admin Contact Management APIs
 export const getContactMessages = async (page = 0, size = 10, sortBy = 'submittedAt', sortDir = 'desc') => {

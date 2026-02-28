@@ -1,7 +1,7 @@
 // api/donarApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://menboots.store/LiftAKids/api';
+const API_BASE_URL = 'http://localhost:8081/LiftAKids/api';
 // api/donarApi.js ফাইল check করুন
 export const registerDonor = async (donorData) => {
   try {
@@ -31,22 +31,33 @@ export const registerDonor = async (donorData) => {
     throw error;
   }
 };
-export const loginDonor = async (loginData) => {
+export const loginDonor = async (credentials) => {
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/donors/login`,
-      loginData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    console.log('Donor API called with:', credentials); // Debug log
+    const response = await axios.post(`${API_BASE_URL}/donors/login`, credentials);
+    console.log('Donor API response:', response);
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    console.error('Donor API error:', error.response || error);
+    throw error;
   }
 };
+// export const loginDonor = async (loginData) => {
+//   try {
+//     const response = await axios.post(
+//       `${API_BASE_URL}/donors/login`,
+//       loginData,
+//       {
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error.response.data;
+//   }
+// };
 
 // export const registerDonor = async (donorData) => {
 //   try {
