@@ -411,7 +411,7 @@ const handleSubmit = async (e) => {
         <div>
           <label className="block mb-2 font-medium text-justify">About Institution</label>
           <textarea
-            name="ababoutInstitutionout"
+            name="aboutInstitution"
             value={formData.about}
             onChange={handleChange}
             rows="3"
