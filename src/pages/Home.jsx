@@ -120,7 +120,7 @@ const handleDonorClick = () => {
               <button
               onClick={handleDonorClick}
                className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
-                Be Part of Lift A Kids
+                Be Part of Lift A Kid
               </button>
             </div>
           </div>
@@ -377,7 +377,7 @@ const handleDonorClick = () => {
 
       {/* Footer */}
       <div className="text-center text-sm text-gray-500 mt-8 md:mt-12">
-        <p>© {new Date().getFullYear()} Lift A Kids. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Lift A Kid. All rights reserved.</p>
       </div>
     </div>
   );
