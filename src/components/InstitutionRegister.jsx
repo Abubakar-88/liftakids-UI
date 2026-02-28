@@ -20,7 +20,7 @@ const InstitutionRegister = () => {
     unionOrAreaId: '',
     villageOrHouse: '',
     type: '',
-    about: ''
+    aboutInstitution: ''
   });
 
   const [divisions, setDivisions] = useState([]);
@@ -179,7 +179,7 @@ const handleSubmit = async (e) => {
         unionOrAreaId: parseInt(formData.unionOrAreaId), 
         villageOrHouse: formData.villageOrHouse,
         type: formData.type,
-        about: formData.about
+        aboutInstitution: formData.aboutInstitution
       });
 
       toast.update(toastId, {
@@ -203,7 +203,7 @@ const handleSubmit = async (e) => {
         unionOrAreaId: '',
         villageOrHouse: '',
         type: '',
-        about: ''
+        aboutInstitution: ''
       });
 
       setTimeout(() => {
@@ -411,7 +411,7 @@ const handleSubmit = async (e) => {
         <div>
           <label className="block mb-2 font-medium text-justify">About Institution</label>
           <textarea
-            name="about"
+            name="ababoutInstitutionout"
             value={formData.about}
             onChange={handleChange}
             rows="3"
