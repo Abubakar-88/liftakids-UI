@@ -1,7 +1,7 @@
 // api/institutionApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8081/LiftAKids/api';
+const API_BASE_URL = 'https://menboots.store/LiftAKids/api';
 
 export const registerInstitution = async (institutionData) => {
   try {
