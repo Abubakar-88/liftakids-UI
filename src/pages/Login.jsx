@@ -171,7 +171,7 @@ const Login = () => {
         <div className={`w-20 h-20 mx-auto mb-4 rounded-full bg-${currentRole.color}-600 flex items-center justify-center shadow-md`}>
           <span className="text-white text-2xl font-bold">LAK</span>
         </div>
-        <h1 className="text-3xl font-bold text-gray-800">Lift A Kids</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Lift A Kid</h1>
         <h2 className="text-xl font-semibold mt-2 text-gray-600">{currentRole.title}</h2>
       </div>
 

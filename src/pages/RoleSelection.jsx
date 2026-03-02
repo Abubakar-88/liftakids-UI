@@ -51,7 +51,7 @@ const RoleSelection = () => {
         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-teal-600 flex items-center justify-center shadow-md">
           <span className="text-white text-2xl font-bold">LAK</span>
         </div>
-        <h1 className="text-3xl font-bold text-gray-800">Lift A Kids</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Lift A Kid</h1>
       </div>
 
       {/* Title */}
