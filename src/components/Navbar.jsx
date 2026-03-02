@@ -74,7 +74,7 @@ const Navbar = () => {
 
         {/* Conditional rendering of title or search bar */}
         {!showSearch ? (
-          <h1 className="text-xl md:text-2xl font-semibold text-teal-600">Lift A Kids</h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-teal-600">Lift A Kid</h1>
         ) : (
           <div className="flex-grow mx-4">
             <div className="relative">
