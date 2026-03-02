@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import DonarRegister from './DonorRegister';
+import DonorRegister from './DonorRegister';
 import InstitutionRegister from './InstitutionRegister';
 
 const DynamicRegister = () => {
@@ -7,9 +7,9 @@ const DynamicRegister = () => {
 
   return (
     <>
-      {role === 'donar' && <DonarRegister />}
+      {role === 'donor' && <DonorRegister />}
       {role === 'institution' && <InstitutionRegister />}
-      {!['donar', 'institution'].includes(role) && <div>Invalid role</div>}
+      {!['donor', 'institution'].includes(role) && <div>Invalid role</div>}
     </>
   );
 };
