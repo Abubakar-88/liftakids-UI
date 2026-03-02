@@ -120,7 +120,7 @@ const handleDonorClick = () => {
               <button
               onClick={handleDonorClick}
                className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
-                Be Part of Lift A Kids
+                Be Part of Lift A Kid
               </button>
             </div>
           </div>
