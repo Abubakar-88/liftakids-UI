@@ -42,8 +42,8 @@ export default function Home() {
         setStudentLimit(prev => prev + 4); // Increase limit by 4 when show more is clicked
     };
 
-    const handleDonateClick = (studentId) => {
-        navigate(`/login/donor?studentId=${studentId}`);
+    const handleDonateClick = () => {
+        navigate(`/login/donor`);
     };
 
     const questions = [
