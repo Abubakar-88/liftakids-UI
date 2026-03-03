@@ -72,6 +72,18 @@ export const getInstitutionName = async (institutionId) => {
   return response.json();
 };
 
+   // Get top unsponsored urgent students with dynamic limit
+   export const getTopUnsponsoredUrgentTopStudents = async (limit = 4) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/students/unsponsored/urgent/top`, {
+                params: { limit }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching urgent students:', error);
+            throw error;
+        }
+      };  
 
 
 export const getTopUnsponsoredUrgentStudents = async () => {
