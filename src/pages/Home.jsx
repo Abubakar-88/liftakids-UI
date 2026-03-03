@@ -330,7 +330,8 @@ export default function Home() {
                         {/* Show More Button */}
                         <div className="text-center mt-6">
                             <button 
-                                onClick={handleShowMore}
+                                
+                                onClick={handleDonorClick}
                                 className="flex items-center justify-center mx-auto text-red-600 font-medium hover:text-red-700 transition-colors"
                             >
                                 Show More <FaChevronDown className="ml-1" />
