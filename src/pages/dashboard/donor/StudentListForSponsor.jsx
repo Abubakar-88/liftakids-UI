@@ -98,34 +98,41 @@ const StudentListForSponsor = () => {
       console.error('Failed to load institutions:', error);
     }
   };
-
 const fetchStudents = async () => {
   try {
     setLoading(true);
-    let response;
     let studentsData = [];
     
     console.log('Fetching students with filters:', filters);
 
     // Case 1: Filter by institution
     if (filters.institutionsId) {
-      response = await getStudentsByInstitution(filters.institutionsId);
+      const response = await getStudentsByInstitution(filters.institutionsId);
       studentsData = response?.data || response || [];
     }
     // Case 2: Search
     else if (filters.search) {
-      response = await searchStudents(filters.search);
-      studentsData = response?.data || response || [];
+      const response = await searchStudents(filters.search);
+      // response already data, so direct assign
+      studentsData = Array.isArray(response) ? response : [];
+      console.log('Search response:', studentsData);
     }
     // Case 3: Get all with pagination
     else {
-      response = await getAllStudents(pagination.page, pagination.size, 'studentName', 'asc');
+      const response = await getAllStudents(pagination.page, pagination.size, 'studentName', 'asc');
       studentsData = response?.content || [];
       setPagination(prev => ({
         ...prev,
         totalPages: response?.totalPages || 1,
         totalElements: response?.totalElements || studentsData.length
       }));
+    }
+
+    // Check if studentsData is array
+    if (!Array.isArray(studentsData)) {
+      console.error('studentsData is not an array:', studentsData);
+      setStudents([]);
+      return;
     }
 
     // Process and set students
@@ -135,34 +142,110 @@ const fetchStudents = async () => {
     }));
     
     setStudents(processedStudents);
-    console.log(` Loaded ${processedStudents.length} students`);
+    console.log(`✅ Loaded ${processedStudents.length} students`);
 
     // Now check pending status for EACH student
     const pendingStatuses = {};
     
     for (const student of processedStudents) {
-      console.log(`\n=== Checking student ${student.studentId}: ${student.studentName} ===`);
-      const pendingStatus = await checkPendingSponsorship(student.studentId);
-      pendingStatuses[student.studentId] = pendingStatus;
-      
-      // Log the result
-      if (pendingStatus.hasPending) {
-        console.log(`🎉 Student ${student.studentId} HAS pending sponsorship!`);
-      } else {
-        console.log(`📭 Student ${student.studentId} has NO pending sponsorship`);
+      try {
+        console.log(`\n=== Checking student ${student.studentId}: ${student.studentName} ===`);
+        const pendingStatus = await checkPendingSponsorship(student.studentId);
+        
+        // Ensure pendingStatus is object
+        if (pendingStatus && typeof pendingStatus === 'object') {
+          pendingStatuses[student.studentId] = pendingStatus;
+          
+          if (pendingStatus.hasPending) {
+            console.log(`🎉 Student ${student.studentId} HAS pending sponsorship!`);
+          } else {
+            console.log(`📭 Student ${student.studentId} has NO pending sponsorship`);
+          }
+        } else {
+          console.warn(`Invalid pending status for student ${student.studentId}`);
+          pendingStatuses[student.studentId] = { hasPending: false };
+        }
+      } catch (err) {
+        console.error(`Error checking pending status for student ${student.studentId}:`, err);
+        pendingStatuses[student.studentId] = { hasPending: false };
       }
     }
     
     setPendingStatusMap(pendingStatuses);
-    console.log(' Final pendingStatusMap:', pendingStatuses);
+    console.log('✅ Final pendingStatusMap:', pendingStatuses);
 
   } catch (error) {
-    console.error('Failed to load students:', error);
+    console.error('❌ Failed to load students:', error);
     setStudents([]);
+    setPendingStatusMap({});
   } finally {
     setLoading(false);
   }
 };
+// const fetchStudents = async () => {
+//   try {
+//     setLoading(true);
+//     let response;
+//     let studentsData = [];
+    
+//     console.log('Fetching students with filters:', filters);
+
+//     // Case 1: Filter by institution
+//     if (filters.institutionsId) {
+//       response = await getStudentsByInstitution(filters.institutionsId);
+//       studentsData = response?.data || response || [];
+//     }
+//     // Case 2: Search
+//     else if (filters.search) {
+//       response = await searchStudents(filters.search);
+//       studentsData = response?.data || response || [];
+//     }
+//     // Case 3: Get all with pagination
+//     else {
+//       response = await getAllStudents(pagination.page, pagination.size, 'studentName', 'asc');
+//       studentsData = response?.content || [];
+//       setPagination(prev => ({
+//         ...prev,
+//         totalPages: response?.totalPages || 1,
+//         totalElements: response?.totalElements || studentsData.length
+//       }));
+//     }
+
+//     // Process and set students
+//     const processedStudents = studentsData.map(student => ({
+//       ...student,
+//       sponsors: student.sponsors || [] // Ensure sponsors array exists
+//     }));
+    
+//     setStudents(processedStudents);
+//     console.log(` Loaded ${processedStudents.length} students`);
+
+//     // Now check pending status for EACH student
+//     const pendingStatuses = {};
+    
+//     for (const student of processedStudents) {
+//       console.log(`\n=== Checking student ${student.studentId}: ${student.studentName} ===`);
+//       const pendingStatus = await checkPendingSponsorship(student.studentId);
+//       pendingStatuses[student.studentId] = pendingStatus;
+      
+//       // Log the result
+//       if (pendingStatus.hasPending) {
+//         console.log(`🎉 Student ${student.studentId} HAS pending sponsorship!`);
+//       } else {
+//         console.log(`📭 Student ${student.studentId} has NO pending sponsorship`);
+//       }
+//     }
+    
+//     setPendingStatusMap(pendingStatuses);
+//     console.log(' Final pendingStatusMap:', pendingStatuses);
+
+//   } catch (error) {
+//     console.error('Failed to load students:', error);
+//     setStudents([]);
+//   } finally {
+//     setLoading(false);
+//   }
+// };
 
 const checkPendingSponsorship = async (studentId) => {
   try {

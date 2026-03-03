@@ -141,9 +141,22 @@ export const getStudentsByInstitution = async (institutionsId) => {
 //     throw error;
 //   }
 // };
-export const searchStudents = (params) => 
-  axios.get(`${API_BASE_URL}/students/search`, { params });
-
+// export const searchStudents = (params) => 
+//   axios.get(`${API_BASE_URL}/students/search`, { params });
+export const searchStudents = async (searchTerm) => {
+  try {
+    // params হিসেবে { studentName: searchTerm } পাঠান
+    const response = await axios.get(`${API_BASE_URL}/students/search`, {
+      params: { studentName: searchTerm }
+    });
+    
+    // response ডাটা সঠিকভাবে return করুন
+    return response.data; // শুধু data part return করুন
+  } catch (error) {
+    console.error('Search API error:', error);
+    throw error;
+  }
+};
 // Add other student-related API calls here
 // Add other student-related API calls here
 export const submitResults = async (studentId, files) => {
