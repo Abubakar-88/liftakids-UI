@@ -542,7 +542,15 @@ const handleCloseModal = () => {
           Search
         </button>
       </div>
-
+         <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium text-gray-500">Total Registered Students:</div>
+          <div className="text-2xl font-bold text-gray-900">{pagination.totalElements}</div>
+        </div>
+        <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
+          <span>↑</span> Updated just now
+        </div>
+      </div>
       {/* Desktop Table */}
       <div className="hidden md:block">
         <table className="min-w-full divide-y divide-gray-200">
@@ -643,7 +651,7 @@ const handleCloseModal = () => {
                 {/* Sponsorship Status */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    student.sponsored ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    student.sponsored ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
                     {student.sponsored ? 'Sponsored' : 'Not Sponsored'}
                   </span>
@@ -699,43 +707,43 @@ const handleCloseModal = () => {
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
-        {pagination.totalPages > 1 && (
-          <div className="bg-white px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {pagination.totalElements} students
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 0}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    pagination.page === 0
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
-                >
-                  Previous
-                </button>
-                <span className="px-4 py-2 text-sm text-gray-700">
-                  Page {pagination.page + 1} of {pagination.totalPages}
-                </span>
-                <button
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.totalPages - 1}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    pagination.page >= pagination.totalPages - 1
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+         {/* Pagination Controls */}
+{pagination.totalPages > 1 && (
+  <div className="bg-white px-6 py-4 border-t border-gray-200">
+    <div className="flex items-center justify-between">
+      <div className="text-sm text-gray-700">
+        Showing {pagination.totalElements} students
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={() => handlePageChange(pagination.page - 1)}
+          disabled={pagination.page === 0}
+          className={`px-3 py-1 md:px-2 md:py-1 rounded-lg text-sm font-medium ${
+            pagination.page === 0
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          Previous
+        </button>
+        <span className="px-2 py-1 md:px-4 md:py-2 text-sm text-gray-700">
+          Page {pagination.page + 1} of {pagination.totalPages}
+        </span>
+        <button
+          onClick={() => handlePageChange(pagination.page + 1)}
+          disabled={pagination.page >= pagination.totalPages - 1}
+          className={`px-3 py-1 md:px-2 md:py-1 rounded-lg text-sm font-medium ${
+            pagination.page >= pagination.totalPages - 1
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </div>
 
       {/* Mobile View */}
@@ -808,6 +816,46 @@ const handleCloseModal = () => {
             </div>
           </div>
         ))}
+
+ {/* Pagination Controls */}
+        {pagination.totalPages > 1 && (
+          <div className="bg-white px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {pagination.totalElements} students
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 0}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    pagination.page === 0
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 text-sm text-gray-700">
+                  Page {pagination.page + 1} of {pagination.totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages - 1}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    pagination.page >= pagination.totalPages - 1
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
       </div>
 
       {/* Result Modal */}
