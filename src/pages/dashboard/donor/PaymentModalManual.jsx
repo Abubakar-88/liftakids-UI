@@ -51,9 +51,9 @@ const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = f
           let url = '';
           
           if (isExistingSponsor && sponsorshipId) {
-            url = `http://localhost:8081/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
+            url = `https://menboots.store/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
           } else if (student.id) {
-            url = `http://localhost:8081/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
+            url = `https://menboots.store/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
           }
           
           if (url) {
@@ -190,7 +190,7 @@ const getCurrentDonorId = () => {
   }
   return 1; // Fallback for testing
 };
-// PaymentModalManual.jsx - complete handlePayNow function
+
 const handlePayNow = async () => {
   if (!validateForm()) return;
 
@@ -226,13 +226,6 @@ const handlePayNow = async () => {
     setLoading(false);
   }
 };
-
-//   const handlePayNow = () => {
-//     if (!validateForm()) return;
-
-//     // Show payment instructions instead of immediate redirect
-//     setShowPaymentInstructions(true);
-//   };
 
   const handleProceedToPayment = () => {
     const paymentInfo = {
@@ -294,55 +287,51 @@ const handlePayNow = async () => {
   // Payment Instructions Modal
   if (showPaymentInstructions) {
     return (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg w-full max-w-md mx-auto overflow-hidden shadow-xl">
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="bg-white rounded-lg w-full max-w-md mx-auto my-8 overflow-hidden shadow-xl">
           {/* Header */}
           <div className="bg-blue-50 p-5 border-b">
             <h2 className="text-xl font-bold text-gray-800 text-center">
               Payment Instructions - {paymentMethods[paymentMethod]?.name}
             </h2>
-            {/* <p className="text-sm text-gray-600 text-center mt-1">
-            For: <span className="font-semibold text-blue-700">{student.studentName || student.name}</span>
-          </p> */}
           </div>
 
-        <div className="p-5">
-          {/* Student Name - Copyable */}
-          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold text-gray-700 text-sm mb-1">Student Name</h3>
-                <p className="text-lg font-bold text-blue-700">{student.studentName || student.name}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Include this name in payment reference/notes
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(student.studentName || student.name);
-                  // Optional: Show a success message
-                  const copyBtn = document.getElementById('copyStudentNameBtn');
-                  if (copyBtn) {
-                    const originalText = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
-                    setTimeout(() => {
-                      copyBtn.innerHTML = originalText;
-                    }, 2000);
-                  }
-                }}
-                id="copyStudentNameBtn"
-                className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Copy
-              </button>
-            </div>
-          </div>
-          </div>
-          {/* Content */}
           <div className="p-5">
+            {/* Student Name - Copyable */}
+            <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-gray-700 text-sm mb-1">Student Name</h3>
+                  <p className="text-lg font-bold text-blue-700">{student.studentName || student.name}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Include this name in payment reference/notes
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(student.studentName || student.name);
+                    // Optional: Show a success message
+                    const copyBtn = document.getElementById('copyStudentNameBtn');
+                    if (copyBtn) {
+                      const originalText = copyBtn.innerHTML;
+                      copyBtn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+                      setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                      }, 2000);
+                    }
+                  }}
+                  id="copyStudentNameBtn"
+                  className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </button>
+              </div>
+            </div>
+          
+            {/* Content */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
               <div className="flex items-start">
                 <svg className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,7 +396,7 @@ const handlePayNow = async () => {
   }
 
 return (
-  <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
     {showCheckout && paymentData ? (
       <PaymentCheckoutPage
         sponsoredData={paymentData}
@@ -416,9 +405,9 @@ return (
         isExistingSponsor={isExistingSponsor}
       />
     ) : (
-      <div className="bg-white rounded-lg w-full max-w-md mx-auto overflow-hidden shadow-xl">
-        {/* Header */}
-        <div className="bg-blue-50 p-5 border-b">
+      <div className="bg-white rounded-lg w-full max-w-md mx-auto my-8 overflow-hidden shadow-xl">
+        {/* Header - Sticky */}
+        <div className="bg-blue-50 p-5 border-b sticky top-0 z-10">
           <h2 className="text-xl font-bold text-gray-800 text-center">
             {isExistingSponsor ? 'Continue Sponsoring' : 'Sponsor'} {student.studentName || student.name}
           </h2>
@@ -429,8 +418,8 @@ return (
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-5">
+        {/* Content - Scrollable */}
+        <div className="p-5 max-h-[calc(100vh-200px)] overflow-y-auto">
           {/* loading state */}
           {loading && (
             <div className="text-center py-4">
@@ -594,8 +583,8 @@ return (
           )}
         </div>
 
-        {/* Footer */}
-        <div className="bg-gray-50 px-5 py-4 flex justify-between">
+        {/* Footer - Sticky at bottom */}
+        <div className="bg-gray-50 px-5 py-4 flex justify-between border-t sticky bottom-0 z-10">
           <button
             onClick={handleClose}
             className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
@@ -605,7 +594,7 @@ return (
           <button
             onClick={handlePayNow}
             disabled={!paymentMethod || totalMonths === 0 || loading}
-            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled: cursor-not-allowed transition-colors"
+            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Loading...' : 'Pay Now'}
           </button>
@@ -613,7 +602,7 @@ return (
 
         {/* Month Picker */}
         {showMonthPicker && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70]">
             <div className="bg-white rounded-lg p-5 w-64">
               <div className="flex justify-between items-center mb-4">
                 <button

@@ -80,7 +80,7 @@ const fetchSponsoredStudents = async (page) => {
     }
   } catch (error) {
     console.error("Failed to fetch sponsored students:", error);
-    setError("Failed to load sponsored students");
+    setError("Not Found sponsored students");
     setStudents([]);
   } finally {
     setLoading(false);
