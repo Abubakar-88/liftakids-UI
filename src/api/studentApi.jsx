@@ -157,6 +157,28 @@ export const searchStudents = async (searchTerm) => {
     throw error;
   }
 };
+
+export const searchStudentsPaginated = async (searchTerm, page = 0, size = 10) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/students/search`, {
+      params: { 
+        studentName: searchTerm,
+        page: page,
+        size: size,
+        sortBy: 'studentName',
+        sortDir: 'asc'
+      }
+    });
+    return response.data; // Page object return করবে
+  } catch (error) {
+    console.error('Search API error:', error);
+    throw error;
+  }
+};
+
+
+
+
 // Add other student-related API calls here
 // Add other student-related API calls here
 export const submitResults = async (studentId, files) => {

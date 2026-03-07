@@ -58,7 +58,7 @@ const [donorData, setDonorData] = useState(null);
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
           <FaUserPlus className="text-teal-700 text-4xl mb-2" />
-          <span className="text-sm text-black text-center">Add Sponsor</span>
+          <span className="text-sm text-black text-center">Add Student</span>
         </div>
 
         <div
@@ -66,7 +66,7 @@ const [donorData, setDonorData] = useState(null);
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
           <FaGraduationCap className="text-teal-700 text-4xl mb-2" />
-          <span className="text-sm text-black text-center">Sponsored Student</span>
+          <span className="text-sm text-black text-center">My Sponsored Student</span>
         </div>
 
         <div

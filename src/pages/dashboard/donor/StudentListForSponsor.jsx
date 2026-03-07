@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getInstitutionsByUnion, getAllInstitutionsList } from '../../../api/institutionApi';
-import { getAllStudents, getStudentsByInstitution, searchStudents, getStudentById } from '../../../api/studentApi';
+import { getAllStudents, getStudentsByInstitution,searchStudentsPaginated, searchStudents, getStudentById } from '../../../api/studentApi';
 import { getDivisions, getDistrictsByDivision, getThanasByDistrict, getUnionsByThanaId } from '../../../api/areaApi';
 import { FaHandHoldingHeart } from 'react-icons/fa';
 import ContactSponsorModal from '../donor/ContactSponsorModal';
@@ -16,6 +16,8 @@ const StudentListForSponsor = () => {
   //const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
  const navigate = useNavigate();
+ const [searchTimeout, setSearchTimeout] = useState(null);
+
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   // Filter states
@@ -102,31 +104,72 @@ const fetchStudents = async () => {
   try {
     setLoading(true);
     let studentsData = [];
+    let totalPages = 1;
+    let totalElements = 0;
     
     console.log('Fetching students with filters:', filters);
+    console.log('Current page:', pagination.page, 'Size:', pagination.size);
 
     // Case 1: Filter by institution
     if (filters.institutionsId) {
       const response = await getStudentsByInstitution(filters.institutionsId);
-      studentsData = response?.data || response || [];
+      
+      // Check if response is paginated or not
+      if (response?.content) {
+        // Paginated response
+        studentsData = response.content;
+        totalPages = response.totalPages || 1;
+        totalElements = response.totalElements || studentsData.length;
+      } else {
+        // Non-paginated response
+        studentsData = response?.data || response || [];
+        totalPages = 1;
+        totalElements = studentsData.length;
+      }
     }
-    // Case 2: Search
+    // Case 2: Search with pagination
     else if (filters.search) {
-      const response = await searchStudents(filters.search);
-      // response already data, so direct assign
-      studentsData = Array.isArray(response) ? response : [];
-      console.log('Search response:', studentsData);
+      // Call search API with pagination parameters
+      const response = await searchStudentsPaginated(
+        filters.search,
+        pagination.page,
+        pagination.size
+      );
+      
+      // Check if response is paginated
+      if (response?.content) {
+        studentsData = response.content;
+        totalPages = response.totalPages || 1;
+        totalElements = response.totalElements || 0;
+        console.log('Search paginated response:', response);
+      } else {
+        // Fallback for non-paginated response
+        studentsData = Array.isArray(response) ? response : [];
+        totalPages = 1;
+        totalElements = studentsData.length;
+        console.log('Search non-paginated response:', studentsData);
+      }
     }
     // Case 3: Get all with pagination
     else {
-      const response = await getAllStudents(pagination.page, pagination.size, 'studentName', 'asc');
+      const response = await getAllStudents(
+        pagination.page, 
+        pagination.size, 
+        'studentName', 
+        'asc'
+      );
+      
       studentsData = response?.content || [];
-      setPagination(prev => ({
-        ...prev,
-        totalPages: response?.totalPages || 1,
-        totalElements: response?.totalElements || studentsData.length
-      }));
+      totalPages = response?.totalPages || 1;
+      totalElements = response?.totalElements || studentsData.length;
     }
+
+    // Update pagination state
+    setPagination(prev => ({
+      ...prev,
+      totalPages: totalPages,
+      totalElements: totalElements
+    }));
 
     // Check if studentsData is array
     if (!Array.isArray(studentsData)) {
@@ -142,34 +185,46 @@ const fetchStudents = async () => {
     }));
     
     setStudents(processedStudents);
-    console.log(`✅ Loaded ${processedStudents.length} students`);
+    
+    // Log pagination info
+    const startItem = pagination.page * pagination.size + 1;
+    const endItem = Math.min(startItem + processedStudents.length - 1, totalElements);
+    console.log(`✅ Loaded ${processedStudents.length} students (Showing ${startItem} to ${endItem} of ${totalElements})`);
 
     // Now check pending status for EACH student
     const pendingStatuses = {};
     
-    for (const student of processedStudents) {
+    // Use Promise.all for better performance
+    const pendingPromises = processedStudents.map(async (student) => {
       try {
         console.log(`\n=== Checking student ${student.studentId}: ${student.studentName} ===`);
         const pendingStatus = await checkPendingSponsorship(student.studentId);
         
         // Ensure pendingStatus is object
         if (pendingStatus && typeof pendingStatus === 'object') {
-          pendingStatuses[student.studentId] = pendingStatus;
-          
           if (pendingStatus.hasPending) {
             console.log(`🎉 Student ${student.studentId} HAS pending sponsorship!`);
           } else {
             console.log(`📭 Student ${student.studentId} has NO pending sponsorship`);
           }
+          return { studentId: student.studentId, status: pendingStatus };
         } else {
           console.warn(`Invalid pending status for student ${student.studentId}`);
-          pendingStatuses[student.studentId] = { hasPending: false };
+          return { studentId: student.studentId, status: { hasPending: false } };
         }
       } catch (err) {
         console.error(`Error checking pending status for student ${student.studentId}:`, err);
-        pendingStatuses[student.studentId] = { hasPending: false };
+        return { studentId: student.studentId, status: { hasPending: false } };
       }
-    }
+    });
+
+    // Wait for all pending status checks
+    const results = await Promise.all(pendingPromises);
+    
+    // Build pending status map
+    results.forEach(result => {
+      pendingStatuses[result.studentId] = result.status;
+    });
     
     setPendingStatusMap(pendingStatuses);
     console.log('✅ Final pendingStatusMap:', pendingStatuses);
@@ -182,6 +237,7 @@ const fetchStudents = async () => {
     setLoading(false);
   }
 };
+
 
 const checkPendingSponsorship = async (studentId) => {
   try {
@@ -360,29 +416,39 @@ const getSponsorButtonStatus = (student) => {
     setPagination(prev => ({ ...prev, page: 0 }));
   };
 
-  const handleSearchChange = (e) => {
-    setFilters(prev => ({ ...prev, search: e.target.value }));
-  };
+const handleSearchChange = (e) => {
+  const searchValue = e.target.value;
+  setFilters(prev => ({ ...prev, search: searchValue }));
+  setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page
+  
+  // Debounce search to avoid too many API calls
+  if (searchTimeout) clearTimeout(searchTimeout);
+  setSearchTimeout(setTimeout(() => {
+    fetchStudents();
+  }, 500));
+};
+ 
 
-  const resetFilters = () => {
-    setFilters({
-      divisionId: '',
-      districtId: '',
-      thanaId: '',
-      unionOrAreaId: '',
-      institutionsId: '',
-      search: ''
-    });
-    setPagination(prev => ({ ...prev, page: 0 }));
-  };
+ const resetFilters = () => {
+  setFilters({
+    divisionId: '',
+    districtId: '',
+    thanaId: '',
+    unionOrAreaId: '',
+    institutionsId: '',
+    search: ''
+  });
+  setPagination(prev => ({ ...prev, page: 0 }));
+  fetchStudents(); // Fetch with reset filters
+};
 
-  const handlePageChange = (newPage) => {
-    if (newPage >= 0 && newPage < pagination.totalPages) {
-      setPagination(prev => ({ ...prev, page: newPage }));
-      // Fetch students for the new page
-      fetchStudents();
-    }
-  };
+const handlePageChange = (newPage) => {
+  if (newPage >= 0 && newPage < pagination.totalPages) {
+    setPagination(prev => ({ ...prev, page: newPage }));
+    // Fetch students for the new page
+    fetchStudents();
+  }
+};
 
   const handleViewDetails = (student) => {
     setSelectedStudent(student);
