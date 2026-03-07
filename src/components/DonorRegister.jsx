@@ -89,7 +89,7 @@ const DonorRegister = () => {
       });
       
       setTimeout(() => {
-        navigate('/login/donar');
+        navigate('/login/donor');
       }, 3000);
       
     } catch (err) {
