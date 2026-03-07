@@ -182,70 +182,6 @@ const fetchStudents = async () => {
     setLoading(false);
   }
 };
-// const fetchStudents = async () => {
-//   try {
-//     setLoading(true);
-//     let response;
-//     let studentsData = [];
-    
-//     console.log('Fetching students with filters:', filters);
-
-//     // Case 1: Filter by institution
-//     if (filters.institutionsId) {
-//       response = await getStudentsByInstitution(filters.institutionsId);
-//       studentsData = response?.data || response || [];
-//     }
-//     // Case 2: Search
-//     else if (filters.search) {
-//       response = await searchStudents(filters.search);
-//       studentsData = response?.data || response || [];
-//     }
-//     // Case 3: Get all with pagination
-//     else {
-//       response = await getAllStudents(pagination.page, pagination.size, 'studentName', 'asc');
-//       studentsData = response?.content || [];
-//       setPagination(prev => ({
-//         ...prev,
-//         totalPages: response?.totalPages || 1,
-//         totalElements: response?.totalElements || studentsData.length
-//       }));
-//     }
-
-//     // Process and set students
-//     const processedStudents = studentsData.map(student => ({
-//       ...student,
-//       sponsors: student.sponsors || [] // Ensure sponsors array exists
-//     }));
-    
-//     setStudents(processedStudents);
-//     console.log(` Loaded ${processedStudents.length} students`);
-
-//     // Now check pending status for EACH student
-//     const pendingStatuses = {};
-    
-//     for (const student of processedStudents) {
-//       console.log(`\n=== Checking student ${student.studentId}: ${student.studentName} ===`);
-//       const pendingStatus = await checkPendingSponsorship(student.studentId);
-//       pendingStatuses[student.studentId] = pendingStatus;
-      
-//       // Log the result
-//       if (pendingStatus.hasPending) {
-//         console.log(`🎉 Student ${student.studentId} HAS pending sponsorship!`);
-//       } else {
-//         console.log(`📭 Student ${student.studentId} has NO pending sponsorship`);
-//       }
-//     }
-    
-//     setPendingStatusMap(pendingStatuses);
-//     console.log(' Final pendingStatusMap:', pendingStatuses);
-
-//   } catch (error) {
-//     console.error('Failed to load students:', error);
-//     setStudents([]);
-//   } finally {
-//     setLoading(false);
-//   }
-// };
 
 const checkPendingSponsorship = async (studentId) => {
   try {
@@ -612,7 +548,6 @@ const getSponsorButtonStatus = (student) => {
 
       {/* Search Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Search Student to Sponsor</h2>
         
         {/* Desktop View - 5 columns */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
