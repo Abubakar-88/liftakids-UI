@@ -564,29 +564,51 @@ const getSponsorButtonStatus = (student) => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
-                <FaHandHoldingHeart className="mr-2" /> Donor Portal
-              </h1>
-              <p className="text-gray-600 italic">
-                Search and sponsor students in need of financial support
-              </p>
-            </div>
-            
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center text-blue-600 hover:text-blue-800"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
-              Back
-            </button>
-          </div>
-        </div>
+     {/* Header Section */}
+     <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-6 order-b-4 border-blue-600">
+       {/* Title and Back button - Same line */}
+       <div className="flex justify-between items-center mb-3">
+         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+           <FaHandHoldingHeart className="text-blue-600 mr-2 text-lg md:text-xl" /> 
+           Donor Portal
+         </h1>
+         
+         <button
+           onClick={() => navigate(-1)}
+           className="flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base"
+         >
+           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+           </svg>
+           <span className="hidden md:inline">Back</span>
+           <span className="md:hidden">←</span>
+         </button>
+       </div>
+       
+       {/* Subtitle */}
+       <h2 className="text-lg md:text-xl font-semibold text-gray-700 mb-3">
+         Search Student to Sponsor
+       </h2>
+       
+       {/* Description */}
+       <p className="text-sm md:text-base text-gray-600 mb-4">
+         Search and sponsor students in need of financial support
+       </p>
+       
+       {/* Info box */}
+       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
+         <div className="flex items-start">
+           <svg className="h-4 w-4 md:h-5 md:w-5 text-yellow-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+           </svg>
+           <div className="text-xs md:text-sm">
+             <span className="font-medium text-yellow-800">Please Enter All Fields:</span>
+             <span className="text-yellow-700 ml-1">Division, District, Thana, Union/Area</span>
+           </div>
+         </div>
+       </div>
+     </div>
+     <div className="w-full h-1 bg-black  mb-6"></div>
 
       {/* Search Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -784,32 +806,72 @@ const getSponsorButtonStatus = (student) => {
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <div className="flex-1 mr-4">
-            <input
-              type="text"
-              name="search"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder="Search by student name or guardian..."
-              className="w-full p-2 border border-gray-300 rounded-md"
-            />
+        <div className="flex flex-col md:flex-row gap-3">
+            {/* Mobile: Reset Icon + Search Row */}
+            <div className="flex items-center gap-2 md:hidden">
+              {/* Reset Icon Button - Mobile */}
+          <button
+            onClick={resetFilters}
+            className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 flex-shrink-0"
+            title="Reset Filters"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+              
+              {/* Search Input - Mobile */}
+              <div className="flex-1">
+                <input
+                  type="text"
+                  name="search"
+                  value={filters.search}
+                  onChange={handleSearchChange}
+                  placeholder="Search by name or guardian..."
+                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+              
+              {/* Search Button - Mobile */}
+              <button
+                onClick={fetchStudents}
+                className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex-shrink-0"
+                title="Search"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop: Original Layout */}
+            <div className="hidden md:flex md:flex-1 md:justify-between md:items-center">
+              <div className="flex-1 mr-4">
+                <input
+                  type="text"
+                  name="search"
+                  value={filters.search}
+                  onChange={handleSearchChange}
+                  placeholder="Search by student name or guardian..."
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={resetFilters}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                >
+                  Reset Filters
+                </button>
+                <button
+                  onClick={fetchStudents}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Search
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={resetFilters}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-            >
-              Reset Filters
-            </button>
-            <button
-              onClick={fetchStudents}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Search
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Student List - Desktop Table */}
@@ -941,8 +1003,14 @@ const getSponsorButtonStatus = (student) => {
               <div className="px-6 py-4 bg-white border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-700">
-                    Showing {students.length} of {pagination.totalElements} students
-                  </div>
+                  Showing <span className="font-medium">
+                    {students.length === 0 ? 0 : pagination.page * pagination.size + 1}
+                  </span> to{' '}
+                  <span className="font-medium">
+                    {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}
+                  </span> of{' '}
+                  <span className="font-medium">{pagination.totalElements}</span> students
+                </div>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handlePageChange(pagination.page - 1)}
@@ -1088,46 +1156,56 @@ const getSponsorButtonStatus = (student) => {
     ))
   )}
   
+  
   {/* Pagination */}
-  {pagination.totalPages > 1 && (
-    <div className="px-4 py-3 bg-white border-t border-gray-200">
-      <div className="flex flex-col items-center space-y-3">
-        <div className="text-sm text-gray-700">
-          Showing {students.length} of {pagination.totalElements} students
-        </div>
+{pagination.totalPages > 0 && (
+  <div className="px-4 py-3 bg-white border-t border-gray-200">
+    <div className="flex flex-col items-center space-y-3">
+      {/* Showing X to Y of Z students */}
+      <div className="text-sm text-gray-700">
+        Showing <span className="font-medium">
+          {students.length === 0 ? 0 : pagination.page * pagination.size + 1}
+        </span> to{' '}
+        <span className="font-medium">
+          {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}
+        </span> of{' '}
+        <span className="font-medium">{pagination.totalElements}</span> students
+      </div>
+      
+      {/* Simple page navigation */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => handlePageChange(pagination.page - 1)}
+          disabled={pagination.page === 0}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            pagination.page === 0
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          Previous
+        </button>
         
-        <div className="flex items-center space-x-1">
-          <button
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page === 0}
-            className={`px-3 py-1 rounded text-sm ${
-              pagination.page === 0
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            Previous
-          </button>
-          
-          <span className="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700">
-            Page {pagination.page + 1} of {pagination.totalPages}
-          </span>
-          
-          <button
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page >= pagination.totalPages - 1}
-            className={`px-3 py-1 rounded text-sm ${
-              pagination.page >= pagination.totalPages - 1
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            Next
-          </button>
-        </div>
+        <span className="text-sm text-gray-700">
+          Page <span className="font-medium">{pagination.page + 1}</span> of{' '}
+          <span className="font-medium">{pagination.totalPages}</span>
+        </span>
+        
+        <button
+          onClick={() => handlePageChange(pagination.page + 1)}
+          disabled={pagination.page >= pagination.totalPages - 1}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            pagination.page >= pagination.totalPages - 1
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          Next
+        </button>
       </div>
     </div>
-  )}
+  </div>
+)}
 </div>
     
     {showDetails && selectedStudent && (

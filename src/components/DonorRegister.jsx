@@ -292,7 +292,7 @@ const DonorRegister = () => {
       <div className="mt-6 text-center text-sm text-gray-600">
         Already registered?{' '}
         <button 
-          onClick={() => navigate('/login/donar')}
+          onClick={() => navigate('/login/donor')}
           className="text-teal-600 hover:text-teal-800 font-medium underline mt-1"
         >
           Login here

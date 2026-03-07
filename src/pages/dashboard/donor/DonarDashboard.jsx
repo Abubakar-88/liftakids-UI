@@ -45,9 +45,9 @@ const [donorData, setDonorData] = useState(null);
           <h2 className="text-sm font-semibold">Welcome {donorData ? donorData.name : 'Donor'}</h2>
           <span className="text-xl">→</span>
         </div>
-        <p className="text-xs mt-2 font-light">The standard Lorem Ipsum passage</p>
+        <p className="text-xs mt-2 font-light">Education for the underprivileged — in your hands</p>
         <p className="text-xs italic mt-1">
-          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+          "Your small support can change the future of a underprivileged student."
         </p>
       </div>
 
