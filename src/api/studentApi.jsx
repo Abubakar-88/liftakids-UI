@@ -73,7 +73,7 @@ export const getInstitutionName = async (institutionId) => {
 };
 
    // Get top unsponsored urgent students with dynamic limit
-   export const getTopUnsponsoredUrgentTopStudents = async (limit = 4) => {
+   export const getTopUnsponsoredUrgentStudents = async (limit = 4) => {
         try {
             const response = await axios.get(`${API_BASE_URL}/students/unsponsored/urgent/top`, {
                 params: { limit }
@@ -86,15 +86,15 @@ export const getInstitutionName = async (institutionId) => {
       };  
 
 
-export const getTopUnsponsoredUrgentStudents = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/students/unsponsored/urgent/top3`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching urgent unsponsored students:', error);
-    throw new Error(error.response?.data?.message || 'Failed to fetch urgent students');
-  }
-};
+// export const getTopUnsponsoredUrgentStudents = async () => {
+//   try {
+//     const response = await axios.get(`${API_BASE_URL}/students/unsponsored/urgent/top3`);
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching urgent unsponsored students:', error);
+//     throw new Error(error.response?.data?.message || 'Failed to fetch urgent students');
+//   }
+// };
 // api/studentApi.js
 export const fetchStudents = async () => {
   try {

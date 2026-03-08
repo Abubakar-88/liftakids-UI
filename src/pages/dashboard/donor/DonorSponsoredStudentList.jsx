@@ -46,7 +46,7 @@ const DonorSponsoredStudentList = () => {
 
     const [sponsoredData, availableData, donorInfoData] = await Promise.all([
       getSponsorshipsByDonorId(donorData.donorId), 
-      getTopUnsponsoredUrgentStudents(), 
+      getTopUnsponsoredUrgentStudents(20), 
       getDonorById(donorData.donorId)
     ]);
 

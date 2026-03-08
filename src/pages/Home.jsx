@@ -4,7 +4,7 @@ import { MdMedicalServices } from 'react-icons/md';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getTopUnsponsoredUrgentTopStudents } from '../api/studentApi';
+import { getTopUnsponsoredUrgentStudents } from '../api/studentApi';
 
 export default function Home() {
     const [expandedQuestion, setExpandedQuestion] = useState(null);
@@ -27,7 +27,7 @@ export default function Home() {
     const fetchUrgentStudents = async () => {
         try {
             setLoading(true);
-            const data = await getTopUnsponsoredUrgentTopStudents(studentLimit);
+            const data = await getTopUnsponsoredUrgentStudents(studentLimit);
             setUrgentStudents(data);
             setError(null);
         } catch (err) {
@@ -442,7 +442,7 @@ export default function Home() {
 
             {/* Footer */}
             <div className="text-center text-sm text-gray-500 mt-8 md:mt-12">
-                <p>© {new Date().getFullYear()} Lift A Kids. All rights reserved.</p>
+                <p>© {new Date().getFullYear()} Lift A Kid. All rights reserved.</p>
             </div>
         </div>
     );
