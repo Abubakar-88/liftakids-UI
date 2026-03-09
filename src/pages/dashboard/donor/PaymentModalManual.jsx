@@ -287,50 +287,51 @@ const handlePayNow = async () => {
   // Payment Instructions Modal
 if (showPaymentInstructions) {
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-lg w-full max-w-md mx-auto my-8 overflow-hidden shadow-xl">
-        {/* Header */}
-        <div className="bg-blue-50 p-5 border-b">
-          <h2 className="text-xl font-bold text-gray-800 text-center">
-            {paymentMethod 
-              ? `Payment Instructions - ${paymentMethods[paymentMethod]?.name}`
-              : 'Payment Confirmation'}
-          </h2>
-        </div>
+     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-2 z-50 overflow-y-auto">
+    <div className="bg-white rounded-lg w-full max-w-md mx-auto overflow-hidden shadow-xl">
+      {/* Header */}
+      <div className="bg-blue-50 p-4 border-b sticky top-0 z-10">
+        <h2 className="text-lg font-bold text-gray-800 text-center">
+          {paymentMethod 
+            ? `Payment Instructions - ${paymentMethods[paymentMethod]?.name}`
+            : 'Payment Confirmation'}
+        </h2>
+      </div>
 
-        <div className="p-5">
-          {/* Student Name - Copyable */}
-          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold text-gray-700 text-sm mb-1">Student Name</h3>
-                <p className="text-lg font-bold text-blue-700">{student.studentName || student.name}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Include this name in payment reference/notes
-                </p>
-              </div>
+      {/* Content - Dynamic height */}
+      <div className="p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
+        {/* Student Name - Simplified */}
+        <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="grid grid-cols-1 gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-medium text-gray-500">Student Name</span>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(student.studentName || student.name);
-                  const copyBtn = document.getElementById('copyStudentNameBtn');
-                  if (copyBtn) {
-                    const originalText = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+                  // Show temporary success
+                  const btn = document.getElementById('copyBtn');
+                  if (btn) {
+                    btn.textContent = 'Copied!';
                     setTimeout(() => {
-                      copyBtn.innerHTML = originalText;
+                      btn.textContent = 'Copy';
                     }, 2000);
                   }
                 }}
-                id="copyStudentNameBtn"
-                className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm"
+                id="copyBtn"
+                className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700"
               >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
                 Copy
               </button>
             </div>
+            <p className="text-base font-bold text-blue-700 break-words">{student.studentName || student.name}</p>
+            <p className="text-xs text-gray-400 flex items-center">
+              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Include in payment reference
+            </p>
           </div>
+        </div>
         
           {/* Content - Conditional based on paymentMethod */}
           {paymentMethod ? (
