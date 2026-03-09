@@ -30,9 +30,9 @@ const PaymentModal = ({ student, onClose, onPayment, isExistingSponsor = false, 
           let url = '';
           
           if (isExistingSponsor && sponsorshipId) {
-            url = `http://localhost/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
+            url = `http://menboots.store/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
           } else if (student.id) {
-            url = `http://localhost/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
+            url = `http://menboots.store/LiftAKids/api/sponsorships/student/${student.studentId}/payments`;
           }
           
           if (url) {

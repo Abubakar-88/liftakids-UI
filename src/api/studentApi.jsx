@@ -124,6 +124,33 @@ export const getStudentsByInstitution = async (institutionsId) => {
   const response = await axios.get(`${API_BASE_URL}/students/institution/${institutionsId}`);
   return response.data; // This should be your student array
 };
+
+export const getStudentsByInstitutionWithPagination = async (
+  institutionId, 
+  page = 0, 
+  size = 10, 
+  sortBy = 'studentName', 
+  direction = 'asc'
+) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/students/institution/${institutionId}/withPagination`, {
+      params: { 
+        page, 
+        size,
+        sortBy,
+        direction
+      }
+    });
+    return response.data; // Returns Page object with content, totalPages, totalElements
+  } catch (error) {
+    console.error('Error fetching students by institution:', error);
+    throw error;
+  }
+};
+
+
+
+
 // export const getStudentsByInstitution = async (institutionId) => {
 //   try {
 //     const response = await axios.get(`${API_BASE_URL}/students/institution/${institutionId}`);

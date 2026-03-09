@@ -96,14 +96,20 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
     return `tel:${cleaned}`;
   };
 
-  const normalizeForWhatsApp = (num) => {
-    if (!num) return "#";
-    let digits = num.replace(/\D/g, "");
-    if (digits.startsWith("0")) digits = "88" + digits.slice(1);
-    return `https://wa.me/${digits}`;
-  };
+ const normalizeForWhatsApp = (num) => {
+  if (!num) return "#";
+  
+  // সব non-digit ক্যারেক্টার রিমুভ করুন
+  let digits = num.replace(/\D/g, "");
+  
+  // বাংলাদেশের নম্বরের জন্য (যদি দরকার হয়)
+  // if (digits.startsWith("0")) digits = "88" + digits.slice(1);
+  
+  // USA নম্বরের জন্য - সরাসরি return
+  return `https://wa.me/${digits}`;
+};
 
-  const adminContact = "+8801980000018";
+const adminContact = "+1 (917) 257-4204";
 
   return (
     <>

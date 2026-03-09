@@ -204,7 +204,9 @@ export default function Home() {
                         <div className="bg-teal-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                             <FaUserPlus className="text-teal-600 text-2xl" />
                         </div>
-                        <h3 className="font-bold text-lg mb-2 text-teal-800">Register Yourself</h3>
+                        <h3
+                         onClick={handleDonorClick} 
+                        className="font-bold text-lg mb-2 text-teal-800">Register Yourself</h3>
                         <p className="text-gray-600 text-sm">
                             Sign up to join and be part of the good people who love to share
                         </p>
@@ -226,7 +228,7 @@ export default function Home() {
                         <div className="bg-teal-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                             <FaHandHoldingHeart className="text-teal-600 text-2xl" />
                         </div>
-                        <h3 className="font-bold text-lg mb-2 text-teal-800">Add Sponsor</h3>
+                        <h3 className="font-bold text-lg mb-2 text-teal-800">Sponsor Student</h3>
                         <p className="text-gray-600 text-sm">
                             Sharing happiness with those less and doing more good for others
                         </p>

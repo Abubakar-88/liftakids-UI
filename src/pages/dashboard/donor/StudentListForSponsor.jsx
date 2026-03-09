@@ -112,7 +112,7 @@ const fetchStudents = async () => {
 
     // Case 1: Filter by institution
     if (filters.institutionsId) {
-      const response = await getStudentsByInstitution(filters.institutionsId);
+      const response = await getStudentsByInstitutionWithPagination(filters.institutionsId, pagination.page, pagination.size);
       
       // Check if response is paginated or not
       if (response?.content) {
