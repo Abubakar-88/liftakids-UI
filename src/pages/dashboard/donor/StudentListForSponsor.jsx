@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getInstitutionsByUnion, getAllInstitutionsList } from '../../../api/institutionApi';
-import { getAllStudents, getStudentsByInstitution,searchStudentsPaginated, searchStudents, getStudentById } from '../../../api/studentApi';
+import { getAllStudents, getStudentsByInstitution, getStudentsByInstitutionWithPagination, searchStudentsPaginated, searchStudents, getStudentById } from '../../../api/studentApi';
 import { getDivisions, getDistrictsByDivision, getThanasByDistrict, getUnionsByThanaId } from '../../../api/areaApi';
 import { FaHandHoldingHeart } from 'react-icons/fa';
 import ContactSponsorModal from '../donor/ContactSponsorModal';
