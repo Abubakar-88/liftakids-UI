@@ -207,7 +207,7 @@ const handlePayNow = async () => {
         startDate: `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`,
         endDate: `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`,
         monthlyAmount: monthlyAmount,
-        paymentMethod: paymentMethod || 'MANUAL',
+        paymentMethod: 'MANUAL',
         status: 'PENDING'
       };
 
@@ -374,6 +374,90 @@ if (showPaymentInstructions) {
                   <li>• Keep your transaction receipt</li>
                 </ul>
               </div>
+               <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-3 bg-white text-gray-500 font-medium">OR</span>
+                  </div>
+                </div>
+                  {/* Institution Contact Message */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 mt-2">
+                  <div className="flex items-center mb-3">
+                    <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full mr-2">📞</span>
+                    <span className="text-xs font-semibold text-purple-700">ACTION REQUIRED</span>
+                  </div>
+                  
+                  <p className="text-sm font-bold text-purple-800 mb-3 text-center">
+                    Please contact {student.institutionName || 'the institution'} and complete the payment to start your sponsorship
+                  </p>
+                  
+                  {/* Institution Contact Info */}
+                  <div className="bg-white rounded-lg p-3 mb-3 border border-purple-100">
+                    <h4 className="text-xs font-semibold text-gray-600 mb-2">🏫 {student.institutionName || 'Institution'} Contact:</h4>
+                    
+                    {/* Phone Number */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <span className="bg-green-100 p-1 rounded-full mr-2">
+                          <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </span>
+                        <span className="text-xs text-gray-600">Phone:</span>
+                      </div>
+                      <a href={`tel:${student.institutionPhone || '+8801712345678'}`} className="text-sm font-medium text-purple-700 hover:text-purple-900">
+                        {student.institutionPhone || '+880 1712-345678'}
+                      </a>
+                    </div>
+                    
+                    {/* WhatsApp Link */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="bg-green-100 p-1 rounded-full mr-2">
+                          <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </span>
+                        <span className="text-xs text-gray-600">WhatsApp:</span>
+                      </div>
+                      <a 
+                        href={`https://wa.me/${student.institutionWhatsApp || '8801712345678'}?text=Hello%2C%20I%20want%20to%20complete%20my%20sponsorship%20payment%20for%20${student.studentName || 'a student'}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-green-600 hover:text-green-800 flex items-center"
+                      >
+                        <span>Chat on WhatsApp</span>
+                        <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href={`tel:${student.institutionPhone || '+8801712345678'}`}
+                      className="bg-purple-600 text-white text-sm py-3 rounded-md hover:bg-purple-700 transition-colors font-medium text-center"
+                    >
+                      📞 Call {student.institutionName || 'Institution'}
+                    </a>
+                    <a
+                      href={`https://wa.me/${student.institutionWhatsApp || '8801712345678'}?text=Hello%2C%20I%20want%20to%20complete%20my%20sponsorship%20payment%20for%20${student.studentName || 'a student'}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-green-600 text-white text-sm py-3 rounded-md hover:bg-green-700 transition-colors font-medium text-center"
+                    >
+                      💬 WhatsApp
+                    </a>
+                  </div>
+                  
+                  <p className="text-[10px] text-gray-500 mt-2 text-center">
+                    Institution will guide you through the payment process
+                  </p>
+                </div>
             </>
           ) : (
             // Generic confirmation message (when no payment method selected)
