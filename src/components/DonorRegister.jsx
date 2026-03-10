@@ -241,7 +241,7 @@ const DonorRegister = () => {
         {/* Full Width Fields */}
         <div>
           <label className="block text-gray-700 mb-2 font-medium" htmlFor="address">
-            Address
+            Address (Optional)
           </label>
           <textarea
             id="address"
