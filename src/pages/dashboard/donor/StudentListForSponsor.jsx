@@ -563,7 +563,46 @@ const handlePageChange = (newPage) => {
     setContactModalOpen(false);
     // sponsorship logic here
   };
+const getPageNumbers = () => {
+  const totalPages = pagination.totalPages;
+  const currentPage = pagination.page + 1;
+  const delta = 2; // Show 2 pages on each side of current page
+  
+  // For small number of pages
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  
+  const range = [];
+  const rangeWithDots = [];
+  let l;
 
+  // Calculate range around current page
+  for (let i = 1; i <= totalPages; i++) {
+    if (
+      i === 1 || // First page
+      i === totalPages || // Last page
+      (i >= currentPage - delta && i <= currentPage + delta) // Pages around current
+    ) {
+      range.push(i);
+    }
+  }
+
+  // Add dots where needed
+  range.forEach((i) => {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1);
+      } else if (i - l !== 1) {
+        rangeWithDots.push('...');
+      }
+    }
+    rangeWithDots.push(i);
+    l = i;
+  });
+
+  return rangeWithDots;
+};
   return (
     <div className="container mx-auto px-4 py-8">
      {/* Header Section */}
@@ -951,109 +990,126 @@ const handlePageChange = (newPage) => {
                       {student.institutionName || 'Not specified'}
                     </td>
                   <td className="px-6 py-4 text-right">
-  <div className="flex justify-end space-x-2">
-    <button
-      onClick={() => handleViewDetails(student)}
-      className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
-    >
-      View Details
-    </button>
-    
-    {!student.fullySponsored && (
-      (() => {
-        console.log(`🎯 Rendering button for student ${student.studentId}`);
-        const buttonStatus = getSponsorButtonStatus(student);
-        console.log(`Button status for ${student.studentId}:`, buttonStatus);
-        
-        if (buttonStatus.status === 'processing') {
-          console.log(`🎨 Showing PROCESSING button for ${student.studentId}`);
-          return (
-            <button
-              disabled
-              className="px-3 py-1 bg-yellow-500 text-white rounded text-sm cursor-not-allowed flex items-center"
-              title={`Payment Pending - Available in ${buttonStatus.daysLeft} day(s)`}
-            >
-              <svg className="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
-              </svg>
-              Processing ({buttonStatus.daysLeft}d)
-            </button>
-          );
-        } else {
-          console.log(`🎨 Showing SPONSOR button for ${student.studentId}`);
-          return (
-            <button
-              onClick={() => handleContactSponsor(student)}
-              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-            >
-              Sponsor
-            </button>
-          );
-        }
-      })()
-    )}
-  </div>
-</td>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={() => handleViewDetails(student)}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
+                  >
+                    View Details
+                  </button>
+                  
+                  {!student.fullySponsored && (
+                    (() => {
+                      console.log(`🎯 Rendering button for student ${student.studentId}`);
+                      const buttonStatus = getSponsorButtonStatus(student);
+                      console.log(`Button status for ${student.studentId}:`, buttonStatus);
+                      
+                      if (buttonStatus.status === 'processing') {
+                        console.log(`🎨 Showing PROCESSING button for ${student.studentId}`);
+                        return (
+                          <button
+                            disabled
+                            className="px-3 py-1 bg-yellow-500 text-white rounded text-sm cursor-not-allowed flex items-center"
+                            title={`Payment Pending - Available in ${buttonStatus.daysLeft} day(s)`}
+                          >
+                            <svg className="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
+                            </svg>
+                            Processing ({buttonStatus.daysLeft}d)
+                          </button>
+                        );
+                      } else {
+                        console.log(`🎨 Showing SPONSOR button for ${student.studentId}`);
+                        return (
+                          <button
+                            onClick={() => handleContactSponsor(student)}
+                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                          >
+                            Sponsor
+                          </button>
+                        );
+                      }
+                    })()
+                  )}
+                </div>
+              </td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
-            {/* Pagination */}
+                {/* Pagination - Centered Compact with Page Numbers */}
             {pagination.totalPages > 1 && (
-              <div className="px-6 py-4 bg-white border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                  Showing <span className="font-medium">
-                    {students.length === 0 ? 0 : pagination.page * pagination.size + 1}
-                  </span> to{' '}
-                  <span className="font-medium">
-                    {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}
-                  </span> of{' '}
-                  <span className="font-medium">{pagination.totalElements}</span> students
-                </div>
-                  <div className="flex space-x-2">
+              <div className="px-4 py-4 bg-white border-t border-gray-200">
+                <div className="flex flex-col items-center space-y-3">
+                  {/* Showing info - Centered */}
+                  <div className="text-xs sm:text-sm text-gray-600">
+                    Showing <span className="font-medium text-blue-600">
+                      {students.length === 0 ? 0 : pagination.page * pagination.size + 1}
+                    </span> to{' '}
+                    <span className="font-medium text-blue-600">
+                      {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}
+                    </span> of{' '}
+                    <span className="font-medium text-blue-600">{pagination.totalElements}</span> students
+                  </div>
+                  
+                  {/* Pagination Controls - Centered */}
+                  <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+                    {/* Previous Button */}
                     <button
                       onClick={() => handlePageChange(pagination.page - 1)}
                       disabled={pagination.page === 0}
-                      className={`px-3 py-1 rounded ${
+                      className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium flex items-center ${
                         pagination.page === 0
-                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : "bg-blue-600 text-white hover:bg-blue-700"
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
-                      Previous
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span className="hidden sm:inline">Prev</span>
                     </button>
-                    
-                    {[...Array(pagination.totalPages)].map((_, index) => (
+
+                    {/* Page Numbers - Show 4-5 pages */}
+                    {getPageNumbers().map((pageNum, index) => (
                       <button
                         key={index}
-                        onClick={() => handlePageChange(index)}
-                        className={`px-3 py-1 rounded ${
-                          pagination.page === index
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        onClick={() => typeof pageNum === 'number' && handlePageChange(pageNum - 1)}
+                        disabled={pageNum === '...'}
+                        className={`min-w-[32px] sm:min-w-[36px] h-8 sm:h-9 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                          pageNum === '...'
+                            ? 'cursor-default text-gray-500'
+                            : pageNum === pagination.page + 1
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-gray-700 hover:bg-gray-100'
                         }`}
                       >
-                        {index + 1}
+                        {pageNum}
                       </button>
                     ))}
-                    
+
+                    {/* Next Button */}
                     <button
                       onClick={() => handlePageChange(pagination.page + 1)}
                       disabled={pagination.page >= pagination.totalPages - 1}
-                      className={`px-3 py-1 rounded ${
+                      className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium flex items-center ${
                         pagination.page >= pagination.totalPages - 1
-                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : "bg-blue-600 text-white hover:bg-blue-700"
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
-                      Next
+                      <span className="hidden sm:inline">Next</span>
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </button>
                   </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  Page {pagination.page + 1} of {pagination.totalPages}
+                  
+                  {/* Page info for mobile */}
+                  <div className="text-xs text-gray-500 sm:hidden">
+                    Page {pagination.page + 1} of {pagination.totalPages}
+                  </div>
                 </div>
               </div>
             )}
