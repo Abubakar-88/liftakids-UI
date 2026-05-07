@@ -1,6 +1,6 @@
 import axios from 'axios';
 // আপনার backend URL
-const API_BASE_URL = import.meta.env.VITE_API_URL; // আপনার backend URL
+const API_BASE_URL = 'http://82.180.146.173:8081/LiftAKids/api'; // আপনার backend URL
 
 // Create axios instance with default config
 const adminApi = axios.create({

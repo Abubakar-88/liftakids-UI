@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = import.meta.env.VITE_API_URL; 
+const BASE = 'http://82.180.146.173:8081/LiftAKids/api'; 
 
 // ==================== Division ====================
 export const getDivisions = () => axios.get(`${BASE}/divisions`);
