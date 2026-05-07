@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = import.meta.env.PRO_API_URL; 
+const BASE = import.meta.env.VITE_API_URL; 
 
 // ==================== Division ====================
 export const getDivisions = () => axios.get(`${BASE}/divisions`);
