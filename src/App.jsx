@@ -44,7 +44,7 @@ import UserNotificationsPage from './pages/UserNotificationsPage';
 import AdminListPage from './pages/dashboard/admin/AdminListPage';
 import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
 import AdminNotificationsPage from './pages/dashboard/admin/AdminNotificationsPage';
-
+import { NotificationProvider } from './contexts/NotificationContext'; 
 // Import AuthProvider and ProtectedRoute
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
