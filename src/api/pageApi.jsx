@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://menboots.store/LiftAKids/api';
+const API_BASE_URL = import.meta.env.PRO_API_URL; 
 
   export const getPageBySlug = async (slug) => {
     try {

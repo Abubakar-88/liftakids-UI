@@ -54,6 +54,7 @@ function App() {
    return (
     
       <AuthProvider>
+         <NotificationProvider> 
         <div className="App">
           {/* Main Content */}
           <main>
@@ -307,6 +308,7 @@ function App() {
             pauseOnHover
           />
         </div>
+         </NotificationProvider> 
       </AuthProvider>
     
   );

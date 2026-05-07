@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://menboots.store/LiftAKids/api'; // আপনার backend URL
+const API_BASE_URL = import.meta.env.PRO_API_URL; // আপনার backend URL
 
 // Create axios instance with default config
 const adminApi = axios.create({
