@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = 'http://82.180.146.173:8081/LiftAKids/api'; 
+const BASE = 'https://server.skyschooling.com/api'; 
 
 // ==================== Division ====================
 export const getDivisions = () => axios.get(`${BASE}/divisions`);
@@ -82,12 +82,12 @@ export const getThanasByDistrict = (districtId) =>
 export const createThana = (data) => axios.post(`${BASE}/thanas`, data);
 
 export const getThanaById = async (id) => {
-    const response = await api.get(`/thanas/${id}`);
+    const response = await axios.get(`${BASE}/thanas/${id}`);
     return response.data; // Ensure this includes divisionId and divisionName
   };
   
   export const updateThana = async (id, data) => {
-    const response = await api.put(`/thanas/${id}`, data);
+    const response = await axios.put(`${BASE}/thanas/${id}`, data);
     return response.data;
   };
 export const deleteThana = (id) => axios.delete(`${BASE}/thanas/${id}`);

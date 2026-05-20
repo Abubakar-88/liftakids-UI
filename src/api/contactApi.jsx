@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://82.180.146.173:8081/LiftAKids/api'; 
+const API_BASE_URL = 'https://server.skyschooling.com/api'; 
 
 // Admin Contact Management APIs
 export const getContactMessages = async (page = 0, size = 10, sortBy = 'submittedAt', sortDir = 'desc') => {

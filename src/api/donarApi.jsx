@@ -1,7 +1,7 @@
 // api/donarApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://82.180.146.173:8081/LiftAKids/api'; 
+const API_BASE_URL = 'https://server.skyschooling.com/api'; 
 // api/donarApi.js ফাইল check করুন
 export const registerDonor = async (donorData) => {
   try {

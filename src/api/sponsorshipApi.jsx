@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = 'http://82.180.146.173:8081/LiftAKids/api'; 
+const API_BASE_URL = 'https://server.skyschooling.com/api'; 
 
 // Donor Search API
 export const searchDonors = async (searchTerm) => {
@@ -93,7 +93,7 @@ export const processPayment = async (sponsorshipId, paymentData) => {
 
 export const checkSponsorshipExists = async (sponsorshipId) => {
   try {
-    const response = await api.get(`${API_BASE}/sponsorships/${sponsorshipId}/exists`);
+    const response = await axios.get(`${API_BASE_URL}/sponsorships/${sponsorshipId}/exists`);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 404) {
@@ -105,7 +105,7 @@ export const checkSponsorshipExists = async (sponsorshipId) => {
 };
 export const getSponsorshipByDonorStudent = async (donorId, studentId) => {
   try {
-    const response = await api.get(`/sponsorships?donorId=${donorId}&studentId=${studentId}`);
+    const response = await axios.get(`${API_BASE_URL}/sponsorships?donorId=${donorId}&studentId=${studentId}`);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 404) {
@@ -117,7 +117,7 @@ export const getSponsorshipByDonorStudent = async (donorId, studentId) => {
 };
 export const getSponsorshipByStudent = async (donorId, studentId) => {
   try {
-    const response = await api.get(`/sponsorships?donorId=${donorId}&studentId=${studentId}`);
+    const response = await axios.get(`${API_BASE_URL}/sponsorships?donorId=${donorId}&studentId=${studentId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching sponsorship:', error);

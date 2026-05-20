@@ -1,7 +1,7 @@
 // api/institutionApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://82.180.146.173:8081/LiftAKids/api';
+const API_BASE_URL = 'https://server.skyschooling.com/api';
 
 export const registerInstitution = async (institutionData) => {
   try {
@@ -243,22 +243,22 @@ export const getSponsoredStudents = async (page = 0, size = 10) => {
 };
 //Address Hierarchy APIs
 export const getDivisions = async () => {
-  const response = await api.get('${API_BASE_URL}/divisions');
+  const response = await axios.get(`${API_BASE_URL}/divisions`);
   return response.data;
 };
 
 export const getDistricts = async (divisionId) => {
-  const response = await api.get(`${API_BASE_URL}/districts?divisionId=${divisionId}`);
+  const response = await axios.get(`${API_BASE_URL}/districts?divisionId=${divisionId}`);
   return response.data;
 };
 
 export const getThanas = async (districtId) => {
-  const response = await api.get(`${API_BASE_URL}/thanas?districtId=${districtId}`);
+  const response = await axios.get(`${API_BASE_URL}/thanas?districtId=${districtId}`);
   return response.data;
 };
 
 export const getUnionsOrAreas = async (thanaId) => {
-  const response = await api.get(`${API_BASE_URL}/unions-or-areas?thanaId=${thanaId}`);
+  const response = await axios.get(`${API_BASE_URL}/unions-or-areas?thanaId=${thanaId}`);
   return response.data;
 };
 
