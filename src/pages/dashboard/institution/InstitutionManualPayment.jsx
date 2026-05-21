@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { searchAllDonors, searchStudents, uploadReceiptFile, processManualPayment   } from '../../../api/institutionApi';
+import { searchAllDonors, searchStudents, uploadReceiptFile, processManualPayment, confirmPayment   } from '../../../api/institutionApi';
 import SearchableDropdown from '../../../components/institutions/SearchableDropdown';
 import { getStudentsByInstitution } from '../../../api/studentApi';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-const InstitutionManualPayment = ({ preSelectedData = null, onSuccess = null }) => {
+const InstitutionManualPayment = ({ preSelectedData = null, isInstitutionConfirmation = false, onSuccess = null }) => {
   const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
@@ -178,58 +178,117 @@ useEffect(() => {
 
   // Student select and sponsorship auto-select logic
   useEffect(() => {
-    if (formData.studentId) {
-      const selectedStudent = allStudents.find(s => s.studentId == formData.studentId);
-      if (selectedStudent) {
-        const sponsors = selectedStudent.sponsors || [];
-        setSelectedStudentSponsors(sponsors);
-        
-        // Auto-select logic - for sponsored students
-        if (sponsors.length > 0) {
-          const firstSponsor = sponsors[0];
-          setFormData(prev => ({
-            ...prev,
-            sponsorshipId: firstSponsor.id || firstSponsor.sponsorshipId
-          }));
-        } else {
-          setFormData(prev => ({
-            ...prev,
-            sponsorshipId: null
-          }));
-        }
-        
-        // Paid months calculation
-        const paidMonthsSet = new Set();
-          sponsors.forEach(sponsor => {
-        if (sponsor.paidUpTo) {
-          try {
-            const paidUpTo = new Date(sponsor.paidUpTo);
-            if (!isNaN(paidUpTo.getTime())) {
-              // Mark all months up to paidUpTo as paid
-              let current = new Date(paidUpTo.getFullYear(), 0, 1); // Start from Jan
-              const end = new Date(paidUpTo.getFullYear(), paidUpTo.getMonth(), 1);
-              
-              while (current <= end) {
-                const year = current.getFullYear();
-                const month = current.getMonth() + 1;
-                const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
-                paidMonthsSet.add(monthKey);
-                current.setMonth(current.getMonth() + 1);
-              }
-            }
-          } catch (e) {
-            console.error('Error processing paidUpTo date:', e);
-          }
-        }
-      });
-        setPaidMonths(Array.from(paidMonthsSet));
+  if (formData.studentId) {
+
+    const selectedStudent = allStudents.find(
+      s => s.studentId == formData.studentId
+    );
+
+    if (selectedStudent) {
+
+      const sponsors = selectedStudent.sponsors || [];
+console.log('SPONSORS DATA:', sponsors);
+      setSelectedStudentSponsors(sponsors);
+
+      // Existing sponsor auto-select
+      if (sponsors.length > 0) {
+
+        // If donor already selected, match donor sponsorship
+        const matchedSponsor = sponsors.find(
+          sponsor => sponsor.donorId == formData.donorId
+        );
+
+        const sponsorToUse = matchedSponsor || sponsors[0];
+
+       setFormData(prev => ({
+          ...prev,
+        sponsorshipId:
+  sponsorToUse?.sponsorshipId &&
+  sponsorToUse?.sponsorshipId !== sponsorToUse?.id
+    ? sponsorToUse.sponsorshipId
+    : sponsorToUse?.sponsorship?.id || null
+        }));
+
+      } else {
+
+        setFormData(prev => ({
+          ...prev,
+          sponsorshipId: null
+        }));
       }
-    } else {
-      setSelectedStudentSponsors([]);
-      setPaidMonths([]);
-      setFormData(prev => ({ ...prev, sponsorshipId: null }));
+
+      // Paid months calculation
+      const paidMonthsSet = new Set();
+
+      sponsors.forEach(sponsor => {
+
+  // ONLY completed payments count as paid
+const isCompleted =
+  sponsor.status === 'COMPLETED' &&
+  sponsor.paidUpTo;
+
+  if (isCompleted && sponsor.paidUpTo) {
+
+    try {
+
+      const paidUpTo = new Date(sponsor.paidUpTo);
+
+      if (!isNaN(paidUpTo.getTime())) {
+
+        let current = new Date(
+          paidUpTo.getFullYear(),
+          0,
+          1
+        );
+
+        const end = new Date(
+          paidUpTo.getFullYear(),
+          paidUpTo.getMonth(),
+          1
+        );
+
+        while (current <= end) {
+
+          const year = current.getFullYear();
+
+          const month = current.getMonth() + 1;
+
+          const monthKey =
+            `${year}-${month.toString().padStart(2, '0')}`;
+
+          paidMonthsSet.add(monthKey);
+
+          current.setMonth(current.getMonth() + 1);
+        }
+      }
+
+    } catch (e) {
+
+      console.error(
+        'Error processing paidUpTo date:',
+        e
+      );
     }
-  }, [formData.studentId, allStudents]);
+  }
+});
+
+      setPaidMonths(Array.from(paidMonthsSet));
+
+    }
+
+  } else {
+
+    setSelectedStudentSponsors([]);
+
+    setPaidMonths([]);
+
+    setFormData(prev => ({
+      ...prev,
+      sponsorshipId: null
+    }));
+  }
+
+}, [formData.studentId, formData.donorId, allStudents]);
 
   // Check if a month is already paid
   const isMonthPaid = (month, year) => {
@@ -443,8 +502,15 @@ const handleMonthSelect = (month, year) => {
     return;
   }
   
-  if (!formData.studentId || !formData.donorId || !formData.startDate || 
-      !formData.endDate || !formData.totalAmount || !formData.receiptNumber || !formData.receiptFile) {
+  if (
+  !formData.studentId ||
+  !formData.donorId ||
+  !formData.startDate ||
+  !formData.endDate ||
+  !formData.totalAmount ||
+  !formData.receiptNumber ||
+  (!isInstitutionConfirmation && !formData.receiptFile)
+) {
     toast.error('Please fill all required fields including receipt file upload');
     return;
   }
@@ -472,6 +538,7 @@ const handleMonthSelect = (month, year) => {
     const paymentData = {
       studentId: parseInt(formData.studentId),
       donorId: parseInt(formData.donorId),
+      sponsorshipId: formData.sponsorshipId || null,
       startDate: formData.startDate,
       endDate: formData.endDate,
       receivedDate: formData.receivedDate, 
@@ -483,12 +550,29 @@ const handleMonthSelect = (month, year) => {
       receiptUrl: receiptUrl,
       notes: formData.notes
     };
-
+console.log('Selected donor:', formData.donorId);
     // Show processing toast
     toast.info('Processing payment...');
 
     // Use the API function from separate file
-    const result = await processManualPayment(paymentData);
+    let result;
+
+if (isInstitutionConfirmation) {
+
+  result = await confirmPayment({
+    paymentId: preSelectedData.paymentId,
+    receiptNumber: formData.receiptNumber,
+    receiptDate: formData.receivedDate,
+    receivedAmount: parseFloat(formData.totalAmount),
+    receivedDate: formData.receivedDate,
+    notes: formData.notes
+  });
+
+} else {
+
+  result = await processManualPayment(paymentData);
+
+}
     
     toast.success('Payment processed successfully! Sponsorship has been activated.');
     
@@ -599,9 +683,29 @@ const handleMonthSelect = (month, year) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Student *
               </label>
+              {/* Debugging Info - Temporary */}
+              {preSelectedData?.studentId && (
+                <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                  <span className="text-blue-700">
+                    Pre-selected Student: {preSelectedData.studentName} (ID: {preSelectedData.studentId})
+                  </span>
+                </div>
+              )}
               <SearchableDropdown
                 options={formattedStudents}
-                value={formData.studentId ? formattedStudents.find(s => s.studentId == formData.studentId) : null}
+                value={
+                      formData.studentId
+                        ? formattedStudents.find(
+                            s => s.studentId == formData.studentId
+                          ) || {
+                            studentId: formData.studentId,
+                            studentName:
+                              preSelectedData?.studentName || 'Selected Student',
+                            name:
+                              preSelectedData?.studentName || 'Selected Student'
+                          }
+                        : null
+                    }
                 onSelect={(student) => setFormData({...formData, studentId: student.studentId})}
                 placeholder="Search student by name, guardian, or phone..."
                 onSearch={handleStudentSearch}
@@ -611,7 +715,12 @@ const handleMonthSelect = (month, year) => {
               {formData.studentId && (
                 <div className="mt-2">
                   <span className="text-xs text-green-600 font-medium">
-                    Selected: {formattedStudents.find(s => s.studentId == formData.studentId)?.studentName}
+                   Selected: {
+                            formattedStudents.find(
+                              s => s.studentId == formData.studentId
+                            )?.studentName ||
+                            preSelectedData?.studentName
+                          }
                   </span>
                   <button
                     type="button"
@@ -632,7 +741,13 @@ const handleMonthSelect = (month, year) => {
                 </label>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="space-y-3">
-                    {selectedStudentSponsors.map((sponsor, index) => (
+                    {selectedStudentSponsors
+                      .filter(
+                          sponsor =>
+                            sponsor.status === 'COMPLETED' &&
+                            sponsor.paidUpTo
+                        )
+                      .map((sponsor, index) => (
                       <div key={index} className="border-b border-yellow-100 pb-2 last:border-b-0">
                         <div className="flex justify-between items-start">
                           <div>

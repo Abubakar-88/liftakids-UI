@@ -46,7 +46,7 @@ const DonorSponsoredStudentList = () => {
 
     const [sponsoredData, availableData, donorInfoData] = await Promise.all([
       getSponsorshipsByDonorId(donorData.donorId), 
-      getTopUnsponsoredUrgentStudents(20), 
+      getTopUnsponsoredUrgentStudents(20),
       getDonorById(donorData.donorId)
     ]);
 
@@ -85,35 +85,108 @@ const DonorSponsoredStudentList = () => {
       fetchData();
     }
   }, [donorData]);
+const handleViewDetails = (student) => {
+  const actualStudent = student.student || student;
 
-  const handleViewDetails = (student) => {
-    // Normalize the student data to ensure consistent structure
-    const normalizedStudent = {
-      ...student,
-      studentId: student.studentId || student.id,
-      studentName: student.studentName || student.name,
-      institutionName: student.institutionName || student.instituteName,
-      grade: student.grade || student.class,
-      requiredMonthlySupport: student.requiredMonthlySupport || student.monthlyAmount,
-      sponsoredAmount: student.sponsoredAmount || student.totalPaidAmount,
-      financial_rank: student.financial_rank || student.financialRank,
-      photoUrl: student.photoUrl || student.avatar,
-      sponsored: student.sponsored !== undefined ? student.sponsored : (student.status === 'ACTIVE' || student.status === 'COMPLETED'),
-      contactNumber: student.contactNumber || student.guardianPhone,
-      address: student.address,
-      guardianName: student.guardianName,
-      bio: student.bio || student.description
-    };
+  const normalizedStudent = {
+    ...actualStudent,
+
+    // Sponsorship info
+    sponsorshipId: student.id || student.sponsorshipId,
+
+    // Student info
+    studentId: actualStudent.studentId || actualStudent.id,
+    studentName: actualStudent.studentName || actualStudent.name,
+    institutionName:
+      actualStudent.institutionName || actualStudent.instituteName,
+    grade: actualStudent.grade || actualStudent.class,
+    requiredMonthlySupport:
+      actualStudent.requiredMonthlySupport || student.monthlyAmount,
+    sponsoredAmount:
+      actualStudent.sponsoredAmount || student.totalPaidAmount,
+    financial_rank:
+      actualStudent.financial_rank || actualStudent.financialRank,
+    photoUrl: actualStudent.photoUrl || actualStudent.avatar,
+    sponsored:
+      actualStudent.sponsored !== undefined
+        ? actualStudent.sponsored
+        : student.status === 'ACTIVE' ||
+          student.status === 'COMPLETED',
+
+    contactNumber:
+      actualStudent.contactNumber || actualStudent.guardianPhone,
+
+    address: actualStudent.address,
+    guardianName: actualStudent.guardianName,
+    bio: actualStudent.bio || actualStudent.description,
+  };
+
+  console.log('Normalized Student:', normalizedStudent);
+
+  setSelectedStudent(normalizedStudent);
+  setShowDetails(true);
+  setActiveDetailsTab('info');
+};
+  // const handleViewDetails = (student) => {
+  //   // Normalize the student data to ensure consistent structure
+  //   const normalizedStudent = {
+  //     ...student,
+  //     studentId: student.studentId || student.id,
+  //     studentName: student.studentName || student.name,
+  //     institutionName: student.institutionName || student.instituteName,
+  //     grade: student.grade || student.class,
+  //     requiredMonthlySupport: student.requiredMonthlySupport || student.monthlyAmount,
+  //     sponsoredAmount: student.sponsoredAmount || student.totalPaidAmount,
+  //     sponsorshipId: student.id || student.sponsorshipId,
+  //     financial_rank: student.financial_rank || student.financialRank,
+  //     photoUrl: student.photoUrl || student.avatar,
+  //     sponsored: student.sponsored !== undefined ? student.sponsored : (student.status === 'ACTIVE' || student.status === 'COMPLETED'),
+  //     contactNumber: student.contactNumber || student.guardianPhone,
+  //     address: student.address,
+  //     guardianName: student.guardianName,
+  //     bio: student.bio || student.description
+  //   };
     
-    setSelectedStudent(normalizedStudent);
-    setShowDetails(true);
-    setActiveDetailsTab('info');
+  //   setSelectedStudent(normalizedStudent);
+  //   setShowDetails(true);
+  //   setActiveDetailsTab('info');
+  // };
+const handleContactSponsor = (student) => {
+  const isSponsoredStudent =
+    student.status === 'ACTIVE' ||
+    student.status === 'COMPLETED' ||
+    student.sponsored === true;
+
+  const normalizedStudent = {
+    ...student,
+
+    // Student Info
+    studentId: student.studentId || student.student?.studentId,
+    studentName: student.studentName || student.student?.studentName,
+    institutionName:
+      student.institutionName || student.student?.institutionName,
+    requiredMonthlySupport:
+      student.requiredMonthlySupport || student.monthlyAmount,
+    photoUrl: student.photoUrl || student.student?.photoUrl,
+    financial_rank:
+      student.financial_rank || student.student?.financial_rank,
+
+    // Sponsorship
+    sponsored: isSponsoredStudent,
+    sponsorshipId: isSponsoredStudent
+      ? student.id || student.sponsorshipId
+      : null,
   };
 
-  const handleContactSponsor = (student) => {
-    setSelectedStudent(student);
-    setContactModalOpen(true);
-  };
+  console.log('Normalized Student:', normalizedStudent);
+
+  setSelectedStudent(normalizedStudent);
+  setContactModalOpen(true);
+};
+  // const handleContactSponsor = (student) => {
+  //   setSelectedStudent(student);
+  //   setContactModalOpen(true);
+  // };
 
   const handlePaymentSubmit = (paymentInfo) => {
     setPaymentData(paymentInfo);

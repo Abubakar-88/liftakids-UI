@@ -3,6 +3,8 @@ import axios from 'axios';
 const API_BASE_URL = 'https://server.skyschooling.com/api';
 
 
+
+
 // const fetchApi = async (endpoint, options = {}) => {
 //   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -72,7 +74,8 @@ export const getInstitutionName = async (institutionId) => {
   return response.json();
 };
 
-   // Get top unsponsored urgent students with dynamic limit
+
+    // Get top unsponsored urgent students with dynamic limit
    export const getTopUnsponsoredUrgentStudents = async (limit = 4) => {
         try {
             const response = await axios.get(`${API_BASE_URL}/students/unsponsored/urgent/top`, {
@@ -84,7 +87,6 @@ export const getInstitutionName = async (institutionId) => {
             throw error;
         }
       };  
-
 
 // export const getTopUnsponsoredUrgentStudents = async () => {
 //   try {
@@ -111,15 +113,7 @@ export const fetchStudents = async () => {
 export const getStudentById = (id) => {
   return axios.get(`${API_BASE_URL}/students/${id}`);
 };
-// export const getStudentsByInstitution = async (institutionId) => {
-//   try {
-//     const response = await axios.get(`${API_BASE_URL}/students/institution/${institutionId}`);
-//     return { data: response.data }; 
-//   } catch (error) {
-//     console.error('Error fetching students:', error.response?.data || error.message);
-//     throw error.response?.data || { message: 'Failed to fetch students' };
-//   }
-// }
+
 export const getStudentsByInstitution = async (institutionsId) => {
   const response = await axios.get(`${API_BASE_URL}/students/institution/${institutionsId}`);
   return response.data; // This should be your student array
@@ -148,9 +142,6 @@ export const getStudentsByInstitutionWithPagination = async (
   }
 };
 
-
-
-
 // export const getStudentsByInstitution = async (institutionId) => {
 //   try {
 //     const response = await axios.get(`${API_BASE_URL}/students/institution/${institutionId}`);
@@ -168,23 +159,8 @@ export const getStudentsByInstitutionWithPagination = async (
 //     throw error;
 //   }
 // };
-// export const searchStudents = (params) => 
-//   axios.get(`${API_BASE_URL}/students/search`, { params });
-export const searchStudents = async (searchTerm) => {
-  try {
-    // params হিসেবে { studentName: searchTerm } পাঠান
-    const response = await axios.get(`${API_BASE_URL}/students/search`, {
-      params: { studentName: searchTerm }
-    });
-    
-    // response ডাটা সঠিকভাবে return করুন
-    return response.data; // শুধু data part return করুন
-  } catch (error) {
-    console.error('Search API error:', error);
-    throw error;
-  }
-};
-
+ export const searchStudents = (params) => 
+  axios.get(`${API_BASE_URL}/students/search`, { params });
 export const searchStudentsPaginated = async (searchTerm, page = 0, size = 10) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/students/search`, {
@@ -202,10 +178,6 @@ export const searchStudentsPaginated = async (searchTerm, page = 0, size = 10) =
     throw error;
   }
 };
-
-
-
-
 // Add other student-related API calls here
 // Add other student-related API calls here
 export const submitResults = async (studentId, files) => {
@@ -379,7 +351,57 @@ export const updateStudentBio = async (studentId, bio) => {
   }
   return await response.json();
 };
+// Get students by District
+export const getStudentsByDistrict = async (districtId, page = 0, size = 10, sortBy = 'studentName', direction = 'asc') => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/students/by-district/${districtId}`, {
+            params: { page, size, sort: `${sortBy},${direction}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching students by district:', error);
+        throw error;
+    }
+};
 
+// Get students by Thana
+export const getStudentsByThana = async (thanaId, page = 0, size = 10, sortBy = 'studentName', direction = 'asc') => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/students/by-thana/${thanaId}`, {
+            params: { page, size, sort: `${sortBy},${direction}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching students by thana:', error);
+        throw error;
+    }
+};
+
+// Get students by Union
+export const getStudentsByUnion = async (unionId, page = 0, size = 10, sortBy = 'studentName', direction = 'asc') => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/students/by-union/${unionId}`, {
+            params: { page, size, sort: `${sortBy},${direction}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching students by union:', error);
+        throw error;
+    }
+};
+
+// Get students by Division
+export const getStudentsByDivision = async (divisionId, page = 0, size = 10, sortBy = 'studentName', direction = 'asc') => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/students/by-division/${divisionId}`, {
+            params: { page, size, sort: `${sortBy},${direction}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching students by division:', error);
+        throw error;
+    }
+};
 
 // export const getCurrentInstitution = async () => {
 //   const response = await fetch('/api/institutions/current', {

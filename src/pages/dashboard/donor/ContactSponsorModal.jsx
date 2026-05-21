@@ -1,37 +1,36 @@
 import React, { useState, useEffect } from "react";
-///import PaymentModal from "../donor/PaymentModal";
 import { createSponsorship } from "../../../api/sponsorshipApi";
 import PaymentModalManual from "../donor/PaymentModalManual";
 
 const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
-  //const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentModalManualOpen, setPaymentModalManualOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState({});
   const [isExistingSponsor, setIsExistingSponsor] = useState(false);
-  
+  const [existingSponsorshipId, setExistingSponsorshipId] = useState(null); // ✅ NEW STATE
+
   useEffect(() => {
     if (student) {
       // Check if this is an existing sponsorship
       const existingSponsor = student.sponsored || student.sponsorshipStatus === 'COMPLETED' || false;
       setIsExistingSponsor(existingSponsor);
       
+      // ✅ Fetch existing sponsorship ID if it's an existing sponsor
+      if (existingSponsor && student.studentId) {
+        fetchExistingSponsorshipId(student.studentId);
+      }
+      
       if (existingSponsor) {
-        // Calculate payment status based on current date and last payment
+        // Calculate payment status...
         const now = new Date();
         const currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        // Paid up to date (default March 2025 if missing)
         const paidUpTo = student.paidUpTo 
           ? new Date(student.paidUpTo) 
-          : new Date(2025, 2, 31); // March = month index 2
-
-        // Convert paidUpTo to start of that month
+          : new Date(2025, 2, 31);
         const paidMonth = new Date(paidUpTo.getFullYear(), paidUpTo.getMonth(), 1);
-        // Calculate months between dates
         const monthDiff = (currentDate.getFullYear() - paidMonth.getFullYear()) * 12 + 
                          (currentDate.getMonth() - paidMonth.getMonth());
         
-        // Determine payment status
         let statusText = "Awaiting Payment";
         let unpaidText = "";
         
@@ -54,24 +53,62 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
     }
   }, [student]);
 
-  // Get current donor ID 
+  // ✅ NEW FUNCTION: Fetch existing sponsorship ID
+  const fetchExistingSponsorshipId = async (studentId) => {
+    try {
+      const donorData = localStorage.getItem('donorData');
+      let donorId = null;
+      if (donorData) {
+        const parsedData = JSON.parse(donorData);
+        donorId = parsedData.donorId || parsedData.id;
+      }
+      
+      if (donorId) {
+        const response = await fetch(
+            `https://server.skyschooling.com/api/sponsorships/existwith?donorId=${donorId}&studentId=${studentId}`
+          );
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.id) {
+            console.log('✅ Found existing sponsorship ID:', data.id);
+            setExistingSponsorshipId(data.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sponsorship ID:', error);
+    }
+  };
+
   const getCurrentDonorId = () => {
     const donorData = localStorage.getItem('donorData');
     if (donorData) {
       const parsedData = JSON.parse(donorData);
       return parsedData.donorId || parsedData.id;
     }
-    return 1; // Fallback for testing
+    return 1;
   };
 
-  const handleSponsorClick = () => {
-    setSelectedStudent(student);
-    setPaymentModalManualOpen(true);
-  };
+ const handleSponsorClick = async () => {
+  let sponsorshipId = student.sponsorshipId;// ✅ Use existing sponsorship ID if available
+
+  if (isExistingSponsor && !sponsorshipId) {
+    sponsorshipId = student.sponsorshipId;
+    console.log('Existing sponsor detected. Using sponsorship ID:', sponsorshipId);
+  }
+
+  if (isExistingSponsor && !sponsorshipId) {
+    alert('Sponsorship ID not found');
+    return;
+  }
+
+  setSelectedStudent(student);
+  setPaymentModalManualOpen(true);
+};
 
   if (!student) return null;
 
-  // Safely extract values with fallbacks
+  // Rest of your existing code...
   const sponsoredAmount = Number(student.sponsoredAmount || student.totalPaidAmount || 0);
   const required = Number(student.requiredMonthlySupport || student.monthlyAmount || 5000);
   const financialRank = student.financial_rank || student.financialRank || "Poor";
@@ -84,32 +121,21 @@ const ContactSponsorModal = ({ student, onClose, onSponsor }) => {
   };
 
   const formatCurrency = (val) =>
-    `$${Number(val || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    })}`;
+    `${(val || 0).toLocaleString()} Taka`;
 
-  // normalize phone for tel: and wa.me links
   const normalizeForTel = (num) => {
     if (!num) return "#";
     const cleaned = num.replace(/[^+\d]/g, "");
     return `tel:${cleaned}`;
   };
 
- const normalizeForWhatsApp = (num) => {
-  if (!num) return "#";
-  
-  // সব non-digit ক্যারেক্টার রিমুভ করুন
-  let digits = num.replace(/\D/g, "");
-  
-  // বাংলাদেশের নম্বরের জন্য (যদি দরকার হয়)
-  // if (digits.startsWith("0")) digits = "88" + digits.slice(1);
-  
-  // USA নম্বরের জন্য - সরাসরি return
-  return `https://wa.me/${digits}`;
-};
+  const normalizeForWhatsApp = (num) => {
+    if (!num) return "#";
+    let digits = num.replace(/\D/g, "");
+    return `https://wa.me/${digits}`;
+  };
 
-const adminContact = "+1 (917) 257-4204";
+  const adminContact = "+1 (917) 257-4204";
 
   return (
     <>
@@ -134,23 +160,18 @@ const adminContact = "+1 (917) 257-4204";
               </div>
             </div>
 
-            {/* Status pill */}
-           {isExistingSponsor ? (
-              <span
-                className="absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm bg-green-600 text-white"
-              >
+            {isExistingSponsor ? (
+              <span className="absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm bg-green-600 text-white">
                 Sponsored
               </span>
             ) : (
-              <span
-                className="absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm bg-red-400 text-white"
-              >
+              <span className="absolute right-3 top-3 text-[11px] px-2 py-0.5 rounded-full shadow-sm bg-red-400 text-white">
                 Not Sponsored
               </span>
             )}
           </div>
 
-          {/* Body */}
+          {/* Body - Your existing body content */}
           <div className="p-3">
             {/* Monthly requirement / progress */}
             <div className="mb-3">
@@ -166,12 +187,10 @@ const adminContact = "+1 (917) 257-4204";
                     style={{ width: `${getProgressPercentage()}%` }}
                   />
                 </div>
-
                 <div className="mt-2 flex items-center justify-between text-[12px] text-gray-600">
                   <div>Sponsored Amount:</div>
                   <div className="font-medium">{formatCurrency(sponsoredAmount)}</div>
                 </div>
-
                 <div className="mt-1 text-[11px] text-gray-600 text-right">
                   {getProgressPercentage().toFixed(0)}%
                 </div>
@@ -184,18 +203,13 @@ const adminContact = "+1 (917) 257-4204";
                 <div className="flex items-start mb-2">
                   <div className="text-amber-800 text-sm w-full">
                     <div className="font-medium mb-1">Payment Status</div>
-                    <div className="text-xs mb-2">{paymentStatus.unpaidMonths || "April Month remains unpaid"}</div>
+                    <div className="text-xs mb-2">{paymentStatus.unpaidMonths || "Current month pending"}</div>
                     
                     <div className="grid grid-cols-2 gap-2">
                       <div className="flex items-center">
                         <span className="text-amber-700 font-medium">Paid Upto:</span>
                       </div>
-                      <div className={
-                        paymentStatus.paidUpTo && 
-                        (new Date(paymentStatus.paidUpTo) >= new Date().setDate(1))
-                          ? "text-green-600 font-medium"
-                          : " text-red-600 font-medium"
-                      }>
+                      <div className="text-green-600 font-medium">
                         {paymentStatus.paidUpTo || "Not paid yet"}
                       </div>
                       
@@ -215,55 +229,34 @@ const adminContact = "+1 (917) 257-4204";
               </div>
             )}
 
-            {/* Contact Information block */}
+            {/* Contact Information block - Your existing content */}
             <div className="pt-2 pb-1 border-t border-gray-100">
               <h4 className="text-[13px] font-medium mb-2 text-justify">Contact Information</h4>
 
-              {/* Institute */}
               <div className="mb-3 text-justify">
                 <div className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded text-justify">
-                  <span className="text-[12px] text-gray-600 text-justify">Institute Name:  </span>
+                  <span className="text-[12px] text-gray-600">Institute Name: </span>
                   {institutionName}
                 </div>
               </div>
 
-              {/* Contact Person + details */}
               <div className="mb-3 text-sm text-justify">
                 <div className="flex">
                   <div className="w-32 text-gray-600">Contact Person</div>
-                  <div className="flex-1">{teacherName || "Abdul Karim"}</div>
+                  <div className="flex-1">{teacherName}</div>
                 </div>
-
                 <div className="flex mt-2">
                   <div className="w-32 text-gray-600">Designation</div>
-                  <div className="flex-1">{student.institutionTeacherDesignation || "Muhtamim"}</div>
+                  <div className="flex-1">{student.institutionTeacherDesignation || "Teacher"}</div>
                 </div>
-
                 <div className="flex mt-2 items-center">
                   <div className="w-32 text-gray-600">Contact Phone</div>
                   <div className="flex-1 flex items-center gap-1">
-                    <a
-                      href={normalizeForTel(student.institutionPhone || student.contactNumber || "+8801988888888")}
-                      className="text-blue-600 font-medium text-sm"
-                    >
-                      {student.institutionPhone || student.contactNumber || "+8801988888888"}
+                    <a href={normalizeForTel(student.institutionPhone || student.contactNumber)} className="text-blue-600 text-sm">
+                      {student.institutionPhone || student.contactNumber}
                     </a>
-
-                    {/* WhatsApp icon link */}
-                    <a
-                      href={normalizeForWhatsApp(student.institutionPhone || student.contactNumber || "+8801988888888")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-1 inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500 hover:opacity-90"
-                      aria-label="Open WhatsApp"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        className="w-4 h-4"
-                        fill="white"
-                        aria-hidden
-                      >
+                    <a href={normalizeForWhatsApp(student.institutionPhone || student.contactNumber)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" fill="white">
                         <path d="M20.52 3.48A11.89 11.89 0 0012 0C5.373 0 0 5.373 0 12a11.9 11.9 0 001.64 6.03L0 24l5.11-1.61A11.9 11.9 0 0012 24c6.627 0 12-5.373 12-12 0-3.2-1.25-6.2-3.48-8.52zM12 21.5c-1.41 0-2.79-.37-4.01-1.07l-.29-.17-3.04.96.97-2.96-.18-.31A9.47 9.47 0 012.5 12c0-5.25 4.25-9.5 9.5-9.5S21.5 6.75 21.5 12 17.25 21.5 12 21.5z" />
                         <path d="M17.1 14.04c-.29-.14-1.72-.85-1.99-.95-.27-.11-.47-.14-.67.14-.2.28-.77.95-.94 1.15-.17.2-.34.22-.63.07-.29-.14-1.22-.45-2.33-1.44-.86-.76-1.44-1.7-1.61-1.99-.17-.29-.02-.45.13-.59.13-.12.29-.34.44-.51.15-.17.2-.29.3-.48.1-.19.05-.35-.02-.49-.07-.14-.67-1.61-.92-2.2-.24-.58-.49-.50-.67-.51-.17-.01-.37-.01-.57-.01-.19 0-.50.07-.76.35-.26.28-.98.96-.98 2.34 0 1.38 1.01 2.72 1.15 2.91.14.19 1.98 3.03 4.80 4.24 1.25.52 2.23.83 3.01 1.06 1.27.37 2.43.32 3.34.19.99-.14 3.07-1.25 3.50-2.46.44-1.22.44-2.26.31-2.46-.13-.20-.47-.32-.99-.46-.52-.13-2.03-.74-2.34-.82z" />
                       </svg>
@@ -272,28 +265,16 @@ const adminContact = "+1 (917) 257-4204";
                 </div>
               </div>
 
-              {/* For any query => admin */}
               <div className="mt-3 pt-2 border-t border-gray-100 text-sm">
-                <div className="text-gray-600 mb-2 text-justify">For any query:</div>
+                <div className="text-gray-600 mb-2">For any query:</div>
                 <div className="flex items-center gap-5">
                   <div className="text-gray-600">Contact Admin:</div>
-                  <div className="flex text-justify gap-1 items-center">
-                    <a href={normalizeForTel(adminContact)} className="text-blue-600 font-medium text-justify">
+                  <div className="flex gap-1 items-center">
+                    <a href={normalizeForTel(adminContact)} className="text-blue-600 font-medium">
                       {adminContact}
                     </a>
-                    <a
-                      href={normalizeForWhatsApp(adminContact)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500"
-                      aria-label="WhatsApp admin"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        className="w-4 h-4"
-                        fill="white"
-                      >
+                    <a href={normalizeForWhatsApp(adminContact)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" fill="white">
                         <path d="M20.52 3.48A11.89 11.89 0 0012 0C5.373 0 0 5.373 0 12a11.9 11.9 0 001.64 6.03L0 24l5.11-1.61A11.9 11.9 0 0012 24c6.627 0 12-5.373 12-12 0-3.2-1.25-6.2-3.48-8.52zM12 21.5c-1.41 0-2.79-.37-4.01-1.07l-.29-.17-3.04.96.97-2.96-.18-.31A9.47 9.47 0 012.5 12c0-5.25 4.25-9.5 9.5-9.5S21.5 6.75 21.5 12 17.25 21.5 12 21.5z" />
                         <path d="M17.1 14.04c-.29-.14-1.72-.85-1.99-.95-.27-.11-.47-.14-.67.14-.2.28-.77.95-.94 1.15-.17.2-.34.22-.63.07-.29-.14-1.22-.45-2.33-1.44-.86-.76-1.44-1.7-1.61-1.99-.17-.29-.02-.45.13-.59.13-.12.29-.34.44-.51.15-.17.2-.29.3-.48.1-.19.05-.35-.02-.49-.07-.14-.67-1.61-.92-2.2-.24-.58-.49-.50-.67-.51-.17-.01-.37-.01-.57-.01-.19 0-.50.07-.76.35-.26.28-.98.96-.98 2.34 0 1.38 1.01 2.72 1.15 2.91.14.19 1.98 3.03 4.80 4.24 1.25.52 2.23.83 3.01 1.06 1.27.37 2.43.32 3.34.19.99-.14 3.07-1.25 3.50-2.46.44-1.22.44-2.26.31-2.46-.13-.20-.47-.32-.99-.46-.52-.13-2.03-.74-2.34-.82z" />
                       </svg>
@@ -323,14 +304,15 @@ const adminContact = "+1 (917) 257-4204";
         </div>
       </div>
 
-      {/* Payment Modal */}
+      {/* ✅ FIXED: Payment Modal with sponsorshipId */}
       {paymentModalManualOpen && (
         <PaymentModalManual
           student={selectedStudent}
           isExistingSponsor={isExistingSponsor}
+         sponsorshipId={selectedStudent?.sponsorshipId}
+         paymentId={selectedStudent?.paymentId}
           onClose={() => setPaymentModalManualOpen(false)}
           onPayment={onSponsor}
-          getCurrentDonorId={getCurrentDonorId} // ✅ Pass the function
         />
       )}
     </>

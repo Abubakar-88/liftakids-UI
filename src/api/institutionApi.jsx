@@ -284,7 +284,7 @@ export const getPendingPaymentSponsorships = async (institutionId) => {
     console.log('🚀 API Call: Getting pending sponsorships for', institutionId);
     
     const response = await axios.get(
-      `${API_BASE_URL}/pending-payment-sponsorships?institutionId=${institutionId}`
+      `${API_BASE_URL}/institution/payments/pending-payment-sponsorships?institutionId=${institutionId}`
     );
     
     console.log('✅ API Response Status:', response.status);
@@ -298,7 +298,21 @@ export const getPendingPaymentSponsorships = async (institutionId) => {
     throw error;
   }
 };
+export const getPendingExistingPayments = async (institutionId) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/institution/payments/pending-existing-payments`,
+      {
+        params: { institutionId }
+      }
+    );
 
+    return response.data || [];
+  } catch (error) {
+    console.error('Error fetching pending existing payments:', error);
+    return [];
+  }
+};
 export const getSponsorshipStats = async (institutionId) => {
   try {
     const response = await axios.get(

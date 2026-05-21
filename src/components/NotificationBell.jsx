@@ -18,7 +18,25 @@ const NotificationBell = () => {
     console.log('🔔 Bell: Notifications changed, count:', notifications.length);
     setForceUpdate(prev => prev + 1);
   }, [notifications]);
-
+useEffect(() => {
+  console.log('🔔 NotificationBell mounted');
+  console.log('User info:', user);
+  
+  // Manual test to check API
+  const testApi = async () => {
+    if (user?.type === 'DONOR' && user?.id) {
+      try {
+        const response = await fetch(`http://localhost:8082/LiftAKids/api/notifications?userType=DONOR&userId=${user.id}`);
+        const data = await response.json();
+        console.log('🔧 Manual API test result:', data);
+      } catch (err) {
+        console.error('Manual API test failed:', err);
+      }
+    }
+  };
+  
+  testApi();
+}, [user]);
   // Debug log - show all details
   useEffect(() => {
     console.log('🔔 NotificationBell FULL DEBUG:', {

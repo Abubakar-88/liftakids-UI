@@ -9,6 +9,7 @@ import {
   confirmPayment, 
   searchStudents, 
   searchAllDonors,
+  getPendingExistingPayments,
   getCompletedPaymentsByInstitution 
 } from '../../api/institutionApi';
 import MobilePaymentView from '../../components/institutions/MobilePaymentView';
@@ -93,12 +94,62 @@ const [isMobile, setIsMobile] = useState(false);
       let pendingData = [];
       let studentsData = [];
 
-      try {
-        pendingData = await getPendingPaymentSponsorships(institutionId);
-        console.log('✅ Pending Data Loaded:', pendingData.length, 'items');
-      } catch (pendingError) {
-        console.error('❌ Pending Data Error:', pendingError);
-      }
+    try {
+          const sponsorshipPending =
+            await getPendingPaymentSponsorships(institutionId);
+
+          const existingPendingPayments =
+            await getPendingExistingPayments(institutionId);
+
+          const normalizedExistingPayments =
+                  existingPendingPayments.map(payment => ({
+
+                    ...payment,
+
+                    // IMPORTANT
+                    paymentId: payment.id,
+
+                    // actual sponsorship id
+                    sponsorshipId: payment.sponsorshipId,
+
+                    // student
+                    studentId: payment.studentId,
+                    studentName: payment.studentName,
+
+                    // donor
+                    donorId: payment.donorId,
+                    donorName: payment.donorName,
+
+                    institutionName: payment.institutionName,
+
+                    // amount
+                    monthlyAmount: payment.amount,
+                    amount: payment.amount,
+
+                    // dates
+                    startDate: payment.startDate,
+                    endDate: payment.endDate,
+                    paidUpTo: payment.paidUpTo,
+
+                    // payment info
+                    paymentMethod: payment.paymentMethod,
+
+                    // USE REAL STATUS
+                    status: payment.status,
+
+                    isExistingSponsorPayment: true
+                  }));
+
+          pendingData = [
+            ...sponsorshipPending,
+            ...normalizedExistingPayments
+          ];
+
+          console.log('✅ Pending Data Loaded:', pendingData.length);
+
+        } catch (pendingError) {
+          console.error('❌ Pending Data Error:', pendingError);
+        }
 
       try {
         studentsData = await getStudentsByInstitution(institutionId);
@@ -131,7 +182,7 @@ const [isMobile, setIsMobile] = useState(false);
   };
 // Record Payment button-এর function
 // InstitutionPaymentConfirmation.jsx - handleCreateFirstPayment function
-const handleCreateFirstPayment = (sponsorship) => {
+const handleCreatePayment = (sponsorship) => {
   console.log('Opening manual payment form for:', sponsorship);
   
   // COMPLETE data pass 
@@ -153,9 +204,11 @@ const handleCreateFirstPayment = (sponsorship) => {
     paidUpTo: sponsorship.paidUpTo,
     
     // Sponsorship Information
-    sponsorshipId: sponsorship.id || sponsorship.sponsorshipId,
+     sponsorshipId:
+    sponsorship.sponsorshipId || sponsorship.id,
+     paymentId:
+        sponsorship.paymentId || sponsorship.id,
     status: sponsorship.status,
-    
     // Additional context
     contactNumber: sponsorship.contactNumber,
     className: sponsorship.className,
@@ -714,7 +767,7 @@ const calculatePayableAmountAdvanced = (monthlyAmount, startDate, endDate) => {
                   <div className="flex items-center justify-end">
                             {/* // Pending Payments section-এ record button-এ click handler*/}
                             <button
-                              onClick={() => handleCreateFirstPayment(sponsorship)}
+                              onClick={() => handleCreatePayment(sponsorship)}
                               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1225,6 +1278,7 @@ const calculatePayableAmountAdvanced = (monthlyAmount, startDate, endDate) => {
             <div className="p-6">
               <InstitutionManualPayment 
                 preSelectedData={selectedSponsorship}
+                isInstitutionConfirmation={true}
                 onSuccess={handleManualPaymentSuccess}
               />
               <div className="flex justify-end mt-4">

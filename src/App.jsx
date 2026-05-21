@@ -48,7 +48,6 @@ import { NotificationProvider } from './contexts/NotificationContext';
 // Import AuthProvider and ProtectedRoute
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-
 function App() {
   
    return (

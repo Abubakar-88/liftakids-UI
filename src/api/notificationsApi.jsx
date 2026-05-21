@@ -59,15 +59,14 @@ const notificationService = {
     }
   },
 
-  // Mark notification as read
-  markAsRead: async (notificationId, userType, userId) => {
+ markAsRead: async (notificationId, userType, userId) => {
     try {
-      const response = await api.put(`/notifications/${notificationId}/read`, null, {
+      const response = await axios.patch(`${API_BASE_URL}/notifications/${notificationId}/read`, null, {
         params: { userType, userId }
       });
       return response.data;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('Error marking as read:', error);
       throw error;
     }
   },
@@ -75,7 +74,7 @@ const notificationService = {
   // Mark all as read
   markAllAsRead: async (userType, userId) => {
     try {
-      const response = await api.put('/notifications/read-all', null, {
+      const response = await axios.patch(`${API_BASE_URL}/notifications/mark-all-read`, null, {
         params: { userType, userId }
       });
       return response.data;
@@ -85,26 +84,57 @@ const notificationService = {
     }
   },
 
+  // Get unread count
+  // getUnreadCount: async (userType, userId) => {
+  //   try {
+  //     const response = await axios.get(`${API_BASE_URL}/notifications/unread/count`, {
+  //       params: { userType, userId }
+  //     });
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error fetching unread count:', error);
+  //     throw error;
+  //   }
+  // },
+
   // Get donor notifications (backward compatible)
-  getDonorNotifications: async (donorId) => {
+   getDonorNotifications: async (donorId) => {
     try {
-      const response = await api.get('/notifications/donor', {
-        headers: { 'X-Donor-Id': donorId }
+      console.log(`🔵 Calling API: ${API_BASE_URL}/notifications?userType=DONOR&userId=${donorId}`);
+      const response = await axios.get(`${API_BASE_URL}/notifications`, {
+        params: {
+          userType: 'DONOR',
+          userId: donorId
+        }
       });
+      console.log('✅ API Response status:', response.status);
+      console.log('✅ API Response data:', response.data);
+      console.log('✅ Data type:', Array.isArray(response.data) ? 'Array' : typeof response.data);
+      console.log('✅ Data length:', response.data?.length);
+      
+      // 🔥 IMPORTANT: Return the data directly (it's already an array)
       return response.data;
     } catch (error) {
-      console.error('Error fetching donor notifications:', error);
+      console.error('❌ Error fetching donor notifications:', error);
+      console.error('Error details:', error.response?.data);
       throw error;
     }
   },
 
   // Get institution notifications
-  getInstitutionNotifications: async (institutionId) => {
+getInstitutionNotifications: async (institutionId) => {
     try {
-      const response = await api.get(`/notifications/institution/${institutionId}`);
+      console.log(`🔵 Calling API for institution: ${institutionId}`);
+      const response = await axios.get(`${API_BASE_URL}/notifications`, {
+        params: {
+          userType: 'INSTITUTION',
+          userId: institutionId
+        }
+      });
+      console.log('✅ API Response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching institution notifications:', error);
+      console.error('❌ Error fetching institution notifications:', error);
       throw error;
     }
   },
