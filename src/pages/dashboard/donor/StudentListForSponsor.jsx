@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getInstitutionsByUnion, getAllInstitutionsList } from '../../../api/institutionApi';
-import { getAllStudents, getStudentsByInstitution, getStudentsByInstitutionWithPagination, searchStudentsPaginated, searchStudents, getStudentById } from '../../../api/studentApi';
+import { getAllStudents, getStudentsByInstitution,getStudentsByInstitutionWithPagination, searchStudentsPaginated,getStudentsByDivision, getStudentById,getStudentsByDistrict, 
+    getStudentsByThana,       
+    getStudentsByUnion  } from '../../../api/studentApi';
 import { getDivisions, getDistrictsByDivision, getThanasByDistrict, getUnionsByThanaId } from '../../../api/areaApi';
 import { FaHandHoldingHeart } from 'react-icons/fa';
 import ContactSponsorModal from '../donor/ContactSponsorModal';
@@ -16,8 +18,6 @@ const StudentListForSponsor = () => {
   //const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
  const navigate = useNavigate();
- const [searchTimeout, setSearchTimeout] = useState(null);
-
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   // Filter states
@@ -29,7 +29,7 @@ const StudentListForSponsor = () => {
     institutionsId: '',
     search: ''
   });
-
+const [searchTimeout, setSearchTimeout] = useState(null);
   // Location data states
   const [divisions, setDivisions] = useState([]);
   const [districts, setDistricts] = useState([]);
@@ -110,55 +110,89 @@ const fetchStudents = async () => {
     console.log('Fetching students with filters:', filters);
     console.log('Current page:', pagination.page, 'Size:', pagination.size);
 
-    // Case 1: Filter by institution
+    // Priority Order: Institution > Union > Thana > District > Search > All
     if (filters.institutionsId) {
-      const response = await getStudentsByInstitutionWithPagination(filters.institutionsId, pagination.page, pagination.size);
-      
-      // Check if response is paginated or not
-      if (response?.content) {
-        // Paginated response
-        studentsData = response.content;
-        totalPages = response.totalPages || 1;
-        totalElements = response.totalElements || studentsData.length;
-      } else {
-        // Non-paginated response
-        studentsData = response?.data || response || [];
-        totalPages = 1;
-        totalElements = studentsData.length;
-      }
+      // Case 1: Filter by Institution
+      const response = await getStudentsByInstitutionWithPagination(
+        filters.institutionsId, 
+        pagination.page, 
+        pagination.size
+      );
+      studentsData = response?.content || [];
+      totalPages = response?.totalPages || 1;
+      totalElements = response?.totalElements || studentsData.length;
+    } 
+    else if (filters.unionOrAreaId) {
+      // ✅ NEW: Filter by Union using studentApi
+      const response = await getStudentsByUnion(
+        filters.unionOrAreaId,
+        pagination.page,
+        pagination.size,
+        'studentName',
+        'asc'
+      );
+      studentsData = response?.content || [];
+      totalPages = response?.totalPages || 1;
+      totalElements = response?.totalElements || studentsData.length;
     }
-    // Case 2: Search with pagination
+    else if (filters.thanaId) {
+      // ✅ NEW: Filter by Thana using studentApi
+      const response = await getStudentsByThana(
+        filters.thanaId,
+        pagination.page,
+        pagination.size,
+        'studentName',
+        'asc'
+      );
+      studentsData = response?.content || [];
+      totalPages = response?.totalPages || 1;
+      totalElements = response?.totalElements || studentsData.length;
+    }
+    else if (filters.districtId) {
+      // ✅ NEW: Filter by District using studentApi
+      const response = await getStudentsByDistrict(
+        filters.districtId,
+        pagination.page,
+        pagination.size,
+        'studentName',
+        'asc'
+      );
+      studentsData = response?.content || [];
+      totalPages = response?.totalPages || 1;
+      totalElements = response?.totalElements || studentsData.length;
+    }
+     else if (filters.divisionId) {
+      // ✅ NEW: Filter by Division using studentApi
+      const response = await getStudentsByDivision(
+        filters.divisionId,
+        pagination.page,
+        pagination.size,
+        'studentName',
+        'asc'
+      );
+      studentsData = response?.content || [];
+      totalPages = response?.totalPages || 1;
+      totalElements = response?.totalElements || studentsData.length;
+    }
     else if (filters.search) {
-      // Call search API with pagination parameters
+      // Case: Search with pagination
       const response = await searchStudentsPaginated(
         filters.search,
         pagination.page,
         pagination.size
       );
-      
-      // Check if response is paginated
-      if (response?.content) {
-        studentsData = response.content;
-        totalPages = response.totalPages || 1;
-        totalElements = response.totalElements || 0;
-        console.log('Search paginated response:', response);
-      } else {
-        // Fallback for non-paginated response
-        studentsData = Array.isArray(response) ? response : [];
-        totalPages = 1;
-        totalElements = studentsData.length;
-        console.log('Search non-paginated response:', studentsData);
-      }
+      studentsData = response?.content || [];
+      totalPages = response?.totalPages || 1;
+      totalElements = response?.totalElements || 0;
     }
-    // Case 3: Get all with pagination
     else {
+      // Case: Get all students with pagination
       const response = await getAllStudents(
         pagination.page, 
         pagination.size, 
         'studentName', 
         'asc'
       );
-      
       studentsData = response?.content || [];
       totalPages = response?.totalPages || 1;
       totalElements = response?.totalElements || studentsData.length;
@@ -171,63 +205,31 @@ const fetchStudents = async () => {
       totalElements: totalElements
     }));
 
-    // Check if studentsData is array
-    if (!Array.isArray(studentsData)) {
-      console.error('studentsData is not an array:', studentsData);
-      setStudents([]);
-      return;
-    }
-
     // Process and set students
-    const processedStudents = studentsData.map(student => ({
+    const processedStudents = (Array.isArray(studentsData) ? studentsData : []).map(student => ({
       ...student,
-      sponsors: student.sponsors || [] // Ensure sponsors array exists
+      sponsors: student.sponsors || []
     }));
     
     setStudents(processedStudents);
     
-    // Log pagination info
-    const startItem = pagination.page * pagination.size + 1;
-    const endItem = Math.min(startItem + processedStudents.length - 1, totalElements);
-    console.log(`✅ Loaded ${processedStudents.length} students (Showing ${startItem} to ${endItem} of ${totalElements})`);
-
-    // Now check pending status for EACH student
+    // Check pending status for each student
     const pendingStatuses = {};
-    
-    // Use Promise.all for better performance
     const pendingPromises = processedStudents.map(async (student) => {
       try {
-        console.log(`\n=== Checking student ${student.studentId}: ${student.studentName} ===`);
         const pendingStatus = await checkPendingSponsorship(student.studentId);
-        
-        // Ensure pendingStatus is object
-        if (pendingStatus && typeof pendingStatus === 'object') {
-          if (pendingStatus.hasPending) {
-            console.log(`🎉 Student ${student.studentId} HAS pending sponsorship!`);
-          } else {
-            console.log(`📭 Student ${student.studentId} has NO pending sponsorship`);
-          }
-          return { studentId: student.studentId, status: pendingStatus };
-        } else {
-          console.warn(`Invalid pending status for student ${student.studentId}`);
-          return { studentId: student.studentId, status: { hasPending: false } };
-        }
+        return { studentId: student.studentId, status: pendingStatus };
       } catch (err) {
-        console.error(`Error checking pending status for student ${student.studentId}:`, err);
         return { studentId: student.studentId, status: { hasPending: false } };
       }
     });
 
-    // Wait for all pending status checks
     const results = await Promise.all(pendingPromises);
-    
-    // Build pending status map
     results.forEach(result => {
       pendingStatuses[result.studentId] = result.status;
     });
     
     setPendingStatusMap(pendingStatuses);
-    console.log('✅ Final pendingStatusMap:', pendingStatuses);
 
   } catch (error) {
     console.error('❌ Failed to load students:', error);
@@ -312,14 +314,14 @@ const getSponsorButtonStatus = (student) => {
   
   
   // Check if student has COMPLETED sponsorship (not PENDING)
-  const hasCompletedSponsorship = student.sponsors?.some(
-    sponsor => sponsor.status === 'COMPLETED'
+  const hasActiveSponsorship = student.sponsors?.some(
+    sponsor => sponsor.status === 'ACTIVE'
   );
   
-  console.log("Has completed sponsorship:", hasCompletedSponsorship);
+  console.log("Has active sponsorship:", hasActiveSponsorship);
   
-  if (hasCompletedSponsorship) {
-    console.log("✅ Student has COMPLETED sponsorship, returning 'sponsored'");
+  if (hasActiveSponsorship) {
+    console.log("✅ Student has ACTIVE sponsorship, returning 'sponsored'");
     return { status: 'sponsored' };
   }
   
@@ -333,7 +335,7 @@ const getSponsorButtonStatus = (student) => {
     };
   }
   
-  console.log("✅ Student available for sponsorship");
+  console.log(" Student available for sponsorship");
   return { status: 'available' };
 };
 
@@ -416,7 +418,7 @@ const getSponsorButtonStatus = (student) => {
     setPagination(prev => ({ ...prev, page: 0 }));
   };
 
-const handleSearchChange = (e) => {
+  const handleSearchChange = (e) => {
   const searchValue = e.target.value;
   setFilters(prev => ({ ...prev, search: searchValue }));
   setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page
@@ -427,9 +429,8 @@ const handleSearchChange = (e) => {
     fetchStudents();
   }, 500));
 };
- 
 
- const resetFilters = () => {
+const resetFilters = () => {
   setFilters({
     divisionId: '',
     districtId: '',
@@ -442,7 +443,7 @@ const handleSearchChange = (e) => {
   fetchStudents(); // Fetch with reset filters
 };
 
-const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage) => {
   if (newPage >= 0 && newPage < pagination.totalPages) {
     setPagination(prev => ({ ...prev, page: newPage }));
     // Fetch students for the new page
@@ -563,6 +564,7 @@ const handlePageChange = (newPage) => {
     setContactModalOpen(false);
     // sponsorship logic here
   };
+// Page numbers helper function - shows 4-5 pages
 const getPageNumbers = () => {
   const totalPages = pagination.totalPages;
   const currentPage = pagination.page + 1;
@@ -605,54 +607,55 @@ const getPageNumbers = () => {
 };
   return (
     <div className="container mx-auto px-4 py-8">
-     {/* Header Section */}
-     <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-6 order-b-4 border-blue-600">
-       {/* Title and Back button - Same line */}
-       <div className="flex justify-between items-center mb-3">
-         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
-           <FaHandHoldingHeart className="text-blue-600 mr-2 text-lg md:text-xl" /> 
-           Donor Portal
-         </h1>
-         
-         <button
-           onClick={() => navigate(-1)}
-           className="flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base"
-         >
-           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-           </svg>
-           <span className="hidden md:inline">Back</span>
-           <span className="md:hidden">←</span>
-         </button>
-       </div>
-       
-       {/* Subtitle */}
-       <h2 className="text-lg md:text-xl font-semibold text-gray-700 mb-3">
-         Search Student to Sponsor
-       </h2>
-       
-       {/* Description */}
-       <p className="text-sm md:text-base text-gray-600 mb-4">
-         Search and sponsor students in need of financial support
-       </p>
-       
-       {/* Info box */}
-       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
-         <div className="flex items-start">
-           <svg className="h-4 w-4 md:h-5 md:w-5 text-yellow-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-           </svg>
-           <div className="text-xs md:text-sm">
-             <span className="font-medium text-yellow-800">Please Enter All Fields:</span>
-             <span className="text-yellow-700 ml-1">Division, District, Thana, Union/Area</span>
-           </div>
-         </div>
-       </div>
-     </div>
-     <div className="w-full h-1 bg-black  mb-6"></div>
-
+      {/* Header Section */}
+{/* Header Section */}
+<div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-6 order-b-4 border-blue-600">
+  {/* Title and Back button - Same line */}
+  <div className="flex justify-between items-center mb-3">
+    <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+      <FaHandHoldingHeart className="text-blue-600 mr-2 text-lg md:text-xl" /> 
+      Donor Portal
+    </h1>
+    
+    <button
+      onClick={() => navigate(-1)}
+      className="flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+      </svg>
+      <span className="hidden md:inline">Back</span>
+      <span className="md:hidden">←</span>
+    </button>
+  </div>
+  
+  {/* Subtitle */}
+  <h2 className="text-lg md:text-xl font-semibold text-gray-700 mb-3">
+    Search Student to Sponsor
+  </h2>
+  
+  {/* Description */}
+  <p className="text-sm md:text-base text-gray-600 mb-4">
+    Search and sponsor students in need of financial support
+  </p>
+  
+  {/* Info box */}
+  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
+    <div className="flex items-start">
+      <svg className="h-4 w-4 md:h-5 md:w-5 text-yellow-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+      <div className="text-xs md:text-sm">
+        <span className="font-medium text-yellow-800">Please Enter All Fields:</span>
+        <span className="text-yellow-700 ml-1">Division, District, Thana, Union/Area</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div className="w-full h-1 bg-black  mb-6"></div>
       {/* Search Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+      
         
         {/* Desktop View - 5 columns */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
@@ -846,72 +849,72 @@ const getPageNumbers = () => {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-3">
-            {/* Mobile: Reset Icon + Search Row */}
-            <div className="flex items-center gap-2 md:hidden">
-              {/* Reset Icon Button - Mobile */}
-          <button
-            onClick={resetFilters}
-            className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 flex-shrink-0"
-            title="Reset Filters"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-              
-              {/* Search Input - Mobile */}
-              <div className="flex-1">
-                <input
-                  type="text"
-                  name="search"
-                  value={filters.search}
-                  onChange={handleSearchChange}
-                  placeholder="Search by name or guardian..."
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                />
-              </div>
-              
-              {/* Search Button - Mobile */}
-              <button
-                onClick={fetchStudents}
-                className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex-shrink-0"
-                title="Search"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-            </div>
+     <div className="flex flex-col md:flex-row gap-3">
+  {/* Mobile: Reset Icon + Search Row */}
+  <div className="flex items-center gap-2 md:hidden">
+    {/* Reset Icon Button - Mobile */}
+<button
+  onClick={resetFilters}
+  className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 flex-shrink-0"
+  title="Reset Filters"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+</button>
+    
+    {/* Search Input - Mobile */}
+    <div className="flex-1">
+      <input
+        type="text"
+        name="search"
+        value={filters.search}
+        onChange={handleSearchChange}
+        placeholder="Search by name or guardian..."
+        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+      />
+    </div>
+    
+    {/* Search Button - Mobile */}
+    <button
+      onClick={fetchStudents}
+      className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex-shrink-0"
+      title="Search"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </button>
+  </div>
 
-            {/* Desktop: Original Layout */}
-            <div className="hidden md:flex md:flex-1 md:justify-between md:items-center">
-              <div className="flex-1 mr-4">
-                <input
-                  type="text"
-                  name="search"
-                  value={filters.search}
-                  onChange={handleSearchChange}
-                  placeholder="Search by student name or guardian..."
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={resetFilters}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-                >
-                  Reset Filters
-                </button>
-                <button
-                  onClick={fetchStudents}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Search
-                </button>
-              </div>
-            </div>
-          </div>
+  {/* Desktop: Original Layout */}
+  <div className="hidden md:flex md:flex-1 md:justify-between md:items-center">
+    <div className="flex-1 mr-4">
+      <input
+        type="text"
+        name="search"
+        value={filters.search}
+        onChange={handleSearchChange}
+        placeholder="Search by student name or guardian..."
+        className="w-full p-2 border border-gray-300 rounded-md"
+      />
+    </div>
+    <div className="flex space-x-2">
+      <button
+        onClick={resetFilters}
+        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+      >
+        Reset Filters
+      </button>
+      <button
+        onClick={fetchStudents}
+        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      >
+        Search
+      </button>
+    </div>
+  </div>
+</div>
       </div>
 
       {/* Student List - Desktop Table */}
@@ -990,129 +993,129 @@ const getPageNumbers = () => {
                       {student.institutionName || 'Not specified'}
                     </td>
                   <td className="px-6 py-4 text-right">
-                <div className="flex justify-end space-x-2">
-                  <button
-                    onClick={() => handleViewDetails(student)}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
-                  >
-                    View Details
-                  </button>
-                  
-                  {!student.fullySponsored && (
-                    (() => {
-                      console.log(`🎯 Rendering button for student ${student.studentId}`);
-                      const buttonStatus = getSponsorButtonStatus(student);
-                      console.log(`Button status for ${student.studentId}:`, buttonStatus);
-                      
-                      if (buttonStatus.status === 'processing') {
-                        console.log(`🎨 Showing PROCESSING button for ${student.studentId}`);
-                        return (
-                          <button
-                            disabled
-                            className="px-3 py-1 bg-yellow-500 text-white rounded text-sm cursor-not-allowed flex items-center"
-                            title={`Payment Pending - Available in ${buttonStatus.daysLeft} day(s)`}
-                          >
-                            <svg className="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
-                            </svg>
-                            Processing ({buttonStatus.daysLeft}d)
-                          </button>
-                        );
-                      } else {
-                        console.log(`🎨 Showing SPONSOR button for ${student.studentId}`);
-                        return (
-                          <button
-                            onClick={() => handleContactSponsor(student)}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-                          >
-                            Sponsor
-                          </button>
-                        );
-                      }
-                    })()
-                  )}
-                </div>
-              </td>
+  <div className="flex justify-end space-x-2">
+    <button
+      onClick={() => handleViewDetails(student)}
+      className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
+    >
+      View Details
+    </button>
+    
+    {!student.fullySponsored && (
+      (() => {
+        console.log(`🎯 Rendering button for student ${student.studentId}`);
+        const buttonStatus = getSponsorButtonStatus(student);
+        console.log(`Button status for ${student.studentId}:`, buttonStatus);
+        
+        if (buttonStatus.status === 'processing') {
+          console.log(`🎨 Showing PROCESSING button for ${student.studentId}`);
+          return (
+            <button
+              disabled
+              className="px-3 py-1 bg-yellow-500 text-white rounded text-sm cursor-not-allowed flex items-center"
+              title={`Payment Pending - Available in ${buttonStatus.daysLeft} day(s)`}
+            >
+              <svg className="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
+              </svg>
+              Processing ({buttonStatus.daysLeft}d)
+            </button>
+          );
+        } else {
+          console.log(`🎨 Showing SPONSOR button for ${student.studentId}`);
+          return (
+            <button
+              onClick={() => handleContactSponsor(student)}
+              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+            >
+              Sponsor
+            </button>
+          );
+        }
+      })()
+    )}
+  </div>
+</td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
-                {/* Pagination - Centered Compact with Page Numbers */}
-            {pagination.totalPages > 1 && (
-              <div className="px-4 py-4 bg-white border-t border-gray-200">
-                <div className="flex flex-col items-center space-y-3">
-                  {/* Showing info - Centered */}
-                  <div className="text-xs sm:text-sm text-gray-600">
-                    Showing <span className="font-medium text-blue-600">
-                      {students.length === 0 ? 0 : pagination.page * pagination.size + 1}
-                    </span> to{' '}
-                    <span className="font-medium text-blue-600">
-                      {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}
-                    </span> of{' '}
-                    <span className="font-medium text-blue-600">{pagination.totalElements}</span> students
-                  </div>
-                  
-                  {/* Pagination Controls - Centered */}
-                  <div className="flex items-center justify-center space-x-1 sm:space-x-2">
-                    {/* Previous Button */}
-                    <button
-                      onClick={() => handlePageChange(pagination.page - 1)}
-                      disabled={pagination.page === 0}
-                      className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium flex items-center ${
-                        pagination.page === 0
-                          ? "text-gray-300 cursor-not-allowed"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      <span className="hidden sm:inline">Prev</span>
-                    </button>
+      {/* Pagination - Centered Compact with Page Numbers */}
+{pagination.totalPages > 1 && (
+  <div className="px-4 py-4 bg-white border-t border-gray-200">
+    <div className="flex flex-col items-center space-y-3">
+      {/* Showing info - Centered */}
+      <div className="text-xs sm:text-sm text-gray-600">
+        Showing <span className="font-medium text-blue-600">
+          {students.length === 0 ? 0 : pagination.page * pagination.size + 1}
+        </span> to{' '}
+        <span className="font-medium text-blue-600">
+          {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}
+        </span> of{' '}
+        <span className="font-medium text-blue-600">{pagination.totalElements}</span> students
+      </div>
+      
+      {/* Pagination Controls - Centered */}
+      <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+        {/* Previous Button */}
+        <button
+          onClick={() => handlePageChange(pagination.page - 1)}
+          disabled={pagination.page === 0}
+          className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium flex items-center ${
+            pagination.page === 0
+              ? "text-gray-300 cursor-not-allowed"
+              : "text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="hidden sm:inline">Prev</span>
+        </button>
 
-                    {/* Page Numbers - Show 4-5 pages */}
-                    {getPageNumbers().map((pageNum, index) => (
-                      <button
-                        key={index}
-                        onClick={() => typeof pageNum === 'number' && handlePageChange(pageNum - 1)}
-                        disabled={pageNum === '...'}
-                        className={`min-w-[32px] sm:min-w-[36px] h-8 sm:h-9 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                          pageNum === '...'
-                            ? 'cursor-default text-gray-500'
-                            : pageNum === pagination.page + 1
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    ))}
+        {/* Page Numbers - Show 4-5 pages */}
+        {getPageNumbers().map((pageNum, index) => (
+          <button
+            key={index}
+            onClick={() => typeof pageNum === 'number' && handlePageChange(pageNum - 1)}
+            disabled={pageNum === '...'}
+            className={`min-w-[32px] sm:min-w-[36px] h-8 sm:h-9 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+              pageNum === '...'
+                ? 'cursor-default text-gray-500'
+                : pageNum === pagination.page + 1
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
 
-                    {/* Next Button */}
-                    <button
-                      onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page >= pagination.totalPages - 1}
-                      className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium flex items-center ${
-                        pagination.page >= pagination.totalPages - 1
-                          ? "text-gray-300 cursor-not-allowed"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      <span className="hidden sm:inline">Next</span>
-                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  {/* Page info for mobile */}
-                  <div className="text-xs text-gray-500 sm:hidden">
-                    Page {pagination.page + 1} of {pagination.totalPages}
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Next Button */}
+        <button
+          onClick={() => handlePageChange(pagination.page + 1)}
+          disabled={pagination.page >= pagination.totalPages - 1}
+          className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium flex items-center ${
+            pagination.page >= pagination.totalPages - 1
+              ? "text-gray-300 cursor-not-allowed"
+              : "text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          <span className="hidden sm:inline">Next</span>
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+      
+      {/* Page info for mobile */}
+      <div className="text-xs text-gray-500 sm:hidden">
+        Page {pagination.page + 1} of {pagination.totalPages}
+      </div>
+    </div>
+  </div>
+)}
           </>
         )}
       </div>

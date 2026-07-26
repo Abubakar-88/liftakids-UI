@@ -59,30 +59,32 @@ const notificationService = {
     }
   },
 
- markAsRead: async (notificationId, userType, userId) => {
-    try {
-      const response = await axios.patch(`${API_BASE_URL}/notifications/${notificationId}/read`, null, {
-        params: { userType, userId }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error marking as read:', error);
-      throw error;
-    }
-  },
+ // Change from PATCH to PUT
+markAsRead: async (notificationId, userType, userId) => {
+  try {
+    const response = await api.put(`/notifications/${notificationId}/read`, null, {
+      params: { userType, userId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error marking as read:', error);
+    throw error;
+  }
+},
 
-  // Mark all as read
-  markAllAsRead: async (userType, userId) => {
-    try {
-      const response = await axios.patch(`${API_BASE_URL}/notifications/mark-all-read`, null, {
-        params: { userType, userId }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-      throw error;
-    }
-  },
+// Update markAllAsRead to match backend endpoint
+markAllAsRead: async (userType, userId) => {
+  try {
+    // Note: Backend endpoint is "/read-all" not "/mark-all-read"
+    const response = await api.put('/notifications/read-all', null, {
+      params: { userType, userId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error marking all as read:', error);
+    throw error;
+  }
+},
 
   // Get unread count
   // getUnreadCount: async (userType, userId) => {

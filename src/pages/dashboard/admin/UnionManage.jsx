@@ -422,7 +422,7 @@ const handleEdit = async (union) => {
   };
 
   return (
-     <AdminDashboard>
+     
     <div className="p-6 bg-gray-100 min-h-screen">
    
       <div className="max-w-6xl mx-auto">
@@ -728,6 +728,6 @@ const handleEdit = async (union) => {
         )}
       </div>
     </div>
-    </AdminDashboard>
+    
   );
 }

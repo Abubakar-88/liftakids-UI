@@ -124,18 +124,21 @@ const NotificationDropdown = ({ onClose, isAdminView = false }) => {
     }
   };
 
-  const handleNotificationClick = async (notification) => {
-    if (notification.status === 'UNREAD') {
-      await markAsRead(notification.notificationId);
+const handleNotificationClick = async (notification) => {
+  if (notification.status === 'UNREAD') {
+    // Use either notificationId or id
+    const notificationId = notification.notificationId || notification.id;
+    if (notificationId) {
+      await markAsRead(notificationId);
     }
-    
-    if (notification.actionUrl) {
-      // Use navigate for SPA navigation
-      navigate(notification.actionUrl);
-    }
-    
-    onClose();
-  };
+  }
+  
+  if (notification.actionUrl) {
+    navigate(notification.actionUrl);
+  }
+  
+  onClose();
+};
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();

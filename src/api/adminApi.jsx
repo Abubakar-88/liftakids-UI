@@ -276,22 +276,7 @@ export const getContactMessages = async (params = {}) => {
  
 };
 
-// Dashboard specific APIs
-export const getDashboardStats = async () => {
-  
-    const response = await adminApi.get('/admin/dashboard/stats');
-    return response;
- 
-};
 
-export const getRecentActivities = async (limit = 10) => {
-  
-    const response = await adminApi.get('/admin/dashboard/activities', {
-      params: { limit }
-    });
-    return response;
- 
-};
 
 // Utility functions
 export const getCurrentAdmin = () => {
@@ -306,5 +291,42 @@ export const getAuthToken = () => {
 export const isAdminLoggedIn = () => {
   return !!localStorage.getItem('adminToken');
 };
+
+// Dashboard specific APIs
+export const getDashboardStats = async () => {
+  try {
+    console.log('📡 Fetching dashboard stats...');
+    const response = await adminApi.get('/admin/dashboard/stats');
+    console.log('✅ Dashboard stats response:', response);
+    
+    // Response is already the data due to interceptor
+    return response;
+  } catch (error) {
+    console.error('❌ Error fetching dashboard stats:', error);
+    // Return default values instead of throwing
+    return {
+      totalDonors: 0,
+      totalInstitutions: 0,
+      totalStudents: 0,
+      activeSponsorships: 0,
+      totalSponsorships: 0,
+      totalPayments: 0,
+      totalRevenue: 0
+    };
+  }
+};
+
+export const getRecentActivities = async (limit = 10) => {
+  try {
+    const response = await adminApi.get('/admin/dashboard/activities', {
+      params: { limit }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching recent activities:', error);
+    return [];
+  }
+};
+
 
 export default adminApi;

@@ -187,7 +187,7 @@ export default function DistrictManager() {
   const totalPages = Math.ceil(totalDistricts / pageSize);
 
   return (
-    <AdminDashboard>
+    
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-6 text-gray-800">Manage Districts</h2>
 
@@ -400,6 +400,6 @@ export default function DistrictManager() {
           </div>
         )}
       </div>
-    </AdminDashboard>
+    
   );
 }

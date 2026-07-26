@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserGraduate, FaHeart, FaSearch, FaInfoCircle, FaSync, FaMoneyBillWave, FaCalendarAlt, FaUniversity } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { FaUserGraduate, FaHeart, FaSearch, FaInfoCircle, FaSync, FaMoneyBillWave, FaCalendarAlt, FaUniversity, FaFilter } from 'react-icons/fa';
 import { getSponsorshipsByDonorId, getDonorById } from '../../../api/donarApi';
 import { getTopUnsponsoredUrgentStudents } from '../../../api/studentApi';
 import { useNavigate } from 'react-router-dom';
-import { FaHandHoldingHeart } from 'react-icons/fa';
 import ContactSponsorModal from '../donor/ContactSponsorModal';
 import PaymentModal from '../donor/PaymentModal';
 import PaymentCheckoutPage from '../donor/PaymentCheckoutPage';
+import { cancelSponsorship, canBeCancelled } from '../../../api/sponsorshipApi';
+import CancelConfirmationModal from './../../../components/Modal/CancelConfirmationModal';
 
 const DonorSponsoredStudentList = () => {
-  const [sponsoredStudents, setSponsoredStudents] = useState([]);
+  const [allSponsorships, setAllSponsorships] = useState([]);
+  const [filteredSponsorships, setFilteredSponsorships] = useState([]);
   const [availableStudents, setAvailableStudents] = useState([]);
   const [donorInfo, setDonorInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,168 +29,174 @@ const DonorSponsoredStudentList = () => {
   const [activeDetailsTab, setActiveDetailsTab] = useState('info');
   const navigate = useNavigate();
   const [donorData, setDonorData] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedSponsorshipForCancel, setSelectedSponsorshipForCancel] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  
+  // 👇 Filter State - ডিফল্ট ACTIVE
+  const [statusFilter, setStatusFilter] = useState('ACTIVE');
+
+  // Filter options
+  const filterOptions = [
+    { value: 'ACTIVE', label: 'Active', color: 'text-green-600 bg-green-50' },
+    { value: 'PENDING_PAYMENT', label: 'Pending Payment', color: 'text-yellow-600 bg-yellow-50' },
+    { value: 'CANCELLED', label: 'Cancelled', color: 'text-red-600 bg-red-50' },
+    { value: 'ALL', label: 'All Sponsorships', color: 'text-blue-600 bg-blue-50' },
+  ];
+
+  // Filter function
+  const filterSponsorships = (sponsorships, filterStatus) => {
+    if (!sponsorships || !Array.isArray(sponsorships)) return [];
+    
+    if (filterStatus === 'ALL') {
+      return sponsorships;
+    }
+    
+    return sponsorships.filter(sponsorship => {
+      return sponsorship.status === filterStatus;
+    });
+  };
+
+  // Status count function
+  const getStatusCount = (status) => {
+    if (status === 'ALL') return allSponsorships.length;
+    return allSponsorships.filter(s => s.status === status).length;
+  };
 
   useEffect(() => {
-    const data = localStorage.getItem('donorData');
-    if (data) {
-      setDonorData(JSON.parse(data));
-    }
-  }, []);
-
- const fetchData = async () => {
-  if (!donorData || !donorData.donorId) {
-    setError('Donor information not found. Please log in again.');
-    setLoading(false);
-    return;
+  console.log('🔄 useEffect triggered');
+  const data = localStorage.getItem('donorData');
+  console.log('📦 Raw donorData from localStorage:', data);
+  
+  if (data) {
+    const parsedData = JSON.parse(data);
+    console.log('📦 Parsed donorData:', parsedData);
+    setDonorData(parsedData);
+  } else {
+    console.log('❌ No donorData in localStorage');
   }
+}, []);
 
-  try {
-    setError(null);
-    setRefreshing(true);
-
-    const [sponsoredData, availableData, donorInfoData] = await Promise.all([
-      getSponsorshipsByDonorId(donorData.donorId), 
-      getTopUnsponsoredUrgentStudents(20),
-      getDonorById(donorData.donorId)
-    ]);
-
- 
-    console.log("Sponsored data:", sponsoredData);
-    
-    
-    if (sponsoredData && sponsoredData.length > 0) {
-      sponsoredData.forEach((sponsorship, index) => {
-        console.log(`Sponsorship ${index + 1} ID:`, sponsorship.id);
-        console.log(`Student: ${sponsorship.studentName} (ID: ${sponsorship.studentId})`);
-      });
+// 👇 donorData পরিবর্তন হলে fetchData কল হবে
+useEffect(() => {
+  console.log('🔄 donorData changed:', donorData);
+  if (donorData && donorData.donorId) {
+    fetchData();
+  }
+}, [donorData]);
+useEffect(() => {
+    console.log('🔄 donorData effect triggered:', donorData);
+    if (donorData && donorData.donorId) {
+      console.log('✅ donorData has donorId:', donorData.donorId);
+      fetchData();
     } else {
-      console.log("No sponsorships found");
+      console.warn('⚠️ donorData is null or missing donorId');
+    }
+  }, [donorData]); 
+
+  // 👇 3. statusFilter 
+  useEffect(() => {
+    console.log('🔄 statusFilter changed:', statusFilter);
+    if (allSponsorships.length > 0) {
+      const filtered = filterSponsorships(allSponsorships, statusFilter);
+      console.log('✅ Re-filtered:', filtered.length, 'items');
+      setFilteredSponsorships(filtered);
+    }
+  }, [statusFilter]);
+  const fetchData = async () => {
+    if (!donorData || !donorData.donorId) {
+      setError('Donor information not found. Please log in again.');
+      setLoading(false);
+      return;
     }
 
-    setSponsoredStudents(sponsoredData);
-    setAvailableStudents(availableData);
-    setDonorInfo(donorInfoData);
-  } catch (err) {
-    setError('Failed to fetch data. Please try again.');
-    console.error('Error fetching data:', err);
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-};
+    try {
+      setError(null);
+      setRefreshing(true);
+
+      const [sponsoredData, availableData, donorInfoData] = await Promise.all([
+        getSponsorshipsByDonorId(donorData.donorId), 
+        getTopUnsponsoredUrgentStudents(20),
+        getDonorById(donorData.donorId)
+      ]);
+
+      console.log("All sponsored data:", sponsoredData);
+      
+      // all sponsorship collect
+      setAllSponsorships(sponsoredData || []);
+      
+      // Filter provide
+      const filtered = filterSponsorships(sponsoredData, statusFilter);
+      setFilteredSponsorships(filtered);
+      
+      setAvailableStudents(availableData || []);
+      setDonorInfo(donorInfoData);
+    } catch (err) {
+      setError('Failed to fetch data. Please try again.');
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Return after filter
+  useEffect(() => {
+    if (allSponsorships.length > 0) {
+      const filtered = filterSponsorships(allSponsorships, statusFilter);
+      setFilteredSponsorships(filtered);
+    }
+  }, [statusFilter, allSponsorships]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchData();
   };
 
-  useEffect(() => {
-    if (donorData) {
-      fetchData();
-    }
-  }, [donorData]);
-const handleViewDetails = (student) => {
-  const actualStudent = student.student || student;
+  const handleViewDetails = (student) => {
+    const actualStudent = student.student || student;
 
-  const normalizedStudent = {
-    ...actualStudent,
+    const normalizedStudent = {
+      ...actualStudent,
+      sponsorshipId: student.id || student.sponsorshipId,
+      studentId: actualStudent.studentId || actualStudent.id,
+      studentName: actualStudent.studentName || actualStudent.name,
+      institutionName: actualStudent.institutionName || actualStudent.instituteName,
+      grade: actualStudent.grade || actualStudent.class,
+      requiredMonthlySupport: actualStudent.requiredMonthlySupport || student.monthlyAmount,
+      sponsoredAmount: actualStudent.sponsoredAmount || student.totalPaidAmount,
+      financial_rank: actualStudent.financial_rank || actualStudent.financialRank,
+      photoUrl: actualStudent.photoUrl || actualStudent.avatar,
+      sponsored: actualStudent.sponsored !== undefined ? actualStudent.sponsored : (student.status === 'ACTIVE' || student.status === 'COMPLETED'),
+      contactNumber: actualStudent.contactNumber || actualStudent.guardianPhone,
+      address: actualStudent.address,
+      guardianName: actualStudent.guardianName,
+      bio: actualStudent.bio || actualStudent.description,
+    };
 
-    // Sponsorship info
-    sponsorshipId: student.id || student.sponsorshipId,
-
-    // Student info
-    studentId: actualStudent.studentId || actualStudent.id,
-    studentName: actualStudent.studentName || actualStudent.name,
-    institutionName:
-      actualStudent.institutionName || actualStudent.instituteName,
-    grade: actualStudent.grade || actualStudent.class,
-    requiredMonthlySupport:
-      actualStudent.requiredMonthlySupport || student.monthlyAmount,
-    sponsoredAmount:
-      actualStudent.sponsoredAmount || student.totalPaidAmount,
-    financial_rank:
-      actualStudent.financial_rank || actualStudent.financialRank,
-    photoUrl: actualStudent.photoUrl || actualStudent.avatar,
-    sponsored:
-      actualStudent.sponsored !== undefined
-        ? actualStudent.sponsored
-        : student.status === 'ACTIVE' ||
-          student.status === 'COMPLETED',
-
-    contactNumber:
-      actualStudent.contactNumber || actualStudent.guardianPhone,
-
-    address: actualStudent.address,
-    guardianName: actualStudent.guardianName,
-    bio: actualStudent.bio || actualStudent.description,
+    setSelectedStudent(normalizedStudent);
+    setShowDetails(true);
+    setActiveDetailsTab('info');
   };
 
-  console.log('Normalized Student:', normalizedStudent);
+  const handleContactSponsor = (student) => {
+    const isSponsoredStudent = student.status === 'ACTIVE' || student.sponsored === true;
 
-  setSelectedStudent(normalizedStudent);
-  setShowDetails(true);
-  setActiveDetailsTab('info');
-};
-  // const handleViewDetails = (student) => {
-  //   // Normalize the student data to ensure consistent structure
-  //   const normalizedStudent = {
-  //     ...student,
-  //     studentId: student.studentId || student.id,
-  //     studentName: student.studentName || student.name,
-  //     institutionName: student.institutionName || student.instituteName,
-  //     grade: student.grade || student.class,
-  //     requiredMonthlySupport: student.requiredMonthlySupport || student.monthlyAmount,
-  //     sponsoredAmount: student.sponsoredAmount || student.totalPaidAmount,
-  //     sponsorshipId: student.id || student.sponsorshipId,
-  //     financial_rank: student.financial_rank || student.financialRank,
-  //     photoUrl: student.photoUrl || student.avatar,
-  //     sponsored: student.sponsored !== undefined ? student.sponsored : (student.status === 'ACTIVE' || student.status === 'COMPLETED'),
-  //     contactNumber: student.contactNumber || student.guardianPhone,
-  //     address: student.address,
-  //     guardianName: student.guardianName,
-  //     bio: student.bio || student.description
-  //   };
-    
-  //   setSelectedStudent(normalizedStudent);
-  //   setShowDetails(true);
-  //   setActiveDetailsTab('info');
-  // };
-const handleContactSponsor = (student) => {
-  const isSponsoredStudent =
-    student.status === 'ACTIVE' ||
-    student.status === 'COMPLETED' ||
-    student.sponsored === true;
+    const normalizedStudent = {
+      ...student,
+      studentId: student.studentId || student.student?.studentId,
+      studentName: student.studentName || student.student?.studentName,
+      institutionName: student.institutionName || student.student?.institutionName,
+      requiredMonthlySupport: student.requiredMonthlySupport || student.monthlyAmount,
+      photoUrl: student.photoUrl || student.student?.photoUrl,
+      financial_rank: student.financial_rank || student.student?.financial_rank,
+      sponsored: isSponsoredStudent,
+      sponsorshipId: isSponsoredStudent ? student.id || student.sponsorshipId : null,
+    };
 
-  const normalizedStudent = {
-    ...student,
-
-    // Student Info
-    studentId: student.studentId || student.student?.studentId,
-    studentName: student.studentName || student.student?.studentName,
-    institutionName:
-      student.institutionName || student.student?.institutionName,
-    requiredMonthlySupport:
-      student.requiredMonthlySupport || student.monthlyAmount,
-    photoUrl: student.photoUrl || student.student?.photoUrl,
-    financial_rank:
-      student.financial_rank || student.student?.financial_rank,
-
-    // Sponsorship
-    sponsored: isSponsoredStudent,
-    sponsorshipId: isSponsoredStudent
-      ? student.id || student.sponsorshipId
-      : null,
+    setSelectedStudent(normalizedStudent);
+    setContactModalOpen(true);
   };
-
-  console.log('Normalized Student:', normalizedStudent);
-
-  setSelectedStudent(normalizedStudent);
-  setContactModalOpen(true);
-};
-  // const handleContactSponsor = (student) => {
-  //   setSelectedStudent(student);
-  //   setContactModalOpen(true);
-  // };
 
   const handlePaymentSubmit = (paymentInfo) => {
     setPaymentData(paymentInfo);
@@ -197,7 +207,88 @@ const handleContactSponsor = (student) => {
   const handlePaymentSuccess = (response) => {
     setCheckoutModalOpen(false);
     setPaymentData(null);
-    fetchData(); // Refresh data after successful payment
+    fetchData();
+  };
+
+  const handleCancelConfirm = async (reason) => {
+    if (!selectedSponsorshipForCancel) return;
+    
+    setIsCancelling(true);
+    
+    try {
+      const check = await canBeCancelled(selectedSponsorshipForCancel.id, donorData.donorId);
+      
+      if (!check.canCancel) {
+        toast.warning('This sponsorship cannot be cancelled at this time.');
+        setShowCancelModal(false);
+        setIsCancelling(false);
+        return;
+      }
+      
+      const result = await cancelSponsorship(
+        selectedSponsorshipForCancel.id, 
+        donorData.donorId, 
+        reason
+      );
+      
+      if (result.success) {
+        toast.success('Sponsorship cancelled successfully!');
+        setShowCancelModal(false);
+        fetchData();
+      }
+    } catch (error) {
+      toast.error('Failed to cancel sponsorship: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsCancelling(false);
+      setSelectedSponsorshipForCancel(null);
+    }
+  };
+
+  const handleCancelClick = (sponsorship) => {
+    setSelectedSponsorshipForCancel(sponsorship);
+    setShowCancelModal(true);
+  };
+
+  // Filter tab render
+  const renderFilterTabs = () => {
+    return (
+      <div className="flex flex-wrap gap-2 mb-4">
+        {filterOptions.map((option) => {
+          const count = getStatusCount(option.value);
+          const isActive = statusFilter === option.value;
+          
+          return (
+            <button
+              key={option.value}
+              onClick={() => setStatusFilter(option.value)}
+              className={`
+                px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                flex items-center gap-2
+                ${isActive 
+                  ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }
+              `}
+            >
+              <span className={`px-2 py-0.5 rounded-full text-xs ${!isActive ? option.color : 'bg-white/20 text-white'}`}>
+                {count}
+              </span>
+              <span>{option.label}</span>
+            </button>
+          );
+        })}
+        
+        {/* Reset Filter */}
+        {statusFilter !== 'ACTIVE' && (
+          <button
+            onClick={() => setStatusFilter('ACTIVE')}
+            className="px-3 py-2 text-sm text-blue-600 hover:text-blue-800"
+          >
+            ✕ Reset to Active
+          </button>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -234,100 +325,125 @@ const handleContactSponsor = (student) => {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-800 flex items-center">
                 <FaUserGraduate className="mr-2 text-blue-600" />
                 My Sponsorships
               </h1>
               {donorInfo && (
-                <p className="text-gray-600">
-                  Welcome back, {donorInfo.name}
-                </p>
+                <p className="text-gray-600">Welcome back, {donorInfo.name}</p>
               )}
             </div>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50"
-            >
-              <FaSync className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-               <button
-              onClick={() => navigate(-1)}
-              className="flex items-center text-blue-600 hover:text-blue-800"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
-              Back
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50"
+              >
+                <FaSync className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center text-blue-600 hover:text-blue-800"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+                Back
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Mobile: Show stats first */}
-        <div className="block lg:hidden mb-6">
-          <DashboardStats
-            sponsoredStudents={sponsoredStudents}
-            availableStudents={availableStudents}
-          />
+        {/* 👇 ফিল্টার ট্যাবস */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <FaFilter className="text-gray-500" />
+            <span className="font-medium text-gray-700">Filter by Status:</span>
+            <span className="text-sm text-gray-500 ml-2">
+              ({filteredSponsorships.length} of {allSponsorships.length} shown)
+            </span>
+          </div>
+          {renderFilterTabs()}
         </div>
 
-        {/* Desktop Tabs */}
-        <div className="hidden lg:block bg-white rounded-lg shadow-sm mb-6">
-          <div className="flex border-b">
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="px-6 py-4 font-medium text-sm text-blue-600 border-b-2 border-blue-600"
-            >
-              My Sponsored Students ({sponsoredStudents.length})
-            </button>
-            <button
-              onClick={() => {
-                const element = document.getElementById('available-section');
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              className="px-6 py-4 font-medium text-sm text-gray-500 hover:text-gray-700"
-            >
-              Available for Sponsorship ({availableStudents.length})
-            </button>
+        {/* Stats Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+            <p className="text-xs text-green-600">Active</p>
+            <p className="text-xl font-bold text-green-700">{getStatusCount('ACTIVE')}</p>
+          </div>
+          <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+            <p className="text-xs text-yellow-600">Pending</p>
+            <p className="text-xl font-bold text-yellow-700">{getStatusCount('PENDING_PAYMENT')}</p>
+          </div>
+          <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+            <p className="text-xs text-red-600">Cancelled</p>
+            <p className="text-xl font-bold text-red-700">{getStatusCount('CANCELLED')}</p>
+          </div>
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <p className="text-xs text-blue-600">Total</p>
+            <p className="text-xl font-bold text-blue-700">{allSponsorships.length}</p>
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
           <div className="w-full lg:w-2/3">
             {/* Sponsored Students Section */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">My Sponsored Students</h2>
-              {sponsoredStudents.length === 0 ? (
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                {statusFilter === 'ALL' ? 'All Sponsorships' : 
+                 statusFilter === 'ACTIVE' ? 'Active Sponsorships' :
+                 statusFilter === 'PENDING_PAYMENT' ? 'Pending Payments' :
+                 'Cancelled Sponsorships'}
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  ({filteredSponsorships.length})
+                </span>
+              </h2>
+              
+              {filteredSponsorships.length === 0 ? (
                 <div className="bg-white rounded-lg shadow-sm p-6 text-center">
                   <FaHeart className="mx-auto text-gray-300 text-4xl mb-3" />
-                  <p className="text-gray-600">You haven't sponsored any students yet.</p>
+                  <p className="text-gray-600">
+                    {statusFilter === 'ALL' ? 'No sponsorships found.' :
+                     statusFilter === 'ACTIVE' ? 'No active sponsorships.' :
+                     statusFilter === 'PENDING_PAYMENT' ? 'No pending payments.' :
+                     'No cancelled sponsorships.'}
+                  </p>
+                  {statusFilter !== 'ALL' && (
+                    <button
+                      onClick={() => setStatusFilter('ALL')}
+                      className="mt-3 text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      View all sponsorships
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sponsoredStudents.map((sponsorship) => (
+                  {filteredSponsorships.map((sponsorship) => (
                     <SponsorshipCard
                       key={sponsorship.id}
                       sponsorship={sponsorship}
                       onViewDetails={handleViewDetails}
                       onSponsorPay={handleContactSponsor}
+                      onCancelClick={handleCancelClick}
                     />
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Available Students Section - Mobile: Always shown at bottom */}
-            <div id="available-section" className="lg:mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Available for Sponsorship</h2>
+            {/* Available Students Section */}
+            <div id="available-section">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Available for Sponsorship ({availableStudents.length})
+              </h2>
               {availableStudents.length === 0 ? (
                 <div className="bg-white rounded-lg shadow-sm p-6 text-center">
                   <FaSearch className="mx-auto text-gray-300 text-4xl mb-3" />
@@ -348,28 +464,28 @@ const handleContactSponsor = (student) => {
             </div>
           </div>
 
-          {/* Statistics Panel - Desktop */}
-          <div className="hidden lg:block w-1/3">
+          {/* Statistics Panel */}
+          <div className="w-full lg:w-1/3">
             <DashboardStats
-              sponsoredStudents={sponsoredStudents}
+              sponsoredStudents={filteredSponsorships}
               availableStudents={availableStudents}
+              allSponsorships={allSponsorships}
             />
           </div>
         </div>
       </div>
 
-        {/* Student Details Modal */}
+      {/* Modals */}
       {showDetails && selectedStudent && (
         <StudentDetailsModal
-            selectedStudent={selectedStudent}
-            activeTab={activeDetailsTab}
-            onTabChange={setActiveDetailsTab}
-            onClose={() => setShowDetails(false)}
-            onSponsor={() => handleContactSponsor(selectedStudent)}
+          selectedStudent={selectedStudent}
+          activeTab={activeDetailsTab}
+          onTabChange={setActiveDetailsTab}
+          onClose={() => setShowDetails(false)}
+          onSponsor={() => handleContactSponsor(selectedStudent)}
         />
-        )}
+      )}
 
-      {/* Modals */}
       {contactModalOpen && (
         <ContactSponsorModal
           student={selectedStudent}
@@ -400,7 +516,21 @@ const handleContactSponsor = (student) => {
           onPaymentSuccess={handlePaymentSuccess}
         />
       )}
-         <div className="mt-4 text-center">
+
+      {showCancelModal && selectedSponsorshipForCancel && (
+        <CancelConfirmationModal
+          isOpen={showCancelModal}
+          onClose={() => {
+            setShowCancelModal(false);
+            setSelectedSponsorshipForCancel(null);
+          }}
+          onConfirm={handleCancelConfirm}
+          studentName={selectedSponsorshipForCancel.studentName || selectedSponsorshipForCancel.student?.studentName}
+          loading={isCancelling}
+        />
+      )}
+
+      <div className="mt-4 text-center">
         <button 
           onClick={() => navigate('/donor/dashboard')}
           className="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center mx-auto"
@@ -414,9 +544,8 @@ const handleContactSponsor = (student) => {
     </div>
   );
 };
-
 // Component for sponsorship card
-const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorPay }) => {
+const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorPay,onCancelClick  }) => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'COMPLETED':
@@ -546,6 +675,50 @@ const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorPay }) => {
         >
           Pay Now
         </button>
+          {/* 🔥 Cancel Button - Show for ACTIVE, PENDING_PAYMENT, and EXPIRED */}
+        {(sponsorship.status === 'ACTIVE' || 
+          sponsorship.status === 'PENDING_PAYMENT' || 
+          sponsorship.status === 'EXPIRED') && (
+            <button
+                onClick={() => onCancelClick(sponsorship)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+            >
+                Cancel
+            </button>
+        )}
+        
+        {/* If already cancelled, show disabled button */}
+        {sponsorship.status === 'CANCELLED' && (
+          <button
+            disabled
+            className="px-4 py-2 bg-gray-400 text-white rounded-lg text-sm cursor-not-allowed"
+          >
+            Cancelled
+          </button>
+        )}
+         {/* <button
+                      onClick={() => onCancelClick(sponsorship)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+                  >
+                      Cancel
+                  </button> */}
+         
+          {/* {sponsorship.status === 'ACTIVE' && (
+                  <button
+                      onClick={() => {
+                          
+                          if (window.confirm('Are you sure you want to cancel this sponsorship?')) {
+                              onCancelSponsorship(sponsorship);
+                          }
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+                  >
+                      Cancel
+                  </button>
+              )} */}
+
+
+
       </div>
     </div>
   );
@@ -859,6 +1032,7 @@ const StudentDetailsModal = ({ selectedStudent, activeTab, onTabChange, onClose,
       </div>
     </div>
   );
+  
 };
 
 export default DonorSponsoredStudentList;

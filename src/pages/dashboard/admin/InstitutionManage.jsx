@@ -460,111 +460,6 @@ const fetchStudentCounts = async (institutions) => {
 
 
 
-  // Fetch institutions
-//   const fetchInstitutions = async () => {
-//   try {
-//     setUiState(prev => ({ ...prev, isLoading: true }));
-    
-//     let res;
-//     let allInstitutions = [];
-    
-//     if (locationFilters.unionOrAreaId) {
-//       res = await getInstitutionsByUnion(locationFilters.unionOrAreaId);
-//       allInstitutions = Array.isArray(res.data) ? res.data : [];
-      
-//     } else if (locationFilters.search) {
-//       res = await searchInstitutions(locationFilters.search);
-//       allInstitutions = Array.isArray(res.data) ? 
-//         res.data : 
-//         (res.data ? [res.data] : []);
-        
-//     } else {
-//       const params = {
-//         page: uiState.currentPage - 1,
-//         size: uiState.pageSize
-//       };
-//       res = await getAllInstitutions(params);
-//       allInstitutions = res.content || [];
-//       setData(prev => ({
-//         ...prev,
-//         totalPages: res.totalPages || 1,
-//         totalElements: res.totalElements || 0
-//       }));
-//     }
-    
-//     // ✅ **CORRECTED STATUS FILTER LOGIC**
-//     let filteredInstitutions = allInstitutions;
-    
-//     if (statusFilter !== 'ALL') {
-//       filteredInstitutions = allInstitutions.filter(inst => {
-//         // First, determine the actual current status
-//         const getActualStatus = (inst) => {
-//           // Priority 1: Check suspended (highest priority)
-//           if (inst.suspended === true || inst.status?.toUpperCase() === 'SUSPENDED') {
-//             return 'SUSPENDED';
-//           }
-          
-//           // Priority 2: Check rejected
-//           if (inst.rejected === true || inst.status?.toUpperCase() === 'REJECTED') {
-//             return 'REJECTED';
-//           }
-          
-//           // Priority 3: Check approved/active
-//           if (inst.isApproved === true || inst.approved === true || 
-//               inst.status?.toUpperCase() === 'APPROVED' || 
-//               inst.status?.toUpperCase() === 'ACTIVE') {
-//             return 'APPROVED';
-//           }
-          
-//           // Priority 4: Default to pending
-//           return 'PENDING';
-//         };
-        
-//         const actualStatus = getActualStatus(inst);
-//         return actualStatus === statusFilter;
-//       });
-//     }
-    
-//     // For union/search filters, we need to handle pagination locally
-//     const totalFiltered = filteredInstitutions.length;
-//     const totalPages = Math.ceil(totalFiltered / uiState.pageSize);
-    
-//     // Apply pagination
-//     const startIdx = (uiState.currentPage - 1) * uiState.pageSize;
-//     const endIdx = startIdx + uiState.pageSize;
-//     const paginatedInstitutions = filteredInstitutions.slice(startIdx, endIdx);
-    
-//     setData(prev => ({
-//       ...prev,
-//       institutions: paginatedInstitutions,
-//       totalPages: locationFilters.unionOrAreaId || locationFilters.search ? 
-//         totalPages : 
-//         res.totalPages || 1,
-//       totalElements: locationFilters.unionOrAreaId || locationFilters.search ? 
-//         totalFiltered : 
-//         res.totalElements || 0
-//     }));
-    
-//     // Debug log
-//     console.log('Filter Results:', {
-//       statusFilter,
-//       totalAll: allInstitutions.length,
-//       totalFiltered: filteredInstitutions.length,
-//       showing: paginatedInstitutions.length,
-//       statusBreakdown: allInstitutions.reduce((acc, inst) => {
-//         const status = getStatusBadge(inst).text;
-//         acc[status] = (acc[status] || 0) + 1;
-//         return acc;
-//       }, {})
-//     });
-    
-//   } catch (error) {
-//     toast.error(error.message || 'Failed to load institutions');
-//     setData(prev => ({ ...prev, institutions: [] }));
-//   } finally {
-//     setUiState(prev => ({ ...prev, isLoading: false }));
-//   }
-// };
 const fetchInstitutions = async () => {
   try {
     setUiState(prev => ({ ...prev, isLoading: true }));
@@ -1243,95 +1138,6 @@ const getStatusBadge = (institution) => {
 };
 
 
-  // Get status badge
-  // const getStatusBadge = (status, isApproved, isSuspended, isRejected) => {
-  //   // Use the actual status enum from your backend
-  //   switch (status) {
-  //     case 'ACTIVE':
-  //       return {
-  //         text: 'Active',
-  //         bgColor: 'bg-emerald-100',
-  //         textColor: 'text-emerald-800',
-  //         icon: <FaCheckCircle className="mr-1" />
-  //       };
-      
-  //     case 'APPROVED':
-  //       return {
-  //         text: 'Approved',
-  //         bgColor: 'bg-green-100',
-  //         textColor: 'text-green-800',
-  //         icon: <FaCheck className="mr-1" />
-  //       };
-      
-  //     case 'PENDING':
-  //       return {
-  //         text: 'Pending',
-  //         bgColor: 'bg-blue-100',
-  //         textColor: 'text-blue-800',
-  //         icon: <FaClock className="mr-1" />
-  //       };
-      
-  //     case 'SUSPENDED':
-  //       return {
-  //         text: 'Suspended',
-  //         bgColor: 'bg-yellow-100',
-  //         textColor: 'text-yellow-800',
-  //         icon: <FaPause className="mr-1" />
-  //       };
-      
-  //     case 'REJECTED':
-  //       return {
-  //         text: 'Rejected',
-  //         bgColor: 'bg-red-100',
-  //         textColor: 'text-red-800',
-  //         icon: <FaBan className="mr-1" />
-  //       };
-      
-  //     case 'INACTIVE':
-  //       return {
-  //         text: 'Inactive',
-  //         bgColor: 'bg-gray-100',
-  //         textColor: 'text-gray-800',
-  //         icon: <FaBan className="mr-1" />
-  //       };
-      
-  //     default:
-  //       // Fallback based on boolean flags
-  //       if (isSuspended) {
-  //         return {
-  //           text: 'Suspended',
-  //           bgColor: 'bg-yellow-100',
-  //           textColor: 'text-yellow-800',
-  //           icon: <FaPause className="mr-1" />
-  //         };
-  //       }
-        
-  //       if (isRejected) {
-  //         return {
-  //           text: 'Rejected',
-  //           bgColor: 'bg-red-100',
-  //           textColor: 'text-red-800',
-  //           icon: <FaBan className="mr-1" />
-  //         };
-  //       }
-        
-  //       if (isApproved) {
-  //         return {
-  //           text: 'Approved',
-  //           bgColor: 'bg-green-100',
-  //           textColor: 'text-green-800',
-  //           icon: <FaCheck className="mr-1" />
-  //         };
-  //       }
-        
-  //       return {
-  //         text: 'Pending',
-  //         bgColor: 'bg-blue-100',
-  //         textColor: 'text-blue-800',
-  //         icon: <FaClock className="mr-1" />
-  //       };
-  //   }
-  // };
 useEffect(() => {
   fetchStatusStatistics();
   
@@ -1372,7 +1178,7 @@ useEffect(() => {
   // ];
 
   return (
-    <AdminDashboard>
+   
       <div className="flex flex-col h-screen">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-6">
@@ -1937,9 +1743,7 @@ useEffect(() => {
             </>
           )}
         </div>
-      </div>
-
-      {/* Modal Components */}
+        {/* Modal Components */}
       <InstitutionFormModal
         isOpen={uiState.isInstitutionModalOpen}
         onClose={closeInstitutionModal}
@@ -1969,7 +1773,10 @@ useEffect(() => {
         currentInstitution={uiState.currentInstitution}
         currentStudents={data.currentStudents}
       />
-    </AdminDashboard>
+      </div>
+
+      
+    
   );
 };
 

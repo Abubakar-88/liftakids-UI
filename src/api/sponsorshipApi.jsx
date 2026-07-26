@@ -174,7 +174,54 @@ export const getDonorPayments = async (donorId) => {
     throw error;
   }
 };
+// Cancel sponsorship (Donor)
+export const cancelSponsorship = async (sponsorshipId, donorId, reason) => {
+    try {
+        const response = await axios.post(
+            `${API_BASE_URL}/sponsorships/${sponsorshipId}/cancel`,
+            null,
+            {
+                params: { 
+                    donorId: donorId,
+                    reason: reason 
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error cancelling sponsorship:', error);
+        throw error;
+    }
+};
 
+// Remove sponsorship (Admin)
+export const removeSponsorship = async (sponsorshipId, adminId) => {
+    try {
+        const response = await axios.delete(
+            `${API_BASE_URL}/sponsorships/${sponsorshipId}/admin/${adminId}`
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error removing sponsorship:', error);
+        throw error;
+    }
+};
+
+// Check if can be cancelled
+export const canBeCancelled = async (sponsorshipId, donorId) => {
+    try {
+        const response = await axios.get(
+            `${API_BASE_URL}/sponsorships/${sponsorshipId}/can-cancel`,
+            {
+                params: { donorId: donorId }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error checking cancellation status:', error);
+        throw error;
+    }
+};
 
 
 

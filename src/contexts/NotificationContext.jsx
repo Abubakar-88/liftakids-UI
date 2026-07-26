@@ -161,10 +161,12 @@ export const NotificationProvider = ({ children }) => {
       
       if (userInfo.type === 'DONOR') {
         console.log('❤️ Fetching donor unread count for ID:', userInfo.id);
-        count = await notificationService.getUnreadCount('DONOR', userInfo.id);
+        const response = await notificationService.getUnreadCount('DONOR', userInfo.id);
+         count = typeof response === 'number' ? response : response?.unreadCount || 0;
       } else if (userInfo.type === 'INSTITUTION') {
         console.log('🏫 Fetching institution unread count for ID:', userInfo.id);
-        count = await notificationService.getUnreadCount('INSTITUTION', userInfo.id);
+       const response = await notificationService.getUnreadCount('INSTITUTION', userInfo.id);
+      count = typeof response === 'number' ? response : response?.unreadCount || 0;
       } else if (userInfo.type === 'ADMIN') {
       console.log('👑 Fetching admin unread count for ID:', userInfo.id);
       
@@ -205,40 +207,50 @@ export const NotificationProvider = ({ children }) => {
   }, [userInfo]);
 
   const markAsRead = useCallback(async (notificationId) => {
-    if (!userInfo || !userInfo.id) {
-      return;
-    }
+  if (!userInfo || !userInfo.id) {
+    console.log('⛔ Cannot mark as read: No user info');
+    return false;
+  }
 
-    try {
-      console.log(`📝 Marking notification ${notificationId} as read`);
-      
-      // Update local state immediately
-      setNotifications(prev =>
-        prev.map(notif =>
-          notif.notificationId === notificationId
-            ? { ...notif, status: 'READ' }
-            : notif
-        )
-      );
-      
-      // Update unread count locally
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
-      // Call API
-      await notificationService.markAsRead(notificationId, userInfo.type, userInfo.id);
-      
-      console.log('✅ Successfully marked as read');
-      
-      // Refresh unread count from server
-      await fetchUnreadCount();
-      
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
-      // Revert on error by refreshing
-      fetchNotifications();
-      fetchUnreadCount();
-    }
-  }, [userInfo, fetchNotifications, fetchUnreadCount]);
+  try {
+    console.log(`📝 Marking notification ${notificationId} as read for ${userInfo.type} ${userInfo.id}`);
+    
+    // Update local state immediately (optimistic update)
+    setNotifications(prev =>
+      prev.map(notif => {
+        const notifId = notif.notificationId || notif.id;
+        if (notifId === notificationId && notif.status === 'UNREAD') {
+          console.log('✅ Optimistically updating notification:', notifId);
+          return { ...notif, status: 'READ' };
+        }
+        return notif;
+      })
+    );
+    
+    // Update unread count locally
+    setUnreadCount(prev => {
+      const newCount = Math.max(0, prev - 1);
+      console.log(`📊 Updating unread count from ${prev} to ${newCount}`);
+      return newCount;
+    });
+    
+    // Call API
+    await notificationService.markAsRead(notificationId, userInfo.type, userInfo.id);
+    console.log('✅ API: Successfully marked as read');
+    
+    // Double-check with server to ensure consistency
+    await fetchUnreadCount();
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Failed to mark as read:', error);
+    // Revert optimistic update on error
+    console.log('🔄 Reverting optimistic update due to error');
+    await fetchNotifications(); // This will restore the correct state
+    return false;
+  }
+}, [userInfo, fetchNotifications, fetchUnreadCount]);
 
   const markAllAsRead = useCallback(async () => {
     if (!userInfo || !userInfo.id) {

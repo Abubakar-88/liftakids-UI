@@ -1,35 +1,40 @@
-// Navbar.jsx - Updated version
+// Navbar.jsx
 import { useState, useEffect } from 'react';
 import { FaTimes, FaHome, FaSearch, FaInfoCircle, FaHandHoldingHeart, FaUser, FaBlog, FaEnvelope } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
-import { getAllPages } from '../api/pageApi'; // আপনার existing API
+import { Link, useLocation } from 'react-router-dom';
+import { getAllPages } from '../api/pageApi';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dynamicPages, setDynamicPages] = useState([]);
+  const location = useLocation();
 
-  // Load dynamic pages on component mount
+  // Load dynamic pages
   useEffect(() => {
     loadDynamicPages();
   }, []);
 
   const loadDynamicPages = async () => {
     try {
+      console.log('📡 Navbar: Loading dynamic pages...');
       const pages = await getAllPages();
-      // Filter only published pages for navigation
-      const publishedPages = pages.filter(page => page.published);
+      console.log('📄 Navbar: All pages:', pages);
+      
+      const publishedPages = pages.filter(page => page.published === true);
+      console.log('✅ Navbar: Published pages:', publishedPages);
+      
       setDynamicPages(publishedPages);
     } catch (error) {
-      console.error('Error loading dynamic pages:', error);
+      console.error('❌ Navbar: Error loading pages:', error);
     }
   };
 
   const toggleSearch = () => {
     setShowSearch(!showSearch);
     if (showSearch) {
-      setSearchQuery(''); // Clear search when closing
+      setSearchQuery('');
     }
   };
 
@@ -41,25 +46,31 @@ const Navbar = () => {
     { name: 'Blog', path: '/blog', icon: <FaBlog /> }
   ];
 
-  // Dynamic navigation items from database
-  const dynamicNavItems = dynamicPages.map(page => ({
-    name: page.title,
-    path: `/${page.slug}`,
-    icon: getIconForPage(page.slug)
-  }));
+  // Dynamic navigation items from database (pages table)
+  const dynamicNavItems = dynamicPages.map(page => {
+    console.log(`📄 Creating nav item: ${page.title} -> /${page.slug}`);
+    return {
+      name: page.title,
+      path: `/${page.slug}`,
+      icon: getIconForPage(page.slug)
+    };
+  });
 
-  // Combine static and dynamic navigation items
+  // Static + Dynamic combine
   const allNavItems = [...staticNavItems, ...dynamicNavItems];
 
-  // Helper function to get icons for dynamic pages
   function getIconForPage(slug) {
     const iconMap = {
       'about-us': <FaInfoCircle />,
       'contact': <FaEnvelope />,
       'benefit-for-sponsor': <FaHandHoldingHeart />,
     };
-    return iconMap[slug] || <FaInfoCircle />; // Default icon
+    return iconMap[slug] || <FaInfoCircle />;
   }
+
+  // Current page title
+  const isBlogDetail = location.pathname.startsWith('/blog/') && location.pathname !== '/blog';
+  const currentPageTitle = isBlogDetail ? 'Blog Post' : 'Lift A Kid';
 
   return (
     <>
@@ -72,9 +83,10 @@ const Navbar = () => {
           {isMenuOpen ? <FaTimes /> : '☰'}
         </button>
 
-        {/* Conditional rendering of title or search bar */}
         {!showSearch ? (
-          <h1 className="text-xl md:text-2xl font-semibold text-teal-600">Lift A Kid</h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-teal-600">
+            {currentPageTitle}
+          </h1>
         ) : (
           <div className="flex-grow mx-4">
             <div className="relative">
@@ -111,20 +123,30 @@ const Navbar = () => {
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-xl font-bold text-teal-600">Menu</h2>
         </div>
-        <nav className="mt-4">
+        <nav className="mt-4 overflow-y-auto max-h-[calc(100vh-80px)]">
           <ul className="space-y-2">
-            {allNavItems.map((item) => (
-              <li key={item.name}>
-                <Link
-                  to={item.path}
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <span className="mr-3 text-teal-500">{item.icon}</span>
-                  <span>{item.name}</span>
-                </Link>
-              </li>
-            ))}
+            {allNavItems.map((item) => {
+              const isActive = location.pathname === item.path || 
+                              (item.path === '/blog' && location.pathname.startsWith('/blog/'));
+              return (
+                <li key={item.name}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center px-4 py-3 transition-colors ${
+                      isActive 
+                        ? 'bg-teal-50 text-teal-600 font-semibold' 
+                        : 'text-gray-700 hover:bg-teal-50 hover:text-teal-600'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span className={`mr-3 ${isActive ? 'text-teal-600' : 'text-teal-500'}`}>
+                      {item.icon}
+                    </span>
+                    <span>{item.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       </div>

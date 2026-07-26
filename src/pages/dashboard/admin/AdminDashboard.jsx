@@ -1,51 +1,31 @@
+// AdminDashboard.jsx - Final
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminNavbar from './AdminNavbar';
-import { useEffect, useState } from 'react';
-import { getDashboardStats, getRecentActivities } from '../../../api/adminApi';
+import { useState } from 'react';
 
-const AdminDashboard = ({ children }) => {
-   const [stats, setStats] = useState(null);
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const [statsData, activitiesData] = await Promise.all([
-        getDashboardStats(),
-        getRecentActivities(5)
-      ]);
-      setStats(statsData);
-      setActivities(activitiesData);
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const AdminDashboard = () => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen w-auto">
-      {/* Fixed Sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col fixed inset-y-0 left-0 bg-gray-800">
-        <AdminSidebar />
+    // 👇 h-screen থেকে min-h-screen এ পরিবর্তন
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar - h-full থাকবে */}
+      <aside className={`${sidebarCollapsed ? 'w-20' : 'w-64'} transition-all duration-300 ease-in-out fixed inset-y-0 left-0 z-30 h-full`}>
+        <AdminSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       </aside>
 
-      {/* Main Content (shifted by sidebar width) */}
-      <div className="flex flex-col flex-1 ml-0 bg-gray-100 min-h-screen">
-        {/* Navbar */}
-        <div className="sticky top-0 z-10">
-          <AdminNavbar />
+      {/* Main Content */}
+      <div className={`flex-1 ${sidebarCollapsed ? 'ml-20' : 'ml-0'} transition-all duration-300 ease-in-out min-h-screen flex flex-col`}>
+        {/* Navbar - sticky */}
+        <div className="sticky top-0 z-20 bg-white shadow-sm">
+          <AdminNavbar sidebarCollapsed={sidebarCollapsed} onSidebarToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
         </div>
-
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8 w-full overflow-x-hidden">
-            {children || <Outlet />}
+        
+        {/* Content - scrollable */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="max-w-full">
+            <Outlet />
           </div>
         </main>
       </div>

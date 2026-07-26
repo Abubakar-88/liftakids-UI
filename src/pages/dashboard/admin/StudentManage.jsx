@@ -680,7 +680,7 @@ const handleExpand = (studentId) => {
 // };
 
   return (
-    <AdminDashboard>
+    
     <div className="container mx-auto p-4">
        {/* Header Section */}
               <div className="flex justify-between items-center mb-6">
@@ -1299,7 +1299,7 @@ const handleExpand = (studentId) => {
         </div>
       </Modal>
     </div>
-    </AdminDashboard>
+   
   );
 };
 

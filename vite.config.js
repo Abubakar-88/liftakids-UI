@@ -9,8 +9,8 @@ export default defineConfig({
  VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Lift A Kids',
-        short_name: 'Lift A Kids',
+        name: 'Lift A Kid',
+        short_name: 'Lift A Kid',
         description: 'Student Management System',
         theme_color: '#2563eb',
         icons: [

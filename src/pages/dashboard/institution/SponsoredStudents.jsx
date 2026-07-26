@@ -20,7 +20,14 @@ const SponsoredStudents = () => {
     last: true
   });
   const [isMobile, setIsMobile] = useState(false);
-   const [institutionName, setInstitutionName] = useState('');
+  const [institutionName, setInstitutionName] = useState('');
+  
+  // 🔥 NEW: Stats state
+  const [stats, setStats] = useState({
+    totalSponsored: 0,
+    monthlyReceived: 0,
+    totalReceived: 0
+  });
 
 // useEffect এর মধ্যে institution data fetch করুন
 useEffect(() => {
@@ -55,15 +62,122 @@ useEffect(() => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
+// 🔥 Function to calculate stats from students data
+// 🔥 Updated: Calculate stats from students data (Fixed monthly received)
+const calculateStats = (studentsList) => {
+  let totalSponsored = studentsList.length;
+  let totalReceived = 0;
+  let monthlyReceived = 0;
+  
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  console.log('Current month for calculation:', currentMonth + 1, currentYear);
+
+  studentsList.forEach(student => {
+    // Log to see what data we have
+    console.log('Student:', student.studentName);
+    console.log('  - sponsoredAmount:', student.sponsoredAmount);
+    console.log('  - totalPaidAmount:', student.totalPaidAmount);
+    console.log('  - lastPaymentDate:', student.lastPaymentDate);
+    console.log('  - sponsors:', student.sponsors);
+    
+    // ========== TOTAL RECEIVED (সব সময়) ==========
+    // Method 1: Direct from student
+    if (student.sponsoredAmount && typeof student.sponsoredAmount === 'number') {
+      totalReceived += student.sponsoredAmount;
+    }
+    
+    // Method 2: From totalPaidAmount
+    if (student.totalPaidAmount && typeof student.totalPaidAmount === 'number') {
+      if (totalReceived === 0) { // Avoid double counting
+        totalReceived += student.totalPaidAmount;
+      }
+    }
+    
+    // Method 3: From sponsors array
+    if (student.sponsors && student.sponsors.length > 0) {
+      student.sponsors.forEach(sponsor => {
+        // Total received
+        if (sponsor.totalPaidAmount && typeof sponsor.totalPaidAmount === 'number') {
+          totalReceived += sponsor.totalPaidAmount;
+        }
+        
+        // 🔥 MONTHLY RECEIVED - Check last payment date
+        let paymentDate = null;
+        
+        // Check different possible date fields
+        if (sponsor.lastPaymentDate) {
+          paymentDate = new Date(sponsor.lastPaymentDate);
+        } else if (sponsor.paidUpTo) {
+          paymentDate = new Date(sponsor.paidUpTo);
+        } else if (sponsor.updatedAt) {
+          paymentDate = new Date(sponsor.updatedAt);
+        } else if (sponsor.createdAt) {
+          paymentDate = new Date(sponsor.createdAt);
+        }
+        
+        if (paymentDate && !isNaN(paymentDate.getTime())) {
+          const paymentMonth = paymentDate.getMonth();
+          const paymentYear = paymentDate.getFullYear();
+          
+          console.log(`  Sponsor ${sponsor.donorName}: payment date = ${paymentDate}, month=${paymentMonth+1}, year=${paymentYear}`);
+          
+          if (paymentMonth === currentMonth && paymentYear === currentYear) {
+            const amount = sponsor.monthlyAmount || sponsor.amount || 0;
+            monthlyReceived += amount;
+            console.log(`    ✅ Added to monthly: ${amount}`);
+          }
+        } else {
+          // If no payment date, check paidUpTo as fallback
+          if (sponsor.paidUpTo) {
+            const paidUpToDate = new Date(sponsor.paidUpTo);
+            if (!isNaN(paidUpToDate.getTime())) {
+              const paidMonth = paidUpToDate.getMonth();
+              const paidYear = paidUpToDate.getFullYear();
+              
+              // If paid up to current month, assume payment made
+              if (paidMonth === currentMonth && paidYear === currentYear) {
+                const amount = sponsor.monthlyAmount || sponsor.amount || 0;
+                monthlyReceived += amount;
+                console.log(`    ✅ Added to monthly from paidUpTo: ${amount}`);
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+
+  console.log('Final Calculated stats:', {
+    totalSponsored,
+    monthlyReceived,
+    totalReceived
+  });
+
+  return {
+    totalSponsored,
+    monthlyReceived,
+    totalReceived
+  };
+};
+
 const fetchSponsoredStudents = async (page) => {
   try {
     setLoading(true);
-    setError(""); // Start with empty error
+    setError("");
     
     const response = await getSponsoredStudents(page);
     
     if (response && Array.isArray(response.content)) {
-      setStudents(response.content);
+      const studentsData = response.content;
+      setStudents(studentsData);
+      
+      // 🔥 Calculate and set stats
+      const calculatedStats = calculateStats(studentsData);
+      setStats(calculatedStats);
+      
       setPagination({
         pageNumber: response.pageable?.pageNumber || page,
         pageSize: response.size || response.pageable?.pageSize || 20,
@@ -72,7 +186,7 @@ const fetchSponsoredStudents = async (page) => {
         first: response.first || true,
         last: response.last || true
       });
-      setError(""); // Clear error on success
+      setError("");
     } else {
       console.error("Unexpected API response format:", response);
       setError("Failed to load students data");
@@ -80,7 +194,7 @@ const fetchSponsoredStudents = async (page) => {
     }
   } catch (error) {
     console.error("Failed to fetch sponsored students:", error);
-    setError("Not Found sponsored students");
+    setError("Failed to load sponsored students");
     setStudents([]);
   } finally {
     setLoading(false);
@@ -95,11 +209,11 @@ const fetchSponsoredStudents = async (page) => {
 
   // Function to check if paidUpTo date is expired
   const isPaymentExpired = (paidUpToDate) => {
-    if (!paidUpToDate) return true; // If no date, consider expired
+    if (!paidUpToDate) return true;
     
     const paidUpTo = new Date(paidUpToDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time part for accurate comparison
+    today.setHours(0, 0, 0, 0);
     
     return paidUpTo < today;
   };
@@ -114,12 +228,10 @@ const fetchSponsoredStudents = async (page) => {
             alt={student.studentName}
             className="w-20 h-35 rounded-full object-cover border border-gray-200"
             onError={(e) => {
-              // If image fails to load, show fallback
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
             }}
           />
-          {/* Fallback avatar - hidden by default */}
           <div 
             className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gray-400 hidden`}
           >
@@ -129,7 +241,6 @@ const fetchSponsoredStudents = async (page) => {
       );
     }
     
-    // No photoUrl - show colored avatar
     const name = student.studentName || "S";
     const initials = name.charAt(0).toUpperCase();
     const colors = [
@@ -170,7 +281,7 @@ const fetchSponsoredStudents = async (page) => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      {/* Error Alert - শুধু তখনই show হবে যখন error আছে */}
+      {/* Error Alert */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
@@ -204,11 +315,6 @@ const fetchSponsoredStudents = async (page) => {
               Sponsored Student of <span className="font-semibold text-blue-700">{parsedInstitutionData?.institutionName || 'Your Institution'}</span>
             </h1>
           </div>
-          
-          {/* <div className="bg-white p-3 rounded-lg shadow-xs border border-gray-200">
-            <div className="text-sm text-gray-500">Institution</div>
-            <div className="font-semibold text-gray-800">{parsedInstitutionData?.institutionName || 'Your Institution'}</div>
-          </div> */}
           <button
             onClick={() => navigate(-1)}
             className="flex items-center text-blue-600 hover:text-blue-800"
@@ -222,29 +328,25 @@ const fetchSponsoredStudents = async (page) => {
       </div>
 
       <div className="space-y-4">
-        {/* Stats Cards */}
+        {/* 🔥 Stats Cards - DYNAMIC NOW */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              {pagination?.totalElements || 24}
+              {stats.totalSponsored}
             </div>
             <div className="text-sm text-gray-600">Total Sponsored</div>
           </div>
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              ৳ 25,250
+              ৳ {stats.monthlyReceived.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Monthly Received</div>
-            <div className="text-sm font-semibold text-green-600 mt-1">
-            </div>
           </div>
           <div className="bg-white shadow-sm rounded-lg p-4 text-center border">
             <div className="text-xl font-bold text-gray-800">
-              ৳ 39,250
+              ৳ {stats.totalReceived.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Total Received</div>
-            <div className="text-sm font-semibold text-green-600 mt-1">
-            </div>
           </div>
         </div>
 
@@ -284,7 +386,6 @@ const fetchSponsoredStudents = async (page) => {
         </div>
       </div>
 
-     
       {/* Mobile View - Card Layout */}
       {isMobile && (
         <div className="mt-4 space-y-3">
@@ -411,7 +512,6 @@ const fetchSponsoredStudents = async (page) => {
         </div>
       )}
 
-    
       {/* Desktop View - Table Layout */}
       {!isMobile && (
         <div className="mt-6 bg-white shadow-sm rounded-lg overflow-hidden">
@@ -482,7 +582,7 @@ const fetchSponsoredStudents = async (page) => {
                         <div className="text-sm text-gray-500">
                           {student.institutionName}
                         </div>
-                      </td>
+                       </td>
 
                       {/* Financial Details Column */}
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -495,7 +595,7 @@ const fetchSponsoredStudents = async (page) => {
                         <div className="text-sm text-green-600 font-medium">
                           Received: ৳ {student.sponsoredAmount}
                         </div>
-                      </td>
+                       </td>
 
                       {/* Sponsorship Status Column */}
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -509,7 +609,7 @@ const fetchSponsoredStudents = async (page) => {
                         <div className="text-sm text-gray-500 mt-1">
                           {student.sponsored ? "Active" : ""}
                         </div>
-                      </td>
+                       </td>
 
                       {/* Sponsor Details Column */}
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -519,13 +619,13 @@ const fetchSponsoredStudents = async (page) => {
                             
                             return (
                               <div key={index} className="mb-2 last:mb-0 text-justify text-lg">
-                                <div className="text-sm  text-gray-900">
+                                <div className="text-sm text-gray-900">
                                   {sponsor.donorName}
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   ৳ {sponsor.monthlyAmount}/month
                                 </div>
-                                <div className="text-sm text-gray-500 ">
+                                <div className="text-sm text-gray-500">
                                   Last Payment Date: {sponsor.lastPaymentDate}
                                 </div>
                                 <div className="text-sm text-gray-500">
@@ -561,15 +661,15 @@ const fetchSponsoredStudents = async (page) => {
                         ) : (
                           <span className="text-sm text-gray-500">No active sponsor</span>
                         )}
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination Controls - শুধু যখন স্টুডেন্ট থাকবে তখনই দেখাবে */}
+          {/* Pagination Controls */}
           {students.length > 0 && pagination.totalPages > 1 && (
             <div className="bg-white px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">

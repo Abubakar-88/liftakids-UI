@@ -103,7 +103,7 @@ const handleSubmit = async (e) => {
   };
 
   return (
-    <AdminDashboard>
+   
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="bg-white p-6 shadow-sm">
@@ -242,6 +242,6 @@ const handleSubmit = async (e) => {
           </div>
         )}
       </div>
-    </AdminDashboard>
+    
   );
 }
