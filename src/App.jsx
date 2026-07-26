@@ -50,7 +50,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import EditBlog from './pages/dashboard/admin/EditBlog';
-import BlogDetails from './pages/BlogDetails';
+import BlogDetails from './pages/';
 import BlogGrid from './pages/BlogGrid';
 function App() {
   
