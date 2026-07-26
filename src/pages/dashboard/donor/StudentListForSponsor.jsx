@@ -100,6 +100,145 @@ const [searchTimeout, setSearchTimeout] = useState(null);
       console.error('Failed to load institutions:', error);
     }
   };
+// const fetchStudents = async () => {
+//   try {
+//     setLoading(true);
+//     let studentsData = [];
+//     let totalPages = 1;
+//     let totalElements = 0;
+    
+//     console.log('Fetching students with filters:', filters);
+//     console.log('Current page:', pagination.page, 'Size:', pagination.size);
+
+//     // Priority Order: Institution > Union > Thana > District > Search > All
+//     if (filters.institutionsId) {
+//       // Case 1: Filter by Institution
+//       const response = await getStudentsByInstitutionWithPagination(
+//         filters.institutionsId, 
+//         pagination.page, 
+//         pagination.size
+//       );
+//       studentsData = response?.content || [];
+//       totalPages = response?.totalPages || 1;
+//       totalElements = response?.totalElements || studentsData.length;
+//     } 
+//     else if (filters.unionOrAreaId) {
+//       // ✅ NEW: Filter by Union using studentApi
+//       const response = await getStudentsByUnion(
+//         filters.unionOrAreaId,
+//         pagination.page,
+//         pagination.size,
+//         'studentName',
+//         'asc'
+//       );
+//       studentsData = response?.content || [];
+//       totalPages = response?.totalPages || 1;
+//       totalElements = response?.totalElements || studentsData.length;
+//     }
+//     else if (filters.thanaId) {
+//       // ✅ NEW: Filter by Thana using studentApi
+//       const response = await getStudentsByThana(
+//         filters.thanaId,
+//         pagination.page,
+//         pagination.size,
+//         'studentName',
+//         'asc'
+//       );
+//       studentsData = response?.content || [];
+//       totalPages = response?.totalPages || 1;
+//       totalElements = response?.totalElements || studentsData.length;
+//     }
+//     else if (filters.districtId) {
+//       // ✅ NEW: Filter by District using studentApi
+//       const response = await getStudentsByDistrict(
+//         filters.districtId,
+//         pagination.page,
+//         pagination.size,
+//         'studentName',
+//         'asc'
+//       );
+//       studentsData = response?.content || [];
+//       totalPages = response?.totalPages || 1;
+//       totalElements = response?.totalElements || studentsData.length;
+//     }
+//      else if (filters.divisionId) {
+//       // ✅ NEW: Filter by Division using studentApi
+//       const response = await getStudentsByDivision(
+//         filters.divisionId,
+//         pagination.page,
+//         pagination.size,
+//         'studentName',
+//         'asc'
+//       );
+//       studentsData = response?.content || [];
+//       totalPages = response?.totalPages || 1;
+//       totalElements = response?.totalElements || studentsData.length;
+//     }
+//     else if (filters.search) {
+//       // Case: Search with pagination
+//       const response = await searchStudentsPaginated(
+//         filters.search,
+//         pagination.page,
+//         pagination.size
+//       );
+//       studentsData = response?.content || [];
+//       totalPages = response?.totalPages || 1;
+//       totalElements = response?.totalElements || 0;
+//     }
+//     else {
+//       // Case: Get all students with pagination
+//       const response = await getAllStudents(
+//         pagination.page, 
+//         pagination.size, 
+//         'studentName', 
+//         'asc'
+//       );
+//       studentsData = response?.content || [];
+//       totalPages = response?.totalPages || 1;
+//       totalElements = response?.totalElements || studentsData.length;
+//     }
+
+//     // Update pagination state
+//     setPagination(prev => ({
+//       ...prev,
+//       totalPages: totalPages,
+//       totalElements: totalElements
+//     }));
+
+//     // Process and set students
+//     const processedStudents = (Array.isArray(studentsData) ? studentsData : []).map(student => ({
+//       ...student,
+//       sponsors: student.sponsors || []
+//     }));
+    
+//     setStudents(processedStudents);
+    
+//     // Check pending status for each student
+//     const pendingStatuses = {};
+//     const pendingPromises = processedStudents.map(async (student) => {
+//       try {
+//         const pendingStatus = await checkPendingSponsorship(student.studentId);
+//         return { studentId: student.studentId, status: pendingStatus };
+//       } catch (err) {
+//         return { studentId: student.studentId, status: { hasPending: false } };
+//       }
+//     });
+
+//     const results = await Promise.all(pendingPromises);
+//     results.forEach(result => {
+//       pendingStatuses[result.studentId] = result.status;
+//     });
+    
+//     setPendingStatusMap(pendingStatuses);
+
+//   } catch (error) {
+//     console.error('❌ Failed to load students:', error);
+//     setStudents([]);
+//     setPendingStatusMap({});
+//   } finally {
+//     setLoading(false);
+//   }
+// };
 const fetchStudents = async () => {
   try {
     setLoading(true);
@@ -107,12 +246,12 @@ const fetchStudents = async () => {
     let totalPages = 1;
     let totalElements = 0;
     
-    console.log('Fetching students with filters:', filters);
-    console.log('Current page:', pagination.page, 'Size:', pagination.size);
+    console.log('🔄 Fetching students with filters:', filters);
+    console.log('📄 Current page:', pagination.page, 'Size:', pagination.size);
 
-    // Priority Order: Institution > Union > Thana > District > Search > All
+    // Priority Order: Institution > Union > Thana > District > Division > Search > All
     if (filters.institutionsId) {
-      // Case 1: Filter by Institution
+      console.log('🏫 Filtering by Institution:', filters.institutionsId);
       const response = await getStudentsByInstitutionWithPagination(
         filters.institutionsId, 
         pagination.page, 
@@ -123,7 +262,7 @@ const fetchStudents = async () => {
       totalElements = response?.totalElements || studentsData.length;
     } 
     else if (filters.unionOrAreaId) {
-      // ✅ NEW: Filter by Union using studentApi
+      console.log('📍 Filtering by Union:', filters.unionOrAreaId);
       const response = await getStudentsByUnion(
         filters.unionOrAreaId,
         pagination.page,
@@ -136,7 +275,7 @@ const fetchStudents = async () => {
       totalElements = response?.totalElements || studentsData.length;
     }
     else if (filters.thanaId) {
-      // ✅ NEW: Filter by Thana using studentApi
+      console.log('📍 Filtering by Thana:', filters.thanaId);
       const response = await getStudentsByThana(
         filters.thanaId,
         pagination.page,
@@ -149,7 +288,7 @@ const fetchStudents = async () => {
       totalElements = response?.totalElements || studentsData.length;
     }
     else if (filters.districtId) {
-      // ✅ NEW: Filter by District using studentApi
+      console.log('📍 Filtering by District:', filters.districtId);
       const response = await getStudentsByDistrict(
         filters.districtId,
         pagination.page,
@@ -161,8 +300,8 @@ const fetchStudents = async () => {
       totalPages = response?.totalPages || 1;
       totalElements = response?.totalElements || studentsData.length;
     }
-     else if (filters.divisionId) {
-      // ✅ NEW: Filter by Division using studentApi
+    else if (filters.divisionId) {
+      console.log('📍 Filtering by Division:', filters.divisionId);
       const response = await getStudentsByDivision(
         filters.divisionId,
         pagination.page,
@@ -175,7 +314,7 @@ const fetchStudents = async () => {
       totalElements = response?.totalElements || studentsData.length;
     }
     else if (filters.search) {
-      // Case: Search with pagination
+      console.log('🔍 Searching:', filters.search);
       const response = await searchStudentsPaginated(
         filters.search,
         pagination.page,
@@ -186,7 +325,7 @@ const fetchStudents = async () => {
       totalElements = response?.totalElements || 0;
     }
     else {
-      // Case: Get all students with pagination
+      console.log('📚 Getting all students');
       const response = await getAllStudents(
         pagination.page, 
         pagination.size, 
@@ -197,6 +336,8 @@ const fetchStudents = async () => {
       totalPages = response?.totalPages || 1;
       totalElements = response?.totalElements || studentsData.length;
     }
+
+    console.log('✅ Students fetched:', studentsData.length, 'Total:', totalElements);
 
     // Update pagination state
     setPagination(prev => ({
@@ -214,22 +355,7 @@ const fetchStudents = async () => {
     setStudents(processedStudents);
     
     // Check pending status for each student
-    const pendingStatuses = {};
-    const pendingPromises = processedStudents.map(async (student) => {
-      try {
-        const pendingStatus = await checkPendingSponsorship(student.studentId);
-        return { studentId: student.studentId, status: pendingStatus };
-      } catch (err) {
-        return { studentId: student.studentId, status: { hasPending: false } };
-      }
-    });
-
-    const results = await Promise.all(pendingPromises);
-    results.forEach(result => {
-      pendingStatuses[result.studentId] = result.status;
-    });
-    
-    setPendingStatusMap(pendingStatuses);
+    await checkPendingStatuses(processedStudents);
 
   } catch (error) {
     console.error('❌ Failed to load students:', error);
@@ -240,6 +366,25 @@ const fetchStudents = async () => {
   }
 };
 
+// Separate function for checking pending statuses
+const checkPendingStatuses = async (students) => {
+  const pendingStatuses = {};
+  const pendingPromises = students.map(async (student) => {
+    try {
+      const pendingStatus = await checkPendingSponsorship(student.studentId);
+      return { studentId: student.studentId, status: pendingStatus };
+    } catch (err) {
+      return { studentId: student.studentId, status: { hasPending: false } };
+    }
+  });
+
+  const results = await Promise.all(pendingPromises);
+  results.forEach(result => {
+    pendingStatuses[result.studentId] = result.status;
+  });
+  
+  setPendingStatusMap(pendingStatuses);
+};
 
 const checkPendingSponsorship = async (studentId) => {
   try {
@@ -372,51 +517,114 @@ const getSponsorButtonStatus = (student) => {
   
 //   return { status: 'available' };
 // };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    
-    // Reset dependent filters when parent filter changes
-    if (name === 'divisionId') {
-      setFilters(prev => ({
-        ...prev,
-        divisionId: value,
-        districtId: '',
-        thanaId: '',
-        unionOrAreaId: '',
-        institutionsId: ''
-      }));
-      if (value) fetchDistricts(value);
-    } else if (name === 'districtId') {
-      setFilters(prev => ({
-        ...prev,
-        districtId: value,
-        thanaId: '',
-        unionOrAreaId: '',
-        institutionsId: ''
-      }));
-      if (value) fetchThanas(value);
-    } else if (name === 'thanaId') {
-      setFilters(prev => ({
-        ...prev,
-        thanaId: value,
-        unionOrAreaId: '',
-        institutionsId: ''
-      }));
-      if (value) fetchUnions(value);
-    } else if (name === 'unionOrAreaId') {
-      setFilters(prev => ({
-        ...prev,
-        unionOrAreaId: value,
-        institutionsId: ''
-      }));
-      if (value) fetchInstitutions(value);
-    } else {
-      setFilters(prev => ({ ...prev, [name]: value }));
+const handleFilterChange = (e) => {
+  const { name, value } = e.target;
+  
+  // Reset dependent filters when parent filter changes
+  if (name === 'divisionId') {
+    setFilters(prev => ({
+      ...prev,
+      divisionId: value,
+      districtId: '',
+      thanaId: '',
+      unionOrAreaId: '',
+      institutionsId: ''
+    }));
+    if (value) {
+      fetchDistricts(value);
+      //  fetchStudents call should be delayed to ensure districts are fetched first
+      setPagination(prev => ({ ...prev, page: 0 }));
+      setTimeout(() => fetchStudents(), 100);
     }
-    
+  } else if (name === 'districtId') {
+    setFilters(prev => ({
+      ...prev,
+      districtId: value,
+      thanaId: '',
+      unionOrAreaId: '',
+      institutionsId: ''
+    }));
+    if (value) {
+      fetchThanas(value);
+      setPagination(prev => ({ ...prev, page: 0 }));
+      setTimeout(() => fetchStudents(), 100);
+    }
+  } else if (name === 'thanaId') {
+    setFilters(prev => ({
+      ...prev,
+      thanaId: value,
+      unionOrAreaId: '',
+      institutionsId: ''
+    }));
+    if (value) {
+      fetchUnions(value);
+      setPagination(prev => ({ ...prev, page: 0 }));
+      setTimeout(() => fetchStudents(), 100);
+    }
+  } else if (name === 'unionOrAreaId') {
+    setFilters(prev => ({
+      ...prev,
+      unionOrAreaId: value,
+      institutionsId: ''
+    }));
+    if (value) {
+      fetchInstitutions(value);
+      setPagination(prev => ({ ...prev, page: 0 }));
+      setTimeout(() => fetchStudents(), 100);
+    }
+  } else {
+    setFilters(prev => ({ ...prev, [name]: value }));
+    // 👇 অন্যান্য ফিল্টার পরিবর্তনে fetchStudents
     setPagination(prev => ({ ...prev, page: 0 }));
-  };
+    setTimeout(() => fetchStudents(), 100);
+  }
+  
+  setPagination(prev => ({ ...prev, page: 0 }));
+};
+  // const handleFilterChange = (e) => {
+  //   const { name, value } = e.target;
+    
+  //   // Reset dependent filters when parent filter changes
+  //   if (name === 'divisionId') {
+  //     setFilters(prev => ({
+  //       ...prev,
+  //       divisionId: value,
+  //       districtId: '',
+  //       thanaId: '',
+  //       unionOrAreaId: '',
+  //       institutionsId: ''
+  //     }));
+  //     if (value) fetchDistricts(value);
+  //   } else if (name === 'districtId') {
+  //     setFilters(prev => ({
+  //       ...prev,
+  //       districtId: value,
+  //       thanaId: '',
+  //       unionOrAreaId: '',
+  //       institutionsId: ''
+  //     }));
+  //     if (value) fetchThanas(value);
+  //   } else if (name === 'thanaId') {
+  //     setFilters(prev => ({
+  //       ...prev,
+  //       thanaId: value,
+  //       unionOrAreaId: '',
+  //       institutionsId: ''
+  //     }));
+  //     if (value) fetchUnions(value);
+  //   } else if (name === 'unionOrAreaId') {
+  //     setFilters(prev => ({
+  //       ...prev,
+  //       unionOrAreaId: value,
+  //       institutionsId: ''
+  //     }));
+  //     if (value) fetchInstitutions(value);
+  //   } else {
+  //     setFilters(prev => ({ ...prev, [name]: value }));
+  //   }
+    
+  //   setPagination(prev => ({ ...prev, page: 0 }));
+  // };
 
   const handleSearchChange = (e) => {
   const searchValue = e.target.value;
@@ -440,14 +648,15 @@ const resetFilters = () => {
     search: ''
   });
   setPagination(prev => ({ ...prev, page: 0 }));
-  fetchStudents(); // Fetch with reset filters
+  // 👇 after Reset  immediate fetch
+  setTimeout(() => fetchStudents(), 50);
 };
 
   const handlePageChange = (newPage) => {
   if (newPage >= 0 && newPage < pagination.totalPages) {
     setPagination(prev => ({ ...prev, page: newPage }));
     // Fetch students for the new page
-    fetchStudents();
+    setTimeout(() => fetchStudents(), 50);
   }
 };
 
@@ -521,10 +730,23 @@ const resetFilters = () => {
   }, [filters.unionOrAreaId]);
 
   // Fetch students when filters or page changes
-  useEffect(() => {
+  // useEffect(() => {
+  //   fetchStudents();
+  // }, [filters, pagination.page]);
+useEffect(() => {
+  // only fetch students if any filter is set or search is not empty
+  // if any filter is set, fetch students; otherwise, don't fetch to avoid unnecessary calls
+  if (filters.divisionId || filters.districtId || filters.thanaId || 
+      filters.unionOrAreaId || filters.institutionsId || filters.search) {
     fetchStudents();
-  }, [filters, pagination.page]);
+  }
+}, [filters.divisionId, filters.districtId, filters.thanaId, 
+    filters.unionOrAreaId, filters.institutionsId, filters.search]);
 
+// 🟢 separate:
+useEffect(() => {
+  fetchStudents();
+}, [pagination.page]);
    // Check pending status when handling sponsor click
   const handleContactSponsor = async (student) => {
     // Check if student has pending sponsorship first
