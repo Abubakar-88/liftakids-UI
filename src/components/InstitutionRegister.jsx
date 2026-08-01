@@ -20,7 +20,7 @@ const InstitutionRegister = () => {
     unionOrAreaId: '',
     villageOrHouse: '',
     type: '',
-    aboutInstitution: ''
+    about: ''
   });
 
   const [divisions, setDivisions] = useState([]);
@@ -148,46 +148,45 @@ const InstitutionRegister = () => {
   };
 
 const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    // Validate required fields
-    if (!formData.divisionId || !formData.districtId || 
-        !formData.thanaId || !formData.unionOrAreaId) {
-      toast.error('Please select all location fields');
-      setLoading(false);
-      return;
-    }
+  if (!formData.divisionId || !formData.districtId || 
+      !formData.thanaId || !formData.unionOrAreaId) {
+    toast.error('Please select all location fields');
+    setLoading(false);
+    return;
+  }
 
-    try {
-      const toastId = toast.loading('Registering your institution...', {
-        position: "top-center",
-        autoClose: false,
-      });
+  const toastId = toast.loading('Registering your institution...', {
+    position: "top-center",
+    autoClose: false,
+  });
 
-      await registerInstitution({
-        institutionName: formData.institutionName,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        teacherName: formData.teacherName,
-        teacherDesignation: formData.teacherDesignation,
-        divisionId: parseInt(formData.divisionId), 
-        districtId: parseInt(formData.districtId), 
-        thanaId: parseInt(formData.thanaId), 
-        unionOrAreaId: parseInt(formData.unionOrAreaId), 
-        villageOrHouse: formData.villageOrHouse,
-        type: formData.type,
-        aboutInstitution: formData.aboutInstitution
-      });
+  try {
+    await registerInstitution({
+      institutionName: formData.institutionName,
+      email: formData.email,
+      password: formData.password,
+      phone: formData.phone,
+      teacherName: formData.teacherName,
+      teacherDesignation: formData.teacherDesignation,
+      divisionId: parseInt(formData.divisionId),
+      districtId: parseInt(formData.districtId),
+      thanaId: parseInt(formData.thanaId),
+      unionOrAreaId: parseInt(formData.unionOrAreaId),
+      villageOrHouse: formData.villageOrHouse,
+      type: formData.type,
+      aboutInstitution: formData.about,   // ✅ correct field name
+    });
 
-      toast.update(toastId, {
-        render: 'Registration successful! Redirecting to login...',
-        type: 'success',
-        isLoading: false,
-        autoClose: 3000,
-      });
+    toast.update(toastId, {
+      render: 'Registration successful! Redirecting to login...',
+      type: 'success',
+      isLoading: false,
+      autoClose: 3000,
+    });
 
       // Reset form
       setFormData({
@@ -207,20 +206,22 @@ const handleSubmit = async (e) => {
       });
 
       setTimeout(() => {
-        navigate('/login/institution', { state: { registrationSuccess: true } });
-      }, 2000);
+      navigate('/login/institution', { state: { registrationSuccess: true } });
+    }, 2000);
 
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
-      toast.error(errorMessage, {
-        position: "top-center",
-        autoClose: 5000,
-      });
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
+    toast.update(toastId, {               // ✅ update existing toast
+      render: errorMessage,
+      type: 'error',
+      isLoading: false,
+      autoClose: 5000,
+    });
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Institution Registration</h1>
@@ -411,7 +412,7 @@ const handleSubmit = async (e) => {
         <div>
           <label className="block mb-2 font-medium text-justify">About Institution</label>
           <textarea
-            name="aboutInstitution"
+            name="about"
             value={formData.about}
             onChange={handleChange}
             rows="3"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getInstitutionsByUnion, getAllInstitutionsList } from '../../../api/institutionApi';
-import { getAllStudents, getStudentsByInstitution,getStudentsByInstitutionWithPagination, searchStudentsPaginated,getStudentsByDivision, getStudentById,getStudentsByDistrict, 
+import { getAllStudents, getStudentsByInstitution, getStudentsByInstitutionWithPagination, searchStudentsPaginated,getStudentsByDivision, getStudentById,getStudentsByDistrict, 
     getStudentsByThana,       
     getStudentsByUnion  } from '../../../api/studentApi';
 import { getDivisions, getDistrictsByDivision, getThanasByDistrict, getUnionsByThanaId } from '../../../api/areaApi';
