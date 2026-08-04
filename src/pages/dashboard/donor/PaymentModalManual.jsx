@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PaymentCheckoutPage from './PaymentCheckoutPage';
 import { createSponsorship, processPayment } from '../../../api/sponsorshipApi';
 import PaymentInstructionsModal from './../../../components/Modal/PaymentInstructionsModal';
+import { toast } from 'react-toastify';
 const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = false, sponsorshipId = null }) => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
@@ -249,8 +250,17 @@ if (hasPendingPayment(paymentHistory)) {
         };
 
         console.log('Sponsorship Data:', sponsorshipData);
-        const response = await createSponsorship(sponsorshipData);
+       const response = await createSponsorship(sponsorshipData);
         currentSponsorshipId = response.data?.id || response.id;
+        if (
+        response.message &&
+        response.message.toLowerCase().includes('already exists')
+      ) {
+        // ফ্রন্টএন্ডে ইউজারকে মেসেজ দেখান
+        setValidationError(response.message);
+        setLoading(false);
+        return;
+      }
         console.log('New sponsorship created:', currentSponsorshipId);
       }
 
@@ -269,11 +279,13 @@ if (hasPendingPayment(paymentHistory)) {
       setShowPaymentInstructions(true);
       
     } catch (error) {
-      console.error('Error in payment process:', error);
-      alert('Failed to process sponsorship. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    const errorMessage =
+      error.response?.data?.message || error.message || 'Failed to process sponsorship. Please try again.';
+    toast.error(errorMessage);
+    console.error('Error in payment process:', error);
+  } finally {
+    setLoading(false);
+  }
   };
 
   const handleProceedToPayment = () => {

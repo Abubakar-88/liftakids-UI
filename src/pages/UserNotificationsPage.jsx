@@ -11,10 +11,69 @@ import {
   FaBullhorn, FaInfoCircle, FaTimesCircle,
   FaCalendarAlt, FaSchool, FaGraduationCap,
   FaUsers, FaDonate, FaHeart, FaUserShield,
-  FaHome
+  FaHome, FaTimes
 } from 'react-icons/fa';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
+
+// Notification Details Modal Component
+const NotificationDetailModal = ({ notification, onClose }) => {
+  if (!notification) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">Notification Details</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <FaTimes />
+          </button>
+        </div>
+        <div className="p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 bg-gray-100 rounded-full">
+              {notification.type === 'PAYMENT_RECEIVED' && <FaMoneyBillWave className="text-green-500" />}
+              {notification.type === 'SPONSORSHIP_CREATED' && <FaHandshake className="text-blue-500" />}
+              {notification.type === 'INSTITUTION_APPROVED' && <FaUserCheck className="text-green-500" />}
+              {notification.type === 'ADMIN_MESSAGE' && <FaUserShield className="text-orange-500" />}
+              {!['PAYMENT_RECEIVED','SPONSORSHIP_CREATED','INSTITUTION_APPROVED','ADMIN_MESSAGE'].includes(notification.type) && <FaBell className="text-gray-500" />}
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800">{notification.title}</h4>
+              <p className="text-sm text-gray-500">
+                {format(new Date(notification.createdAt), 'PPPpp')}
+              </p>
+            </div>
+          </div>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-gray-700 whitespace-pre-wrap">{notification.message}</p>
+          </div>
+          {notification.relatedEntityType && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">
+                <strong>Related:</strong> {notification.relatedEntityType} #{notification.relatedEntityId}
+              </p>
+              {notification.relatedEntityName && (
+                <p className="text-sm text-gray-600">
+                  <strong>Name:</strong> {notification.relatedEntityName}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const UserNotificationsPage = () => {
   const { 
     notifications, 
@@ -29,6 +88,8 @@ const UserNotificationsPage = () => {
   const [filter, setFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
 
   // Check authentication and redirect admin
   useEffect(() => {
@@ -37,17 +98,81 @@ const UserNotificationsPage = () => {
       return;
     }
     
-    // If admin, redirect to admin notifications page
     if (user.type === 'ADMIN') {
       navigate('/admin/notifications');
       return;
     }
     
-    // Only allow DONOR and INSTITUTION
     if (!['DONOR', 'INSTITUTION'].includes(user.type)) {
-      navigate('/dashboard');
+      navigate('/notifications');
     }
   }, [user, navigate]);
+
+  
+ // ============================================================
+// 🔥 Custom Notification Click Handler (Final)
+// ============================================================
+const handleNotificationClick = async (notification) => {
+  // Mark as read if unread
+  if (notification.status === 'UNREAD') {
+    await markAsRead(notification.notificationId || notification.id);
+  }
+
+  // If notification is expired, do nothing
+  if (notification.expired) {
+    return;
+  }
+
+  const userType = user?.type?.toUpperCase();
+  const type = notification.type;
+  const donorId = user?.id || user?.donorId; // Get donor ID from user object
+
+  // ----- Institution User -----
+  if (userType === 'INSTITUTION') {
+    // Payment related → redirect to payment confirmation
+    if (type === 'PENDING_PAYMENT' || type === 'PAYMENT_CONFIRMED' || type === 'NEW_DONATION') {
+      navigate('/institution/payment-confirmation');
+      return;
+    }
+    // Sponsorship related → redirect to sponsored students
+    if (type === 'SPONSORSHIP_CREATED' || type === 'STUDENT_SPONSORED' || type === 'PAYMENT_COMPLETED') {
+      navigate('/institution/sponsored-students');
+      return;
+    }
+    // Admin messages, registration, etc. → show details modal
+    setSelectedNotification(notification);
+    setShowDetailModal(true);
+    return;
+  }
+
+  // ----- Donor User -----
+  if (userType === 'DONOR') {
+    // Sponsorship created (pending payment) → go to sponsored students list (pending tab)
+    if (type === 'SPONSORSHIP_CREATED' || type === 'PENDING_PAYMENT') {
+      navigate('/donor/sponsored-students');
+      return;
+    }
+    // Payment received / success → go to payment history with donor ID
+    if (type === 'PAYMENT_RECEIVED' || type === 'PAYMENT_SUCCESS' || type === 'PAYMENT_CONFIRMED') {
+      if (donorId) {
+        navigate(`/donor/sponsored-students/${donorId}/payments`);
+      } else {
+        // Fallback if donorId not found
+        navigate('/donor/sponsored-students');
+      }
+      return;
+    }
+    // Other notifications → show details modal
+    setSelectedNotification(notification);
+    setShowDetailModal(true);
+    return;
+  }
+
+  // Fallback: show details modal for any other case
+  setSelectedNotification(notification);
+  setShowDetailModal(true);
+};
+  // ============================================================
 
   // Filter notifications
   const filteredNotifications = notifications.filter(notif => {
@@ -111,7 +236,6 @@ const UserNotificationsPage = () => {
 
   // Get icon based on type
   const getNotificationIcon = (type) => {
-    // Common icons
     const commonIcons = {
       'SUCCESS': <FaCheckCircle className="text-green-500 text-xl" />,
       'ERROR': <FaTimesCircle className="text-red-500 text-xl" />,
@@ -119,7 +243,6 @@ const UserNotificationsPage = () => {
       'INFO': <FaInfoCircle className="text-blue-500 text-xl" />
     };
 
-    // Donor specific icons
     const donorIcons = {
       'DONOR_REGISTRATION': <FaUserPlus className="text-green-500 text-xl" />,
       'DONOR_APPROVED': <FaUserCheck className="text-green-500 text-xl" />,
@@ -137,7 +260,6 @@ const UserNotificationsPage = () => {
       'PAYMENT_OVERDUE': <FaExclamationTriangle className="text-red-500 text-xl" />
     };
 
-    // Institution specific icons
     const institutionIcons = {
       'INSTITUTION_REGISTRATION': <FaEnvelope className="text-teal-500 text-xl" />,
       'INSTITUTION_APPROVED': <FaUserCheck className="text-green-500 text-xl" />,
@@ -199,7 +321,6 @@ const UserNotificationsPage = () => {
   // Get type display text
   const getNotificationTypeText = (type) => {
     const typeMap = {
-      // Donor types
       'DONOR_REGISTRATION': 'Registration Complete',
       'DONOR_APPROVED': 'Account Approved',
       'DONOR_REJECTED': 'Registration Rejected',
@@ -215,7 +336,6 @@ const UserNotificationsPage = () => {
       'PAYMENT_DUE': 'Payment Due',
       'PAYMENT_OVERDUE': 'Payment Overdue',
       
-      // Institution types
       'INSTITUTION_REGISTRATION': 'Registration',
       'INSTITUTION_APPROVED': 'Account Approved',
       'INSTITUTION_REJECTED': 'Registration Rejected',
@@ -228,7 +348,6 @@ const UserNotificationsPage = () => {
       'ADMIN_MESSAGE': 'Admin Message',
       'SYSTEM_ANNOUNCEMENT': 'System Announcement',
       
-      // Common types
       'SUCCESS': 'Success',
       'ERROR': 'Error',
       'WARNING': 'Warning',
@@ -236,17 +355,6 @@ const UserNotificationsPage = () => {
     };
     
     return typeMap[type] || type.replace(/_/g, ' ');
-  };
-
-  // Handle notification click
-  const handleNotificationClick = async (notification) => {
-    if (notification.status === 'UNREAD') {
-      await markAsRead(notification.notificationId || notification.id);
-    }
-    
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
-    }
   };
 
   // Get user-specific stats
@@ -499,14 +607,20 @@ const UserNotificationsPage = () => {
               
               {filteredNotifications.map((notification, index) => {
                 const colors = getNotificationColor(notification.type);
+                // Check if notification is expired (you may have a field, if not, we can skip)
+                const isExpired = notification.expired || false;
                 
                 return (
                   <div
                     key={notification.notificationId || notification.id || index}
-                    onClick={() => handleNotificationClick(notification)}
-                    className={`p-6 cursor-pointer transition-all duration-200 ${colors} ${
+                    onClick={() => {
+                      if (!isExpired) {
+                        handleNotificationClick(notification);
+                      }
+                    }}
+                    className={`p-6 transition-all duration-200 ${colors} ${
                       notification.status === 'UNREAD' ? 'border-l-4 border-blue-500' : ''
-                    }`}
+                    } ${isExpired ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <div className="flex items-start">
                       {/* Icon */}
@@ -534,6 +648,11 @@ const UserNotificationsPage = () => {
                               <span className="text-xs text-gray-500">
                                 {format(new Date(notification.createdAt), 'MMM dd, yyyy')}
                               </span>
+                              {isExpired && (
+                                <span className="px-3 py-1 bg-red-100 text-red-600 text-xs rounded-full">
+                                  Expired
+                                </span>
+                              )}
                             </div>
                             
                             <h3 className="text-lg font-semibold text-gray-800 mb-2">
@@ -545,7 +664,7 @@ const UserNotificationsPage = () => {
                             <span className="text-sm text-gray-500">
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </span>
-                            {notification.status === 'UNREAD' && (
+                            {notification.status === 'UNREAD' && !isExpired && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -569,21 +688,6 @@ const UserNotificationsPage = () => {
                                 {notification.relatedEntityType}: #{notification.relatedEntityId}
                               </span>
                             )}
-                            
-                            {notification.actionUrl && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(notification.actionUrl);
-                                }}
-                                className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
-                              >
-                                View details
-                                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                              </button>
-                            )}
                           </div>
                         )}
                       </div>
@@ -595,6 +699,17 @@ const UserNotificationsPage = () => {
           )}
         </div>
       </div>
+
+      {/* Notification Details Modal */}
+      {showDetailModal && selectedNotification && (
+        <NotificationDetailModal
+          notification={selectedNotification}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedNotification(null);
+          }}
+        />
+      )}
     </div>
   );
 };

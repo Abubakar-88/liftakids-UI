@@ -30,7 +30,6 @@ const NotificationDropdown = ({ onClose, isAdminView = false }) => {
     
     const userType = user.type?.toUpperCase();
     
-    // Admin gets special admin page
     if (isAdminView && userType === 'ADMIN') {
       navigate('/admin/notifications');
     } else {
@@ -124,21 +123,40 @@ const NotificationDropdown = ({ onClose, isAdminView = false }) => {
     }
   };
 
-const handleNotificationClick = async (notification) => {
-  if (notification.status === 'UNREAD') {
-    // Use either notificationId or id
-    const notificationId = notification.notificationId || notification.id;
-    if (notificationId) {
-      await markAsRead(notificationId);
+  // ============================================================
+  // 🔥 Updated handleNotificationClick
+  // ============================================================
+  const handleNotificationClick = async (notification) => {
+    if (notification.status === 'UNREAD') {
+      const notificationId = notification.notificationId || notification.id;
+      if (notificationId) {
+        await markAsRead(notificationId);
+      }
+    }
+    
+    // ✅ Always go to notifications list
+  if (!user) {
+    navigate('/login');
+  } else {
+    const userType = user.type?.toUpperCase();
+    switch (userType) {
+      case 'DONOR':
+        navigate('/donor/notifications');
+        break;
+      case 'INSTITUTION':
+        navigate('/institution/notifications');
+        break;
+      case 'ADMIN':
+        navigate('/admin/notifications');
+        break;
+      default:
+        navigate('/notifications');
     }
   }
   
-  if (notification.actionUrl) {
-    navigate(notification.actionUrl);
-  }
-  
-  onClose();
-};
+  onClose(); // Close dropdown
+  };
+  // ============================================================
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
