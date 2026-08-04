@@ -178,7 +178,7 @@ const handleSubmit = async (e) => {
       unionOrAreaId: parseInt(formData.unionOrAreaId),
       villageOrHouse: formData.villageOrHouse,
       type: formData.type,
-      aboutInstitution: formData.about,   // ✅ correct field name
+      aboutInstitution: formData.about,
     });
 
     toast.update(toastId, {
@@ -188,30 +188,79 @@ const handleSubmit = async (e) => {
       autoClose: 3000,
     });
 
-      // Reset form
-      setFormData({
-        institutionName: '',
-        email: '',
-        password: '',
-        phone: '',
-        teacherName: '',
-        teacherDesignation: '',
-        divisionId: '',
-        districtId: '',
-        thanaId: '',
-        unionOrAreaId: '',
-        villageOrHouse: '',
-        type: '',
-        aboutInstitution: ''
-      });
+    // Reset form
+    setFormData({
+      institutionName: '',
+      email: '',
+      password: '',
+      phone: '',
+      teacherName: '',
+      teacherDesignation: '',
+      divisionId: '',
+      districtId: '',
+      thanaId: '',
+      unionOrAreaId: '',
+      villageOrHouse: '',
+      type: '',
+      aboutInstitution: ''
+    });
 
-      setTimeout(() => {
+    setTimeout(() => {
       navigate('/login/institution', { state: { registrationSuccess: true } });
     }, 2000);
 
   } catch (err) {
-    const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
-    toast.update(toastId, {               // ✅ update existing toast
+    console.error('Registration error:', err);
+
+    let errorMessage = 'Registration failed. Please try again.';
+
+    // 1️⃣ Determine the raw error string
+    let rawMessage = '';
+    if (typeof err === 'string') {
+      rawMessage = err;
+    } else if (err.response) {
+      const data = err.response.data;
+      if (typeof data === 'string') {
+        rawMessage = data;
+      } else if (data && typeof data === 'object') {
+        rawMessage = data.message || data.error || '';
+      }
+    } else if (err.message) {
+      rawMessage = err.message;
+    }
+
+    // If we got a non-empty raw message, use it; otherwise keep default
+    if (rawMessage) {
+      errorMessage = rawMessage;
+    }
+
+    // 2️⃣ 🔥 Detect duplicate email/phone from raw message
+    const lowerMsg = errorMessage.toLowerCase();
+
+    if (lowerMsg.includes('duplicate entry')) {
+      // Extract the duplicate value (email or phone)
+      const match = errorMessage.match(/Duplicate entry '([^']+)'/);
+      const duplicateValue = match ? match[1] : '';
+
+      if (lowerMsg.includes('email') || lowerMsg.includes('uk1f4tsqkqcl6ta96mo9yy9wrom')) {
+        errorMessage = duplicateValue
+          ? `❌ Email "${duplicateValue}" is already registered. Please use a different email.`
+          : '❌ This email is already registered. Please use a different email.';
+      } else if (lowerMsg.includes('phone') || lowerMsg.includes('mobile')) {
+        errorMessage = duplicateValue
+          ? `❌ Phone number "${duplicateValue}" is already registered. Please use a different phone number.`
+          : '❌ This phone number is already registered. Please use a different phone number.';
+      } else {
+        errorMessage = '❌ This email or phone number is already registered.';
+      }
+    } else if (lowerMsg.includes('email')) {
+      errorMessage = '❌ This email is already registered. Please use a different email.';
+    } else if (lowerMsg.includes('phone') || lowerMsg.includes('mobile')) {
+      errorMessage = '❌ This phone number is already registered. Please use a different phone number.';
+    }
+
+    // 3️⃣ Update toast with final message
+    toast.update(toastId, {
       render: errorMessage,
       type: 'error',
       isLoading: false,
