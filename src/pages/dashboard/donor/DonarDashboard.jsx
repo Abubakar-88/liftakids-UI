@@ -62,7 +62,7 @@ const [donorData, setDonorData] = useState(null);
         </div>
 
         <div
-          onClick={() => navigate('/donar/sponsored-students')}
+          onClick={() => navigate('/donor/sponsored-students')}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
           <FaGraduationCap className="text-teal-700 text-4xl mb-2" />
@@ -70,7 +70,7 @@ const [donorData, setDonorData] = useState(null);
         </div>
 
         <div
-          onClick={() => navigate(`/donar/settings/${donorId}`)}
+          onClick={() => navigate(`/donor/settings/${donorId}`)}
           className="flex flex-col items-center bg-blue-50 p-4 rounded-xl cursor-pointer hover:bg-blue-100"
         >
           <FaCog className="text-teal-700 text-4xl mb-2" />

@@ -140,7 +140,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              <Route path="/donar/sponsored-students" element={
+              <Route path="/donor/sponsored-students" element={
                 <ProtectedRoute allowedRoles={['DONOR']}>
                   <DonorSponsoredStudentList />
                 </ProtectedRoute>
@@ -152,7 +152,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              <Route path="/donar/settings/:donorId" element={
+              <Route path="/donor/settings/:donorId" element={
                 <ProtectedRoute allowedRoles={['DONOR']}>
                   <DonorSettings />
                 </ProtectedRoute>
