@@ -1,6 +1,6 @@
 import axios from 'axios';
 // আপনার backend URL
-const API_BASE_URL = 'https://server.skyschooling.com/api'; // আপনার backend URL
+const API_BASE_URL = import.meta.env.VITE_API_URL; // আপনার backend URL
 
 // Create axios instance with default config
 const adminApi = axios.create({

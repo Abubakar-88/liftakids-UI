@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = 'https://server.skyschooling.com/api'; 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Donor Search API
 export const searchDonors = async (searchTerm) => {

@@ -1,7 +1,7 @@
 // api/donarApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://server.skyschooling.com/api'; 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 // api/donarApi.js ফাইল check করুন
 export const registerDonor = async (donorData) => {
   try {

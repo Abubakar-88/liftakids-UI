@@ -1,7 +1,7 @@
 // api/blogApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://server.skyschooling.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,

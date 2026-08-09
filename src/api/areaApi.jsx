@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = 'https://server.skyschooling.com/api'; 
+const BASE = import.meta.env.VITE_API_URL;
 
 // ==================== Division ====================
 export const getDivisions = () => axios.get(`${BASE}/divisions`);

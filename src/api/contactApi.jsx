@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'https://server.skyschooling.com/api'; 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Admin Contact Management APIs
 export const getContactMessages = async (page = 0, size = 10, sortBy = 'submittedAt', sortDir = 'desc') => {
