@@ -52,9 +52,9 @@ const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = f
           let url = '';
           
           if (isExistingSponsor && sponsorshipId) {
-            url = `https://server.skyschooling.com/api/sponsorships/${sponsorshipId}/payments`;
+            url = `${import.meta.env.VITE_API_URL}/sponsorships/${sponsorshipId}/payments`;
           } else if (student.studentId) {
-            url = `https://server.skyschooling.com/api/sponsorships/student/${student.studentId}/payments`;
+            url = `${import.meta.env.VITE_API_URL}/sponsorships/student/${student.studentId}/payments`;
           }
           
           if (url) {

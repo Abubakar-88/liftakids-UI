@@ -45,7 +45,7 @@ const BlogDetails = () => {
   const handleLike = async () => {
     if (!blog) return;
     try {
-      const response = await fetch(`http://localhost:8082/LiftAKids/api/blogs/public/${blog.id}/like`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/blogs/public/${blog.id}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

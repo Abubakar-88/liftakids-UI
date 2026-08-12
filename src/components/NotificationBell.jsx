@@ -26,7 +26,7 @@ useEffect(() => {
   const testApi = async () => {
     if (user?.type === 'DONOR' && user?.id) {
       try {
-        const response = await fetch(`http://localhost:8082/LiftAKids/api/notifications?userType=DONOR&userId=${user.id}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/notifications?userType=DONOR&userId=${user.id}`);
         const data = await response.json();
         console.log('🔧 Manual API test result:', data);
       } catch (err) {
