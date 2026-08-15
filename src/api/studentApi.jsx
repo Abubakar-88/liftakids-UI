@@ -264,23 +264,32 @@ export const fetchStudentResults = async (studentId) => {
 
 export const checkStudentPendingStatus = async (studentId) => {
   try {
-    const response = await axios.get(
-      `${API_BASE_URL}/students/${studentId}/pending-sponsorships?days=3`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          // Add auth header if needed
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        }
-      }
+    // ✅ Sponsorship TABLE থেকে PENDING_PAYMENT চেক করুন
+    const response = await fetch(
+      `http://localhost:8082/LiftAKids/api/sponsorships/student/${studentId}`
     );
-    return response.data;
+    
+    if (!response.ok) {
+      return { hasPending: false, data: [] };
+    }
+    
+    const data = await response.json();
+    console.log('Student sponsorships:', data);
+    
+    // PENDING_PAYMENT স্ট্যাটাস চেক করুন
+    if (Array.isArray(data) && data.length > 0) {
+      const hasPending = data.some(item => 
+        item.status === 'PENDING_PAYMENT'
+      );
+      return { hasPending, data };
+    }
+    
+    return { hasPending: false, data: [] };
   } catch (error) {
     console.error('Error checking pending status:', error);
-    return [];
+    return { hasPending: false, data: [] };
   }
 };
-
 
 export const deleteStudent = async (studentId) => {
   const response = await fetch(`${API_BASE_URL}/students/${studentId}`, {

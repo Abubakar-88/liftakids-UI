@@ -10,6 +10,7 @@ import PaymentModalManual from '../donor/PaymentModalManual';
 //import PaymentCheckoutPage from '../donor/PaymentCheckoutPage';
 import { useNavigate } from 'react-router-dom';
 import { checkStudentPendingStatus } from '../../../api/studentApi';
+import { toast } from 'react-toastify';
 const StudentListForSponsor = () => {
   // State management
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -205,32 +206,30 @@ const fetchStudents = async () => {
       totalElements: totalElements
     }));
 
-    // Process and set students
+     // Process and set students
     const processedStudents = (Array.isArray(studentsData) ? studentsData : []).map(student => ({
       ...student,
       sponsors: student.sponsors || []
     }));
     
-    setStudents(processedStudents);
+     setStudents(processedStudents);
     
-    // Check pending status for each student
+    // প্রতিটি student এর জন্য pending status চেক করুন
     const pendingStatuses = {};
-    const pendingPromises = processedStudents.map(async (student) => {
+    
+    // Batch processing - প্রতিটি student এর জন্য আলাদা করে চেক করুন
+    for (const student of processedStudents) {
       try {
         const pendingStatus = await checkPendingSponsorship(student.studentId);
-        return { studentId: student.studentId, status: pendingStatus };
+        pendingStatuses[student.studentId] = pendingStatus;
       } catch (err) {
-        return { studentId: student.studentId, status: { hasPending: false } };
+        console.error(`Error checking pending for ${student.studentId}:`, err);
+        pendingStatuses[student.studentId] = { hasPending: false };
       }
-    });
-
-    const results = await Promise.all(pendingPromises);
-    results.forEach(result => {
-      pendingStatuses[result.studentId] = result.status;
-    });
+    }
     
     setPendingStatusMap(pendingStatuses);
-
+    console.log('Pending status map:', pendingStatuses);
   } catch (error) {
     console.error('❌ Failed to load students:', error);
     setStudents([]);
@@ -245,99 +244,94 @@ const checkPendingSponsorship = async (studentId) => {
   try {
     console.log(`🔍 Checking pending for student ${studentId}`);
     
-    const pendingData = await checkStudentPendingStatus(studentId);
-    console.log('API response data:', pendingData);
+    const result = await checkStudentPendingStatus(studentId);
+    console.log('API response:', result);
     
-    if (pendingData && pendingData.length > 0) {
-      const studentData = pendingData[0];
-      console.log('Student data from API:', studentData);
-      
-      if (studentData.sponsors && studentData.sponsors.length > 0) {
-        console.log('Sponsors found:', studentData.sponsors);
-        
-        const pendingSponsorship = studentData.sponsors.find(sponsor => {
-          console.log(`Checking sponsor: ${sponsor.status} === 'PENDING_PAYMENT'?`, 
-                     sponsor.status === 'PENDING_PAYMENT');
-          return sponsor.status === 'PENDING_PAYMENT';
-        });
+    // যদি boolean রিটার্ন করে
+    if (typeof result === 'boolean') {
+      return { hasPending: result, daysLeft: 1 };
+    }
+    
+    // যদি object রিটার্ন করে
+    if (result && typeof result === 'object') {
+      // যদি hasPending প্রপার্টি থাকে
+      if (result.hasPending) {
+        // pending sponsorship এর সময় চেক করুন
+        const pendingSponsorship = result.data && result.data.length > 0 ? result.data[0] : null;
         
         if (pendingSponsorship) {
-          console.log(' Found PENDING_PAYMENT sponsorship:', pendingSponsorship);
-          
           const pendingDate = pendingSponsorship.sponsorStartDate || 
                              pendingSponsorship.startDate || 
+                             pendingSponsorship.createdAt ||
                              new Date();
-          
-          console.log('Pending date:', pendingDate);
           
           const pendingTime = new Date(pendingDate);
           const now = new Date();
           const timeDiff = now.getTime() - pendingTime.getTime();
           const daysDiff = timeDiff / (1000 * 3600 * 24);
           
-          console.log(`Days difference: ${daysDiff}`);
+          console.log(`Pending days diff: ${daysDiff}`);
           
-          if (daysDiff < 3) {
-            const daysLeft = Math.ceil(3 - daysDiff);
-            console.log(`Will show processing for ${daysLeft} more days`);
+          if (daysDiff < 7) {
+            const daysLeft = Math.ceil(7 - daysDiff);
             return {
               hasPending: true,
               daysLeft: daysLeft,
               sponsorship: pendingSponsorship
             };
-          } else {
-            console.log(`Pending is ${daysDiff} days old (> 3 days)`);
           }
-        } else {
-          console.log('❌ No PENDING_PAYMENT found in sponsors');
         }
-      } else {
-        console.log('❌ No sponsors array in response');
+        return { hasPending: true, daysLeft: 1 };
       }
-    } else {
-      console.log('❌ Empty response from API');
     }
     
     return { hasPending: false };
   } catch (error) {
-    console.error(`💥 Error checking pending status for student ${studentId}:`, error);
+    console.error(`Error checking pending status for student ${studentId}:`, error);
     return { hasPending: false };
   }
 };
 const getSponsorButtonStatus = (student) => {
   if (!student || !student.studentId) {
-    console.log("❌ No student or studentId");
     return { status: 'available' };
   }
-  
-  const studentId = student.studentId;
-  
-  
-  // Check if student has COMPLETED sponsorship (not PENDING)
-  const hasActiveSponsorship = student.sponsors?.some(
-    sponsor => sponsor.status === 'ACTIVE'
+
+  // ✅ আসল, backend-verified data ব্যবহার করুন
+  const pendingInfo = pendingStatusMap[student.studentId];
+  if (pendingInfo?.hasPending) {
+    return { status: 'processing', daysLeft: pendingInfo.daysLeft || 1 };
+  }
+
+  const sponsors = student.sponsors || [];
+
+  const hasActiveSponsorship = sponsors.some(
+    sponsor => sponsor.status === 'ACTIVE' && !isSponsorshipExpired(sponsor)
   );
-  
-  console.log("Has active sponsorship:", hasActiveSponsorship);
-  
-  if (hasActiveSponsorship) {
-    console.log("✅ Student has ACTIVE sponsorship, returning 'sponsored'");
-    return { status: 'sponsored' };
-  }
-  
-  // Now check for pending
-  if (pendingStatusMap[studentId] && pendingStatusMap[studentId].hasPending) {
-    console.log("🎯 Student has PENDING sponsorship, returning 'processing'");
-    return {
-      status: 'processing',
-      daysLeft: pendingStatusMap[studentId].daysLeft || 1,
-      sponsorship: pendingStatusMap[studentId].sponsorship
-    };
-  }
-  
-  console.log(" Student available for sponsorship");
+  if (hasActiveSponsorship) return { status: 'sponsored' };
+
+  const hasExpired = sponsors.some(
+    sponsor => sponsor.status === 'ACTIVE' && isSponsorshipExpired(sponsor)
+  );
+  if (hasExpired) return { status: 'available', hasExpired: true };
+
   return { status: 'available' };
 };
+
+// Helper function
+const isSponsorshipExpired = (sponsorship) => {
+  if (!sponsorship.endDate) return false;
+  const endDate = new Date(sponsorship.endDate);
+  const today = new Date();
+  return endDate < today;
+};
+
+// Helper function to check if sponsorship is expired
+// const isSponsorshipExpired = (sponsorship) => {
+//   if (!sponsorship.endDate) return false;
+//   const endDate = new Date(sponsorship.endDate);
+//   const today = new Date();
+//   return endDate < today;
+// };
 
   // Determine sponsor button status
 // const getSponsorButtonStatus = (student) => {
@@ -526,19 +520,33 @@ const resetFilters = () => {
   }, [filters, pagination.page]);
 
    // Check pending status when handling sponsor click
-  const handleContactSponsor = async (student) => {
-    // Check if student has pending sponsorship first
-    const pendingStatus = await checkPendingSponsorship(student.studentId);
-    
-    if (pendingStatus.hasPending) {
-      // Show message that sponsorship is processing
-      alert(`This student already has a pending sponsorship. Please wait ${pendingStatus.daysLeft} more day(s).`);
-      return;
-    }
-    
-    setSelectedStudent(student);
-    setContactModalOpen(true);
-  };
+const handleContactSponsor = async (student) => {
+  // Check student's sponsors
+  const sponsors = student.sponsors || [];
+  
+  const hasPending = sponsors.some(s => s.status === 'PENDING_PAYMENT');
+  const hasActive = sponsors.some(s => s.status === 'ACTIVE' && !isSponsorshipExpired(s));
+  
+  if (hasPending) {
+    toast.warning('This student already has a pending sponsorship request.');
+    return;
+  }
+  
+  if (hasActive) {
+    toast.info('This student is already sponsored.');
+    return;
+  }
+  
+  // Find existing sponsorship ID (if any)
+  const existingSponsorship = sponsors.find(s => s.status === 'PENDING_PAYMENT' || s.status === 'ACTIVE');
+  
+  setSelectedStudent({
+    ...student,
+    existingSponsorshipId: existingSponsorship?.id || null
+  });
+  
+  setContactModalOpen(true);
+};
   
   // Handle payment data from PaymentModalManual
   const handlePaymentSubmit = (paymentInfo) => {
@@ -992,7 +1000,8 @@ const getPageNumbers = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {student.institutionName || 'Not specified'}
                     </td>
-                  <td className="px-6 py-4 text-right">
+                
+<td className="px-6 py-4 text-right">
   <div className="flex justify-end space-x-2">
     <button
       onClick={() => handleViewDetails(student)}
@@ -1001,39 +1010,43 @@ const getPageNumbers = () => {
       View Details
     </button>
     
-    {!student.fullySponsored && (
-      (() => {
-        console.log(`🎯 Rendering button for student ${student.studentId}`);
-        const buttonStatus = getSponsorButtonStatus(student);
-        console.log(`Button status for ${student.studentId}:`, buttonStatus);
-        
-        if (buttonStatus.status === 'processing') {
-          console.log(`🎨 Showing PROCESSING button for ${student.studentId}`);
-          return (
-            <button
-              disabled
-              className="px-3 py-1 bg-yellow-500 text-white rounded text-sm cursor-not-allowed flex items-center"
-              title={`Payment Pending - Available in ${buttonStatus.daysLeft} day(s)`}
-            >
-              <svg className="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
-              </svg>
-              Processing ({buttonStatus.daysLeft}d)
-            </button>
-          );
-        } else {
-          console.log(`🎨 Showing SPONSOR button for ${student.studentId}`);
-          return (
-            <button
-              onClick={() => handleContactSponsor(student)}
-              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-            >
-              Sponsor
-            </button>
-          );
-        }
-      })()
-    )}
+    {(() => {
+      const status = getSponsorButtonStatus(student);
+      
+      if (status.status === 'sponsored') {
+        return (
+          <button
+            disabled
+            className="px-3 py-1 bg-blue-500 text-white rounded text-sm cursor-not-allowed"
+          >
+            Sponsored
+          </button>
+        );
+      }
+      
+      if (status.status === 'processing') {
+        return (
+          <button
+            disabled
+            className="px-3 py-1 bg-yellow-500 text-white rounded text-sm cursor-not-allowed flex items-center"
+          >
+            <svg className="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
+            </svg>
+            Processing
+          </button>
+        );
+      }
+      
+      return (
+        <button
+          onClick={() => handleContactSponsor(student)}
+          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+        >
+          Sponsor
+        </button>
+      );
+    })()}
   </div>
 </td>
                   </tr>
@@ -1465,12 +1478,15 @@ const getPageNumbers = () => {
     )}
     
     {paymentModalManualOpen && (
-      <PaymentModalManual
-        student={selectedStudent}
-        onClose={() => setPaymentModalManualOpen(false)}
-        onPayment={handlePaymentSubmit}
-      />
-    )}
+  <PaymentModalManual
+    student={selectedStudent}
+    onClose={() => {
+      setPaymentModalManualOpen(false);
+      fetchStudents(); // list + pendingStatusMap refresh 
+    }}
+    onPayment={handlePaymentSubmit}
+  />
+)}
    
     {/* {checkoutModalOpen && (
       <PaymentCheckoutPage

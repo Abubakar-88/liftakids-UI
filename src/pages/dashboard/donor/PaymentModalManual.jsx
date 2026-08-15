@@ -43,39 +43,53 @@ const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = f
   };
 
   // Calculate paid months based on paidUpTo date
-  useEffect(() => {
-    const fetchPaymentHistory = async () => {
-      if (student && (isExistingSponsor || sponsorshipId)) {
-        setLoading(true);
+useEffect(() => {
+  const fetchPaymentHistory = async () => {
+    if (student && (isExistingSponsor || sponsorshipId)) {
+      setLoading(true);
+      
+      try {
+        let url = '';
         
-        try {
-          let url = '';
+        if (isExistingSponsor && sponsorshipId) {
+          url = `${import.meta.env.VITE_API_URL}/sponsorships/${sponsorshipId}/payments`;
+        } else if (student.studentId) {
+          // First check for pending sponsorship
+          const checkResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/students/${student.studentId}/pending-sponsorships?days=7`
+          );
           
-          if (isExistingSponsor && sponsorshipId) {
-            url = `${import.meta.env.VITE_API_URL}/sponsorships/${sponsorshipId}/payments`;
-          } else if (student.studentId) {
-            url = `${import.meta.env.VITE_API_URL}/sponsorships/student/${student.studentId}/payments`;
-          }
-          
-          if (url) {
-            const response = await fetch(url);
-            if (response.ok) {
-              const payments = await response.json();
-              setPaymentHistory(payments);
-              calculatePaidMonths(payments);
+          if (checkResponse.ok) {
+            const pendingData = await checkResponse.json();
+            if (pendingData && pendingData.length > 0) {
+              const sponsorship = pendingData[0];
+              const sponsorshipIdFromData = sponsorship.id || sponsorship.sponsorshipId;
+              if (sponsorshipIdFromData) {
+                url = `${import.meta.env.VITE_API_URL}/sponsorships/${sponsorshipIdFromData}/payments`;
+              }
             }
           }
-        } catch (error) {
-          console.error('Error fetching payment history:', error);
-        } finally {
-          setLoading(false);
         }
+        
+        if (url) {
+          const response = await fetch(url);
+          if (response.ok) {
+            const payments = await response.json();
+            setPaymentHistory(payments);
+            calculatePaidMonths(payments);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching payment history:', error);
+      } finally {
+        setLoading(false);
       }
-    };
+    }
+  };
 
-    fetchPaymentHistory();
-  }, [student, isExistingSponsor, sponsorshipId]);
-  
+  fetchPaymentHistory();
+}, [student, isExistingSponsor, sponsorshipId]);
+
  const calculatePaidMonths = (payments) => {
 
   const paidMonths = new Set();
@@ -213,32 +227,44 @@ const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = f
   };
 const hasPendingPayment = (payments) => {
   return payments.some(payment =>
-    payment.paymentStatus === 'PENDING' ||
-    payment.paymentStatus === 'PENDING_PAYMENT' ||
     payment.status === 'PENDING' ||
+    payment.paymentStatus === 'PENDING' ||
     payment.status === 'PENDING_PAYMENT'
   );
 };
-  const handlePayNow = async () => {
-if (hasPendingPayment(paymentHistory)) {
+const handlePayNow = async () => {
+  if (hasPendingPayment(paymentHistory)) {
+    setValidationError(
+      'You already have a pending payment for this sponsorship. Please wait for confirmation before making another payment.'
+    );
+    return;
+  }
 
-  setValidationError(
-    'You already have a pending payment for this sponsorship. Please wait for confirmation before making another payment.'
-  );
+  if (!validateForm()) return;
 
-  return;
-}
+  try {
+    setLoading(true);
 
+    let currentSponsorshipId = sponsorshipId;
+    console.log('Initial sponsorshipId from props:', currentSponsorshipId);
 
-    if (!validateForm()) return;
-
-    try {
-      setLoading(true);
-
-      // Step 1: Create sponsorship if new sponsor
-      let currentSponsorshipId = sponsorshipId;
+    // Step 1: If no sponsorshipId, create or find existing sponsorship
+    if (!isExistingSponsor || !currentSponsorshipId) {
+      // First check if student already has a sponsorship
+      const checkResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/sponsorships/existwith?donorId=${getCurrentDonorId()}&studentId=${student.studentId}`
+      );
       
-      if (!isExistingSponsor) {
+      if (checkResponse.ok) {
+        const existingSponsorships = await checkResponse.json();
+        if (existingSponsorships && existingSponsorships.length > 0) {
+          currentSponsorshipId = existingSponsorships[0].id;
+          console.log('Found existing sponsorship ID:', currentSponsorshipId);
+        }
+      }
+      
+      // If still no sponsorshipId, create new one
+      if (!currentSponsorshipId) {
         const sponsorshipData = {
           studentId: student.studentId,
           donorId: getCurrentDonorId(),
@@ -249,44 +275,93 @@ if (hasPendingPayment(paymentHistory)) {
           status: 'PENDING_PAYMENT'
         };
 
-        console.log('Sponsorship Data:', sponsorshipData);
-       const response = await createSponsorship(sponsorshipData);
+        const response = await createSponsorship(sponsorshipData);
         currentSponsorshipId = response.data?.id || response.id;
-        if (
-        response.message &&
-        response.message.toLowerCase().includes('already exists')
-      ) {
-        // ফ্রন্টএন্ডে ইউজারকে মেসেজ দেখান
-        setValidationError(response.message);
+        
+        if (!currentSponsorshipId && response.message && response.message.includes('already exists')) {
+          const existingResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/sponsorships/existwith?donorId=${getCurrentDonorId()}&studentId=${student.studentId}`
+          );
+          if (existingResponse.ok) {
+            const existingData = await existingResponse.json();
+            if (existingData && existingData.length > 0) {
+              currentSponsorshipId = existingData[0].id;
+            }
+          }
+        }
+      }
+    }
+
+    if (!currentSponsorshipId) {
+      setValidationError('Could not find or create sponsorship. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    const startDate = `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`;
+    const endDate = `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`;
+    
+    // ✅ শুধু COMPLETED পেমেন্ট চেক করুন
+    const paymentCheckResponse = await fetch(
+      `${import.meta.env.VITE_API_URL}/sponsorships/${currentSponsorshipId}/payments`
+    );
+    
+    if (paymentCheckResponse.ok) {
+      const existingPayments = await paymentCheckResponse.json();
+      console.log('Existing payments:', existingPayments);
+      
+      // শুধু COMPLETED পেমেন্ট চেক করুন (PENDING বাদ দিন)
+      const hasOverlap = existingPayments.some(payment => {
+        // ✅ শুধু COMPLETED পেমেন্ট চেক করব
+        if (payment.status !== 'COMPLETED') {
+          return false;
+        }
+        
+        const paymentStart = new Date(payment.startDate);
+        const paymentEnd = new Date(payment.endDate);
+        const newStart = new Date(startDate);
+        const newEnd = new Date(endDate);
+        
+        return (newStart <= paymentEnd && newEnd >= paymentStart);
+      });
+      
+      if (hasOverlap) {
+        setValidationError(
+          'Payment already exists for the selected period. Please select different months.'
+        );
         setLoading(false);
         return;
       }
-        console.log('New sponsorship created:', currentSponsorshipId);
-      }
+    }
 
+    // Process payment
+    await processPayment(currentSponsorshipId, {
+      amount: totalAmount,
+      monthlyAmount: monthlyAmount,
+      totalMonths: totalMonths,
+      paymentMethod: 'MANUAL',
+      paymentStatus: 'PENDING',
+      startDate: startDate,
+      endDate: endDate
+    });
 
-      await processPayment(currentSponsorshipId, {
-        amount: totalAmount,
-        monthlyAmount: monthlyAmount,
-        totalMonths: totalMonths,
-        paymentMethod: 'MANUAL',
-        paymentStatus: 'PENDING',
-        startDate: `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`,
-        endDate: `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`
-      });
-
-      // Step 2: Show payment instructions
-      setShowPaymentInstructions(true);
-      
-    } catch (error) {
-    const errorMessage =
-      error.response?.data?.message || error.message || 'Failed to process sponsorship. Please try again.';
-    toast.error(errorMessage);
+    setShowPaymentInstructions(true);
+    
+  } catch (error) {
     console.error('Error in payment process:', error);
+    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+    
+    if (errorMessage.includes('overlapping') || errorMessage.includes('already exists')) {
+      setValidationError(
+        'Payment already exists for this period. Please select different months or contact support.'
+      );
+    } else {
+      toast.error(errorMessage);
+    }
   } finally {
     setLoading(false);
   }
-  };
+};
 
   const handleProceedToPayment = () => {
     const paymentInfo = {
