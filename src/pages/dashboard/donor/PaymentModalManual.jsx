@@ -3,6 +3,7 @@ import PaymentCheckoutPage from './PaymentCheckoutPage';
 import { createSponsorship, processPayment } from '../../../api/sponsorshipApi';
 import PaymentInstructionsModal from './../../../components/Modal/PaymentInstructionsModal';
 import { toast } from 'react-toastify';
+
 const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = false, sponsorshipId = null }) => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
@@ -14,6 +15,10 @@ const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = f
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
   const [paymentHistory, setPaymentHistory] = useState([]);
+
+  // ✅ NEW: auto-redirect state for existing pending payments
+  const [autoShowInstructions, setAutoShowInstructions] = useState(false);
+  const [existingPendingPayment, setExistingPendingPayment] = useState(null);
 
   const [selectedMonths, setSelectedMonths] = useState({
     from: { month: currentMonth, year: currentYear },
@@ -42,100 +47,116 @@ const PaymentModalManual = ({ student, onClose, onPayment, isExistingSponsor = f
     }
   };
 
-  // Calculate paid months based on paidUpTo date
-useEffect(() => {
-  const fetchPaymentHistory = async () => {
-    if (student && (isExistingSponsor || sponsorshipId)) {
-      setLoading(true);
-      
-      try {
-        let url = '';
-        
-        if (isExistingSponsor && sponsorshipId) {
-          url = `${import.meta.env.VITE_API_URL}/sponsorships/${sponsorshipId}/payments`;
-        } else if (student.studentId) {
-          // First check for pending sponsorship
-          const checkResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/students/${student.studentId}/pending-sponsorships?days=7`
-          );
-          
-          if (checkResponse.ok) {
-            const pendingData = await checkResponse.json();
-            if (pendingData && pendingData.length > 0) {
-              const sponsorship = pendingData[0];
-              const sponsorshipIdFromData = sponsorship.id || sponsorship.sponsorshipId;
-              if (sponsorshipIdFromData) {
-                url = `${import.meta.env.VITE_API_URL}/sponsorships/${sponsorshipIdFromData}/payments`;
+  // Fetch payment history + auto-detect pending payment
+  useEffect(() => {
+    const fetchPaymentHistory = async () => {
+      if (student && (isExistingSponsor || sponsorshipId)) {
+        setLoading(true);
+
+        try {
+          let url = '';
+
+          if (isExistingSponsor && sponsorshipId) {
+            url = `http://localhost:8082/LiftAKids/api/sponsorships/${sponsorshipId}/payments`;
+          } else if (student.studentId) {
+            // First check for pending sponsorship
+            const checkResponse = await fetch(
+              `http://localhost:8082/LiftAKids/api/students/${student.studentId}/pending-sponsorships?days=7`
+            );
+
+            if (checkResponse.ok) {
+              const pendingData = await checkResponse.json();
+              if (pendingData && pendingData.length > 0) {
+                const sponsorship = pendingData[0];
+                const sponsorshipIdFromData = sponsorship.id || sponsorship.sponsorshipId;
+                if (sponsorshipIdFromData) {
+                  url = `http://localhost:8082/LiftAKids/api/sponsorships/${sponsorshipIdFromData}/payments`;
+                }
               }
             }
           }
-        }
-        
-        if (url) {
-          const response = await fetch(url);
-          if (response.ok) {
-            const payments = await response.json();
-            setPaymentHistory(payments);
-            calculatePaidMonths(payments);
+
+          if (url) {
+            const response = await fetch(url);
+            if (response.ok) {
+              const payments = await response.json();
+              setPaymentHistory(payments);
+              calculatePaidMonths(payments);
+
+              // ✅ NEW: pending payment already থাকলে সরাসরি Instructions modal এ যাবে
+              const pendingPayment = payments.find(p =>
+                p.status === 'PENDING' ||
+                p.paymentStatus === 'PENDING' ||
+                p.status === 'PENDING_PAYMENT'
+              );
+
+              if (pendingPayment) {
+                setExistingPendingPayment(pendingPayment);
+
+                const pStart = new Date(pendingPayment.startDate);
+                const pEnd = new Date(pendingPayment.endDate);
+
+                if (!isNaN(pStart) && !isNaN(pEnd)) {
+                  setSelectedMonths({
+                    from: { month: pStart.getMonth() + 1, year: pStart.getFullYear() },
+                    to: { month: pEnd.getMonth() + 1, year: pEnd.getFullYear() },
+                  });
+                }
+
+                setAutoShowInstructions(true);
+                setShowPaymentInstructions(true); // ✅ সরাসরি redirect
+              }
+            }
           }
+        } catch (error) {
+          console.error('Error fetching payment history:', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching payment history:', error);
-      } finally {
-        setLoading(false);
       }
-    }
-  };
+    };
 
-  fetchPaymentHistory();
-}, [student, isExistingSponsor, sponsorshipId]);
+    fetchPaymentHistory();
+  }, [student, isExistingSponsor, sponsorshipId]);
 
- const calculatePaidMonths = (payments) => {
+  const calculatePaidMonths = (payments) => {
+    const paidMonths = new Set();
 
-  const paidMonths = new Set();
+    payments.forEach(payment => {
+      // ONLY completed confirmed payments
+      if (
+        payment.status !== 'COMPLETED' ||
+        !payment.paidUpTo
+      ) {
+        return;
+      }
 
-  payments.forEach(payment => {
+      try {
+        const startDate = new Date(payment.startDate);
+        const endDate = new Date(payment.endDate);
 
-    // ONLY completed confirmed payments
-    if (
-      payment.status !== 'COMPLETED' ||
-      !payment.paidUpTo
-    ) {
-      return;
-    }
+        let current = new Date(startDate);
 
-    try {
+        while (current <= endDate) {
+          const year = current.getFullYear();
+          const month = current.getMonth() + 1;
 
-      const startDate = new Date(payment.startDate);
+          paidMonths.add(
+            `${year}-${String(month).padStart(2, '0')}`
+          );
 
-      const endDate = new Date(payment.endDate);
-
-      let current = new Date(startDate);
-
-      while (current <= endDate) {
-
-        const year = current.getFullYear();
-
-        const month = current.getMonth() + 1;
-
-        paidMonths.add(
-          `${year}-${String(month).padStart(2, '0')}`
+          current.setMonth(current.getMonth() + 1);
+        }
+      } catch (e) {
+        console.error(
+          'Error processing payment date range:',
+          e
         );
-
-        current.setMonth(current.getMonth() + 1);
       }
+    });
 
-    } catch (e) {
-
-      console.error(
-        'Error processing payment date range:',
-        e
-      );
-    }
-  });
-
-  setPaidMonthsList(Array.from(paidMonths));
-};
+    setPaidMonthsList(Array.from(paidMonths));
+  };
 
   if (!student) return null;
 
@@ -176,7 +197,7 @@ useEffect(() => {
   const handleMonthSelect = (month, year) => {
     // Don't allow selection of paid months
     if (isMonthPaid(month, year)) return;
-    
+
     if (pickerFor === 'from') {
       setSelectedMonths({ ...selectedMonths, from: { month, year } });
     } else {
@@ -225,156 +246,158 @@ useEffect(() => {
     }
     return 1; // Fallback for testing
   };
-const hasPendingPayment = (payments) => {
-  return payments.some(payment =>
-    payment.status === 'PENDING' ||
-    payment.paymentStatus === 'PENDING' ||
-    payment.status === 'PENDING_PAYMENT'
-  );
-};
-const handlePayNow = async () => {
-  if (hasPendingPayment(paymentHistory)) {
-    setValidationError(
-      'You already have a pending payment for this sponsorship. Please wait for confirmation before making another payment.'
+
+  const hasPendingPayment = (payments) => {
+    return payments.some(payment =>
+      payment.status === 'PENDING' ||
+      payment.paymentStatus === 'PENDING' ||
+      payment.status === 'PENDING_PAYMENT'
     );
-    return;
-  }
+  };
 
-  if (!validateForm()) return;
-
-  try {
-    setLoading(true);
-
-    let currentSponsorshipId = sponsorshipId;
-    console.log('Initial sponsorshipId from props:', currentSponsorshipId);
-
-    // Step 1: If no sponsorshipId, create or find existing sponsorship
-    if (!isExistingSponsor || !currentSponsorshipId) {
-      // First check if student already has a sponsorship
-      const checkResponse = await fetch(
-        `${import.meta.env.VITE_API_URL}/sponsorships/existwith?donorId=${getCurrentDonorId()}&studentId=${student.studentId}`
+  const handlePayNow = async () => {
+    if (hasPendingPayment(paymentHistory)) {
+      setValidationError(
+        'You already have a pending payment for this sponsorship. Please wait for confirmation before making another payment.'
       );
-      
-      if (checkResponse.ok) {
-        const existingSponsorships = await checkResponse.json();
-        if (existingSponsorships && existingSponsorships.length > 0) {
-          currentSponsorshipId = existingSponsorships[0].id;
-          console.log('Found existing sponsorship ID:', currentSponsorshipId);
-        }
-      }
-      
-      // If still no sponsorshipId, create new one
-      if (!currentSponsorshipId) {
-        const sponsorshipData = {
-          studentId: student.studentId,
-          donorId: getCurrentDonorId(),
-          startDate: `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`,
-          endDate: `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`,
-          monthlyAmount: monthlyAmount,
-          paymentMethod: 'MANUAL',
-          status: 'PENDING_PAYMENT'
-        };
+      return;
+    }
 
-        const response = await createSponsorship(sponsorshipData);
-        currentSponsorshipId = response.data?.id || response.id;
-        
-        if (!currentSponsorshipId && response.message && response.message.includes('already exists')) {
-          const existingResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/sponsorships/existwith?donorId=${getCurrentDonorId()}&studentId=${student.studentId}`
-          );
-          if (existingResponse.ok) {
-            const existingData = await existingResponse.json();
-            if (existingData && existingData.length > 0) {
-              currentSponsorshipId = existingData[0].id;
+    if (!validateForm()) return;
+
+    try {
+      setLoading(true);
+
+      let currentSponsorshipId = sponsorshipId;
+      console.log('Initial sponsorshipId from props:', currentSponsorshipId);
+
+      // Step 1: If no sponsorshipId, create or find existing sponsorship
+      if (!isExistingSponsor || !currentSponsorshipId) {
+        // First check if student already has a sponsorship
+        const checkResponse = await fetch(
+          `http://localhost:8082/LiftAKids/api/sponsorships/existwith?donorId=${getCurrentDonorId()}&studentId=${student.studentId}`
+        );
+
+        if (checkResponse.ok) {
+          const existingSponsorships = await checkResponse.json();
+          if (existingSponsorships && existingSponsorships.length > 0) {
+            currentSponsorshipId = existingSponsorships[0].id;
+            console.log('Found existing sponsorship ID:', currentSponsorshipId);
+          }
+        }
+
+        // If still no sponsorshipId, create new one
+        if (!currentSponsorshipId) {
+          const sponsorshipData = {
+            studentId: student.studentId,
+            donorId: getCurrentDonorId(),
+            startDate: `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`,
+            endDate: `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`,
+            monthlyAmount: monthlyAmount,
+            paymentMethod: 'MANUAL',
+            status: 'PENDING_PAYMENT'
+          };
+
+          const response = await createSponsorship(sponsorshipData);
+          currentSponsorshipId = response.data?.id || response.id;
+
+          if (!currentSponsorshipId && response.message && response.message.includes('already exists')) {
+            const existingResponse = await fetch(
+              `http://localhost:8082/LiftAKids/api/sponsorships/existwith?donorId=${getCurrentDonorId()}&studentId=${student.studentId}`
+            );
+            if (existingResponse.ok) {
+              const existingData = await existingResponse.json();
+              if (existingData && existingData.length > 0) {
+                currentSponsorshipId = existingData[0].id;
+              }
             }
           }
         }
       }
-    }
 
-    if (!currentSponsorshipId) {
-      setValidationError('Could not find or create sponsorship. Please try again.');
-      setLoading(false);
-      return;
-    }
-
-    const startDate = `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`;
-    const endDate = `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`;
-    
-    // ✅ শুধু COMPLETED পেমেন্ট চেক করুন
-    const paymentCheckResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/sponsorships/${currentSponsorshipId}/payments`
-    );
-    
-    if (paymentCheckResponse.ok) {
-      const existingPayments = await paymentCheckResponse.json();
-      console.log('Existing payments:', existingPayments);
-      
-      // শুধু COMPLETED পেমেন্ট চেক করুন (PENDING বাদ দিন)
-      const hasOverlap = existingPayments.some(payment => {
-        // ✅ শুধু COMPLETED পেমেন্ট চেক করব
-        if (payment.status !== 'COMPLETED') {
-          return false;
-        }
-        
-        const paymentStart = new Date(payment.startDate);
-        const paymentEnd = new Date(payment.endDate);
-        const newStart = new Date(startDate);
-        const newEnd = new Date(endDate);
-        
-        return (newStart <= paymentEnd && newEnd >= paymentStart);
-      });
-      
-      if (hasOverlap) {
-        setValidationError(
-          'Payment already exists for the selected period. Please select different months.'
-        );
+      if (!currentSponsorshipId) {
+        setValidationError('Could not find or create sponsorship. Please try again.');
         setLoading(false);
         return;
       }
-    }
 
-    // Process payment
-    await processPayment(currentSponsorshipId, {
-      amount: totalAmount,
-      monthlyAmount: monthlyAmount,
-      totalMonths: totalMonths,
-      paymentMethod: 'MANUAL',
-      paymentStatus: 'PENDING',
-      startDate: startDate,
-      endDate: endDate
-    });
+      const startDate = `${selectedMonths.from.year}-${String(selectedMonths.from.month).padStart(2, '0')}`;
+      const endDate = `${selectedMonths.to.year}-${String(selectedMonths.to.month).padStart(2, '0')}`;
 
-    setShowPaymentInstructions(true);
-    
-  } catch (error) {
-    console.error('Error in payment process:', error);
-    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
-    
-    if (errorMessage.includes('overlapping') || errorMessage.includes('already exists')) {
-      setValidationError(
-        'Payment already exists for this period. Please select different months or contact support.'
+      // ✅ শুধু COMPLETED পেমেন্ট চেক করুন
+      const paymentCheckResponse = await fetch(
+        `http://localhost:8082/LiftAKids/api/sponsorships/${currentSponsorshipId}/payments`
       );
-    } else {
-      toast.error(errorMessage);
+
+      if (paymentCheckResponse.ok) {
+        const existingPayments = await paymentCheckResponse.json();
+        console.log('Existing payments:', existingPayments);
+
+        // শুধু COMPLETED পেমেন্ট চেক করুন (PENDING বাদ দিন)
+        const hasOverlap = existingPayments.some(payment => {
+          // ✅ শুধু COMPLETED পেমেন্ট চেক করব
+          if (payment.status !== 'COMPLETED') {
+            return false;
+          }
+
+          const paymentStart = new Date(payment.startDate);
+          const paymentEnd = new Date(payment.endDate);
+          const newStart = new Date(startDate);
+          const newEnd = new Date(endDate);
+
+          return (newStart <= paymentEnd && newEnd >= paymentStart);
+        });
+
+        if (hasOverlap) {
+          setValidationError(
+            'Payment already exists for the selected period. Please select different months.'
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Process payment
+      await processPayment(currentSponsorshipId, {
+        amount: totalAmount,
+        monthlyAmount: monthlyAmount,
+        totalMonths: totalMonths,
+        paymentMethod: 'MANUAL',
+        paymentStatus: 'PENDING',
+        startDate: startDate,
+        endDate: endDate
+      });
+
+      setShowPaymentInstructions(true);
+
+    } catch (error) {
+      console.error('Error in payment process:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+
+      if (errorMessage.includes('overlapping') || errorMessage.includes('already exists')) {
+        setValidationError(
+          'Payment already exists for this period. Please select different months or contact support.'
+        );
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleProceedToPayment = () => {
     const paymentInfo = {
       student,
-      months: totalMonths,
-      amount: totalAmount,
+      months: existingPendingPayment?.totalMonths ?? totalMonths,
+      amount: existingPendingPayment?.amount ?? totalAmount,
       paymentMethod: 'MANUAL',
       period: { from: selectedMonths.from, to: selectedMonths.to },
       sponsorshipId: isExistingSponsor ? sponsorshipId : null,
     };
 
     setPaymentData(paymentInfo);
-    
+
     // Redirect to payment website based on selected method
     if (paymentMethod === 'remitly' && paymentMethods.remitly) {
       window.open(paymentMethods.remitly.website, '_blank');
@@ -383,7 +406,7 @@ const handlePayNow = async () => {
     } else if (paymentMethod === 'payment_link') {
       console.log('Payment link would be sent via email');
     }
-    
+
     setShowPaymentInstructions(false);
   };
 
@@ -407,7 +430,12 @@ const handlePayNow = async () => {
     setPaymentData(null);
   };
 
+  // ✅ UPDATED: auto-redirect হলে Back মানেই modal close
   const handleBackFromInstructions = () => {
+    if (autoShowInstructions) {
+      onClose(); // pending payment case-এ ফিরে যাওয়ার মতো কোনো form নেই
+      return;
+    }
     setShowPaymentInstructions(false);
   };
 
@@ -418,24 +446,28 @@ const handlePayNow = async () => {
   };
 
   // Payment Instructions Modal
- if (showPaymentInstructions) {
-  return (
-    <PaymentInstructionsModal
-      paymentMethod={paymentMethod}
-      paymentMethods={paymentMethods}
-      student={student}
-      totalAmount={totalAmount}
-      totalMonths={totalMonths}
-      selectedMonths={selectedMonths}
-      monthlyAmount={monthlyAmount}
-      formatMonthDisplay={formatMonthDisplay}
-      handleBackFromInstructions={handleBackFromInstructions}
-      handleProceedToPayment={handleProceedToPayment}
-      isExistingSponsor={isExistingSponsor}
-      onClose={onClose}
-    />
-  );
-}
+  if (showPaymentInstructions) {
+    // ✅ pending payment থাকলে তার actual data দেখানো হবে, নাহলে user-এর select করা data
+    const displayTotalAmount = existingPendingPayment?.amount ?? totalAmount;
+    const displayTotalMonths = existingPendingPayment?.totalMonths ?? totalMonths;
+
+    return (
+      <PaymentInstructionsModal
+        paymentMethod={paymentMethod}
+        paymentMethods={paymentMethods}
+        student={student}
+        totalAmount={displayTotalAmount}
+        totalMonths={displayTotalMonths}
+        selectedMonths={selectedMonths}
+        monthlyAmount={monthlyAmount}
+        formatMonthDisplay={formatMonthDisplay}
+        handleBackFromInstructions={handleBackFromInstructions}
+        handleProceedToPayment={handleProceedToPayment}
+        isExistingSponsor={isExistingSponsor}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -507,8 +539,8 @@ const handlePayNow = async () => {
                   onClick={() => openMonthPicker('from')}
                 >
                   <span className={
-                    isMonthPaid(selectedMonths.from.month, selectedMonths.from.year) 
-                      ? 'text-red-500' 
+                    isMonthPaid(selectedMonths.from.month, selectedMonths.from.year)
+                      ? 'text-red-500'
                       : 'text-gray-800'
                   }>
                     {formatMonthDisplay(selectedMonths.from)}
@@ -528,8 +560,8 @@ const handlePayNow = async () => {
                   onClick={() => openMonthPicker('to')}
                 >
                   <span className={
-                    isMonthPaid(selectedMonths.to.month, selectedMonths.to.year) 
-                      ? 'text-red-500' 
+                    isMonthPaid(selectedMonths.to.month, selectedMonths.to.year)
+                      ? 'text-red-500'
                       : 'text-gray-800'
                   }>
                     {formatMonthDisplay(selectedMonths.to)}
@@ -585,7 +617,7 @@ const handlePayNow = async () => {
                     <p className="text-xs text-gray-500 mt-1">Send money through Remitly platform</p>
                   </div>
                 </label>
-                
+
                 <label className="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50">
                   <input
                     type="radio"
@@ -624,12 +656,12 @@ const handlePayNow = async () => {
               className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {
-                  loading
-                    ? 'Loading...'
-                    : isExistingSponsor
-                    ? 'Pay Now'
-                    : 'Sponsor Now'
-                }
+                loading
+                  ? 'Loading...'
+                  : isExistingSponsor
+                  ? 'Pay Now'
+                  : 'Sponsor Now'
+              }
             </button>
           </div>
 

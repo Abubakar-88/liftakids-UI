@@ -261,33 +261,37 @@ export const fetchStudentResults = async (studentId) => {
   }
   return await response.json();
 };
-
 export const checkStudentPendingStatus = async (studentId) => {
   try {
     // ✅ Sponsorship TABLE থেকে PENDING_PAYMENT চেক করুন
     const response = await fetch(
-      `http://localhost:8082/LiftAKids/api/sponsorships/student/${studentId}`
+      `${API_BASE_URL}/sponsorships/student/${studentId}`
     );
-    
+ 
     if (!response.ok) {
-      return { hasPending: false, data: [] };
+      // ⚠️ আগে এখানে silently { hasPending: false } রিটার্ন হতো —
+      // এখন visible warning দিচ্ছি এবং checkFailed flag পাঠাচ্ছি
+      console.error(
+        `⚠️ Pending status check failed for student ${studentId}: HTTP ${response.status}`
+      );
+      return { hasPending: false, data: [], checkFailed: true };
     }
-    
+ 
     const data = await response.json();
-    console.log('Student sponsorships:', data);
-    
+    console.log(`Student ${studentId} sponsorships:`, data);
+ 
     // PENDING_PAYMENT স্ট্যাটাস চেক করুন
     if (Array.isArray(data) && data.length > 0) {
-      const hasPending = data.some(item => 
+      const hasPending = data.some(item =>
         item.status === 'PENDING_PAYMENT'
       );
       return { hasPending, data };
     }
-    
+ 
     return { hasPending: false, data: [] };
   } catch (error) {
-    console.error('Error checking pending status:', error);
-    return { hasPending: false, data: [] };
+    console.error(`⚠️ Error checking pending status for student ${studentId}:`, error);
+    return { hasPending: false, data: [], checkFailed: true };
   }
 };
 
@@ -348,7 +352,7 @@ export const updateStudent = async (studentId, formData) => {
 
 
 export const updateStudentBio = async (studentId, bio) => {
-  const response = await fetch(`/students/${studentId}/bio`, {
+  const response = await fetch(`${API_BASE_URL}/students/${studentId}/bio`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',

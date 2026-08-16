@@ -7,6 +7,7 @@ import { getTopUnsponsoredUrgentStudents } from '../../../api/studentApi';
 import { useNavigate } from 'react-router-dom';
 import ContactSponsorModal from '../donor/ContactSponsorModal';
 import PaymentModal from '../donor/PaymentModal';
+import PaymentModalManual from '../donor/PaymentModalManual';
 import PaymentCheckoutPage from '../donor/PaymentCheckoutPage';
 import { cancelSponsorship, canBeCancelled } from '../../../api/sponsorshipApi';
 import CancelConfirmationModal from './../../../components/Modal/CancelConfirmationModal';
@@ -24,8 +25,8 @@ const DonorSponsoredStudentList = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
-  const [paymentData, setPaymentData] = useState(null);
+ // const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  //const [paymentData, setPaymentData] = useState(null);
   const [activeDetailsTab, setActiveDetailsTab] = useState('info');
   const navigate = useNavigate();
   const [donorData, setDonorData] = useState(null);
@@ -152,7 +153,33 @@ useEffect(() => {
     setRefreshing(true);
     await fetchData();
   };
+const handleSponsorPay = (sponsorship) => {
+  const isSponsoredStudent = sponsorship.status === 'ACTIVE' || sponsorship.sponsored === true;
 
+  const normalizedStudent = {
+    ...sponsorship,
+    studentId: sponsorship.studentId || sponsorship.student?.studentId,
+    studentName: sponsorship.studentName || sponsorship.student?.studentName,
+    institutionName: sponsorship.institutionName || sponsorship.student?.institutionName,
+    requiredMonthlySupport: sponsorship.requiredMonthlySupport || sponsorship.monthlyAmount,
+    photoUrl: sponsorship.photoUrl || sponsorship.student?.photoUrl,
+    financial_rank: sponsorship.financial_rank || sponsorship.student?.financial_rank,
+    sponsored: isSponsoredStudent,
+    sponsorshipId: sponsorship.id || sponsorship.sponsorshipId,
+    paidUpTo: sponsorship.paidUpTo,
+  };
+
+  setSelectedStudent(normalizedStudent);
+
+  if (sponsorship.status === 'PENDING_PAYMENT') {
+    // ✅ PENDING হলে ContactSponsorModal skip — সরাসরি PaymentModalManual,
+    // যেটা নিজে থেকেই pending payment ধরে PaymentInstructionsModal দেখাবে
+    setPaymentModalOpen(true);
+  } else {
+    // ACTIVE / EXPIRED হলে আগের মতোই ContactSponsorModal দিয়ে শুরু
+    setContactModalOpen(true);
+  }
+};
   const handleViewDetails = (student) => {
     const actualStudent = student.student || student;
 
@@ -428,11 +455,11 @@ useEffect(() => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredSponsorships.map((sponsorship) => (
                     <SponsorshipCard
-                      key={sponsorship.id}
-                      sponsorship={sponsorship}
-                      onViewDetails={handleViewDetails}
-                      onSponsorPay={handleContactSponsor}
-                      onCancelClick={handleCancelClick}
+                  key={sponsorship.id}
+                  sponsorship={sponsorship}
+                  onViewDetails={handleViewDetails}
+                  onSponsorPay={handleSponsorPay}   
+                  onCancelClick={handleCancelClick}
                     />
                   ))}
                 </div>
@@ -497,16 +524,17 @@ useEffect(() => {
         />
       )}
       
-      {paymentModalOpen && (
-        <PaymentModal
-          student={selectedStudent}
-          paidMonths={selectedStudent?.paidMonths} 
-          onClose={() => setPaymentModalOpen(false)}
-          onPayment={handlePaymentSubmit}
-        />
-      )}
+     {paymentModalOpen && (
+  <PaymentModalManual
+    student={selectedStudent}
+    isExistingSponsor={!!selectedStudent?.sponsorshipId}
+    sponsorshipId={selectedStudent?.sponsorshipId}
+    onClose={() => setPaymentModalOpen(false)}
+    onPayment={handlePaymentSubmit}
+  />
+)}
       
-      {checkoutModalOpen && (
+      {/* {checkoutModalOpen && (
         <PaymentCheckoutPage
           sponsoredData={paymentData}
           onBack={() => {
@@ -515,7 +543,7 @@ useEffect(() => {
           }}
           onPaymentSuccess={handlePaymentSuccess}
         />
-      )}
+      )} */}
 
       {showCancelModal && selectedSponsorshipForCancel && (
         <CancelConfirmationModal
@@ -696,28 +724,7 @@ const SponsorshipCard = ({ sponsorship, onViewDetails, onSponsorPay,onCancelClic
             Cancelled
           </button>
         )}
-         {/* <button
-                      onClick={() => onCancelClick(sponsorship)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
-                  >
-                      Cancel
-                  </button> */}
-         
-          {/* {sponsorship.status === 'ACTIVE' && (
-                  <button
-                      onClick={() => {
-                          
-                          if (window.confirm('Are you sure you want to cancel this sponsorship?')) {
-                              onCancelSponsorship(sponsorship);
-                          }
-                      }}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
-                  >
-                      Cancel
-                  </button>
-              )} */}
-
-
+      
 
       </div>
     </div>
