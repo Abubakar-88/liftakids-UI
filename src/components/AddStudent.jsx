@@ -188,6 +188,7 @@ const handleSubmit = async (e) => {
       state: { success: 'Student added successfully' } 
     });
   } catch (err) {
+    console.log('Full error object:', err);
     setErrors(err.response?.data?.message || err.message || 'Failed to add student');
   } finally {
     setLoading(false);
