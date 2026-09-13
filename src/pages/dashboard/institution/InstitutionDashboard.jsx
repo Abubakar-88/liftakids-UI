@@ -125,6 +125,16 @@ const { logout } = useAuth();
           <FaMoneyBillWave className="text-green-600 text-3xl mb-2" />
           <span className="text-xs text-black text-center font-medium">Manual Payment</span>
         </div>
+
+            {/* 👇 NEW: Institution Management (Full width) */}
+        <div
+          onClick={() => navigate('/institution/manage')}
+          className="flex flex-col items-center bg-teal-50 p-4 rounded-xl cursor-pointer hover:bg-teal-100 transition-colors border-2 border-teal-300 col-span-3"
+        >
+          <FaCog className="text-teal-600 text-3xl mb-2" />
+          <span className="text-sm text-black text-center font-semibold">📋 Institution Management</span>
+          <span className="text-xs text-gray-500">Manage Academic Calendar, Students, Reports & More</span>
+        </div>
           {/* Logout */}
           <div
           onClick={handleLogout}
