@@ -52,6 +52,15 @@ import ProtectedRoute from './components/ProtectedRoute';
 import EditBlog from './pages/dashboard/admin/EditBlog';
 import BlogDetails from './pages/BlogDetails';
 import BlogGrid from './pages/BlogGrid';
+
+// Institution Management Dashboard
+import InstitutionManageDashboard from './pages/dashboard/institution/InstitutionManage/InstitutionManageDashboard';
+import TeacherList from './pages/dashboard/institution/InstitutionManage/TeacherList';
+import ClassManagementPage from './pages/dashboard/institution/InstitutionManage/ClassManagementPage';
+import SubjectManagementPage from './pages/dashboard/institution/InstitutionManage/SubjectManagementPage';
+import AcademicCalendar from './pages/dashboard/institution/InstitutionManage/AcademicCalendar';
+import StudentAdmissionPage from './pages/dashboard/institution/InstitutionManage/StudentAdmissionPage';
+
 function App() {
   
   return (
@@ -126,6 +135,48 @@ function App() {
                   <UserNotificationsPage />
                 </ProtectedRoute>
               } />
+
+
+
+              {/* // Institution Manage Routes */}
+              <Route path="/institution/manage" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <InstitutionManageDashboard />
+                </ProtectedRoute>
+              } />
+               
+              {/* // Teacher Management direct route (optional) */}
+              <Route path="/institution/manage/teachers" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <TeacherList />
+                </ProtectedRoute>
+              } />
+             
+              <Route path="/institution/manage/classes" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <ClassManagementPage /> {/* We'll create a wrapper page */}
+                </ProtectedRoute>
+              } />
+
+              <Route path="/institution/manage/subjects" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <SubjectManagementPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/institution/manage/calendar" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <AcademicCalendar />
+                </ProtectedRoute>
+              } />
+
+               <Route path="/institution/manage/admission" element={
+                  <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                    <StudentAdmissionPage />
+                  </ProtectedRoute>
+                } />
+
+
+
 
               {/* Donor Protected Routes */}
               <Route path="/donor/dashboard" element={
