@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { FaUserPlus, FaUniversity, FaGraduationCap, FaCreditCard,FaMoneyBillWave, FaSignOutAlt, FaNotesMedical, FaUsers, FaCheckCircle } from 'react-icons/fa';
+import { FaUserPlus, FaUniversity, FaGraduationCap,FaCog, FaCreditCard,FaMoneyBillWave, FaSignOutAlt, FaNotesMedical, FaUsers, FaCheckCircle } from 'react-icons/fa';
 import { PiExamFill } from 'react-icons/pi';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
