@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ClassManagementModal from '../../../../components/Modal/InsitutionManage/classManagementModal';
+import ClassManagementModal from '../../../../components/Modal/InsitutionManage/ClassManagementModal';
 
 const ClassManagementPage = () => {
   const navigate = useNavigate();
