@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FaTimes, FaEye, FaUserTimes, FaUsers, FaChevronLeft, 
-  FaChevronRight, FaSearch, FaUser 
+  FaChevronRight,FaMoneyBillWave , FaSearch, FaUser 
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { getStudentsByClass, removeStudentFromClass } from '../../../api/InstitutionManage/studentAdmissionApi';
 import ClassStudentDetailsModal from './ClassStudentDetailsModal';
-
+import { assignFeesToStudent } from '../../../api/InstitutionManage/feeApi';
+import FeeAssignModal from './FeeAssignModal';
 const ClassStudentListModal = ({ isOpen, onClose, classData, institutionId }) => {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
@@ -17,7 +18,8 @@ const ClassStudentListModal = ({ isOpen, onClose, classData, institutionId }) =>
   const [showDetails, setShowDetails] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [removingId, setRemovingId] = useState(null);
-
+const [showFeeAssign, setShowFeeAssign] = useState(false);
+const [selectedStudentForFee, setSelectedStudentForFee] = useState(null);
   const PER_PAGE = 10;
 
   // Fetch students when modal opens
@@ -208,7 +210,17 @@ const ClassStudentListModal = ({ isOpen, onClose, classData, institutionId }) =>
                         </div>
                       </div>
                     </div>
-
+                    {/* 👇 Assign Fee Button */}
+                    <button
+                      onClick={() => {
+                        setSelectedStudentForFee(student);
+                        setShowFeeAssign(true);
+                      }}
+                      className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                      title="Assign Fee"
+                    >
+                      <FaMoneyBillWave />
+                    </button>
                     {/* Right: Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
@@ -306,7 +318,21 @@ const ClassStudentListModal = ({ isOpen, onClose, classData, institutionId }) =>
           </div>
         </div>
       </div>
-
+        {showFeeAssign && selectedStudentForFee && (
+          <FeeAssignModal
+            student={selectedStudentForFee}
+            institutionId={institutionId}
+            onClose={() => {
+              setShowFeeAssign(false);
+              setSelectedStudentForFee(null);
+            }}
+            onSuccess={() => {
+              setShowFeeAssign(false);
+              setSelectedStudentForFee(null);
+              fetchStudents(); // refresh
+            }}
+          />
+        )}
       {/* Student Details Modal (separate) */}
       {showDetails && selectedStudent && (
         <ClassStudentDetailsModal

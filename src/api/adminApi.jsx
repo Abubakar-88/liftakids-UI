@@ -1,5 +1,5 @@
 import axios from 'axios';
-// আপনার backend URL
+
 const API_BASE_URL = import.meta.env.VITE_API_URL; // আপনার backend URL
 
 // Create axios instance with default config
@@ -76,62 +76,81 @@ export const adminLogout = () => {
 
 // Admin CRUD Operations
 export const getAllAdmins = async () => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get('/admin');
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getAdminById = async (adminId) => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get(`/admin/${adminId}`);
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const createFirstAdmin = async (adminData) => {
-
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.post('/admin/first', adminData);
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Create admin by existing admin (requires authentication)
 export const createAdmin = async (adminData, adminId) => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.post('/admin', adminData, {
       headers: {
         'X-Admin-Id': adminId
       }
     });
     return response;
-  
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const updateAdmin = async (adminId, adminData, updatedByAdminId) => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.put(`/admin/${adminId}`, adminData, {
       headers: {
         'X-Admin-Id': updatedByAdminId
       }
     });
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const deleteAdmin = async (adminId, deletedByAdminId) => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     await adminApi.delete(`/admin/${adminId}`, {
       headers: {
         'X-Admin-Id': deletedByAdminId
       }
     });
     return { success: true, message: 'Admin deleted successfully' };
-
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const changeAdminStatus = async (adminId, action, currentAdminId) => {
-
+  // eslint-disable-next-line no-useless-catch
+  try {
     const endpoint = action === 'activate' 
       ? `/admin/${adminId}/activate` 
       : `/admin/${adminId}/deactivate`;
@@ -146,134 +165,178 @@ export const changeAdminStatus = async (adminId, action, currentAdminId) => {
       success: true, 
       message: `Admin ${action}d successfully` 
     };
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const updateAdminProfile = async (adminId, profileData) => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.put(`/admin/profile/${adminId}`, profileData);
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Change Password
 export const changePassword = async (adminId, passwordData) => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.post(`/admin/${adminId}/change-password`, passwordData);
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Admin Statistics
 export const getAdminStats = async () => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get('/admin/stats');
     return response;
-  
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Institution Management APIs
 export const getInstitutions = async (params = {}) => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get('/admin/institutions', { params });
     return response;
-  
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const approveInstitution = async (institutionId, adminId) => {
-
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.post(
       `/admin/institutions/${institutionId}/approve`,
       {},
       { headers: { 'X-Admin-Id': adminId } }
     );
     return response;
-  
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const rejectInstitution = async (institutionId, adminId, reason) => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.post(
       `/admin/institutions/${institutionId}/reject`,
       { reason },
       { headers: { 'X-Admin-Id': adminId } }
     );
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Student Management APIs
 export const getStudents = async (params = {}) => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get('/admin/students', { params });
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Donor Management APIs
 export const getDonors = async (params = {}) => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get('/admin/donors', { params });
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Area Management APIs
 export const getDivisions = async () => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get('/admin/divisions');
     return response;
-  
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const createDivision = async (divisionData, adminId) => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.post('/admin/divisions', divisionData, {
       headers: { 'X-Admin-Id': adminId }
     });
     return response;
-  
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Similar APIs for District, Thana, Union
 export const getDistricts = async (divisionId = null) => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const params = divisionId ? { divisionId } : {};
     const response = await adminApi.get('/admin/districts', { params });
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getThanas = async (districtId = null) => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     const params = districtId ? { districtId } : {};
     const response = await adminApi.get('/admin/thanas', { params });
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Content Management APIs
 export const getStaticPages = async () => {
-  
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.get('/admin/pages');
     return response;
-
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const createPage = async (pageData, adminId) => {
- 
+  // eslint-disable-next-line no-useless-catch
+  try {
     const response = await adminApi.post('/admin/pages', pageData, {
       headers: { 'X-Admin-Id': adminId }
     });
     return response;
- 
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getContactMessages = async (params = {}) => {
-  
+ 
     const response = await adminApi.get('/admin/contact/messages', { params });
     return response;
- 
+
 };
 
 
@@ -327,6 +390,9 @@ export const getRecentActivities = async (limit = 10) => {
     return [];
   }
 };
+
+
+
 
 
 export default adminApi;

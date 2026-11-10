@@ -60,12 +60,28 @@ import ClassManagementPage from './pages/dashboard/institution/InstitutionManage
 import SubjectManagementPage from './pages/dashboard/institution/InstitutionManage/SubjectManagementPage';
 import AcademicCalendar from './pages/dashboard/institution/InstitutionManage/AcademicCalendar';
 import StudentAdmissionPage from './pages/dashboard/institution/InstitutionManage/StudentAdmissionPage';
+import FeeManagementPage from './pages/dashboard/institution/InstitutionManage/FeeManagementPage';
+
+
+// Teacher Portal
+import { TeacherAuthProvider } from './contexts/TeacherAuthContext';
+import TeacherLoginPage from './pages/teacher/TeacherLoginPage';
+import TeacherChangePasswordPage from './pages/teacher/TeacherChangePasswordPage';
+import TeacherDashboard from './pages/teacher/TeacherDashboard';
+import TeacherProfilePage from './pages/teacher/TeacherProfilePage';
+import TeacherLayout from './pages/teacher/TeacherLayout';
+import ProtectedTeacherRoute from './components/ProtectedTeacherRoute';
+import TeacherSchedulePage from './pages/teacher/TeacherSchedulePage'; // Import the TeacherSchedulePage component
+import TeacherAttendancePage from './pages/teacher/TeacherAttendancePage';
+import TeacherResultUploadPage from './pages/teacher/TeacherResultUploadPage';
+import TeacherAssignments from './pages/teacher/TeacherAssignments';
 
 function App() {
   
   return (
     <AuthProvider>
       <NotificationProvider> 
+         <TeacherAuthProvider>
         <div className="App">
           <main>
             <Routes>
@@ -74,6 +90,8 @@ function App() {
               <Route path="/chose-option" element={<RoleSelection />} />
               <Route path="/login/:role" element={<Login />} />
               <Route path="/register/:role" element={<DynamicRegister />} />
+              {/* Public Teacher Routes */}
+              <Route path="/teacher/login" element={<TeacherLoginPage />} />
               {/* <Route path="/blog" element={<BlogPage />} /> */}
               <Route path="/contact" element={<DynamicPage />}/>
               <Route path="/pages/:slug" element={<DynamicPage />} />
@@ -81,7 +99,14 @@ function App() {
               <Route path="/benefit-for-sponsor" element={<DynamicPage />} />
                   <Route path="/blog/:slug" element={<BlogDetails />} />
                   <Route path="/blog" element={<BlogGrid />} />
+
               {/* Institution Protected Routes */}
+
+              <Route path="/institution/manage" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <InstitutionManageDashboard />
+                </ProtectedRoute>
+              } />
               <Route path="/institution/dashboard" element={
                 <ProtectedRoute allowedRoles={['INSTITUTION']}>
                   <InstitutionDashboard />
@@ -137,7 +162,6 @@ function App() {
               } />
 
 
-
               {/* // Institution Manage Routes */}
               <Route path="/institution/manage" element={
                 <ProtectedRoute allowedRoles={['INSTITUTION']}>
@@ -151,7 +175,7 @@ function App() {
                   <TeacherList />
                 </ProtectedRoute>
               } />
-             
+             <Route path="attendance" element={<TeacherAttendancePage />} />
               <Route path="/institution/manage/classes" element={
                 <ProtectedRoute allowedRoles={['INSTITUTION']}>
                   <ClassManagementPage /> {/* We'll create a wrapper page */}
@@ -175,6 +199,42 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                <Route path="/institution/manage/fees" element={
+                <ProtectedRoute allowedRoles={['INSTITUTION']}>
+                  <FeeManagementPage />
+                </ProtectedRoute>
+              } />
+              {/* // Teacher Protected Routes */}
+               {/* Change Password (Auth required, but allowed even if mustChangePassword is true) */}
+              <Route
+                path="/teacher/change-password"
+                element={
+                  <ProtectedTeacherRoute requirePasswordChanged={false}>
+                    <TeacherChangePasswordPage />
+                  </ProtectedTeacherRoute>
+                }
+              />
+
+              {/* Protected Teacher Routes (Layout wrapper) */}
+              <Route
+                path="/teacher"
+                element={
+                  <ProtectedTeacherRoute requirePasswordChanged={true}>
+                    <TeacherLayout />
+                  </ProtectedTeacherRoute>
+                }
+              >
+                <Route path="dashboard" element={<TeacherDashboard />} />
+                <Route path="profile" element={<TeacherProfilePage />} />
+                {/* Phase 2+ routes — coming soon */}
+                 <Route path="schedule" element={<TeacherSchedulePage />} /> 
+                <Route path="results" element={<TeacherResultUploadPage />} />
+              <Route path="attendance" element={<TeacherAttendancePage />} /> 
+              <Route path="/teacher/assignments" element={<TeacherAssignments />} />
+              </Route>
+
+
+
 
 
 
@@ -191,7 +251,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              <Route path="/donor/sponsored-students" element={
+              <Route path="/donar/sponsored-students" element={
                 <ProtectedRoute allowedRoles={['DONOR']}>
                   <DonorSponsoredStudentList />
                 </ProtectedRoute>
@@ -203,7 +263,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              <Route path="/donor/settings/:donorId" element={
+              <Route path="/donar/settings/:donorId" element={
                 <ProtectedRoute allowedRoles={['DONOR']}>
                   <DonorSettings />
                 </ProtectedRoute>
@@ -289,6 +349,7 @@ function App() {
             pauseOnHover
           />
         </div>
+        </TeacherAuthProvider>
       </NotificationProvider>
     </AuthProvider>
   );

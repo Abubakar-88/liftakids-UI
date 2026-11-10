@@ -203,3 +203,7 @@ export const getTeacherNotices = async (teacherId) => {
   const response = await api.get(`/institution/teachers/${teacherId}/notices`);
   return response.data;
 };
+export const getTeacherAssignments = async (teacherId) => {
+  const response = await api.get(`/institution/teachers/${teacherId}/assignments`);
+  return response.data;
+};

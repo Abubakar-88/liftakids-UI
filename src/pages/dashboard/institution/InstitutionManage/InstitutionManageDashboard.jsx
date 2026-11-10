@@ -10,10 +10,13 @@ import {
 import { useAuth } from '../../../../contexts/AuthContext';
 import NotificationBell from '../../../../components/NotificationBell';
 import AcademicCalendar from '../InstitutionManage/AcademicCalendar';
-import TeacherList from './TeacherList'; // 👈 TeacherList import করুন
+import TeacherList from './TeacherList';
 import ClassManagementModal from '../../../../components/Modal/InsitutionManage/ClassManagementModal';
 import SubjectManagementModal from '../../../../components/Modal/InsitutionManage/SubjectManagementModal';
 import StudentAdmissionPage from './StudentAdmissionPage';
+import FeeManagementPage from './FeeManagementPage';
+import ClassMonitorPage from './ClassMonitorPage';
+import AdminResultViewPage from './AdminResultViewPage'; // ✅ ১. নতুন পেজ ইম্পোর্ট
 
 const InstitutionManageDashboard = () => {
   const navigate = useNavigate();
@@ -36,31 +39,40 @@ const InstitutionManageDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewSection institutionData={institutionData} />;
+        return <OverviewSection institutionData={institutionData} setActiveTab={setActiveTab}/>;
       case 'calendar':
         return <AcademicCalendar />;
-      case 'teachers': // 👈 Teacher Management Tab
+      case 'teachers':
         return <TeacherList />;
       case 'students':
         return <div className="text-center py-12 text-gray-500">Student Management (Coming Soon)</div>;
       case 'classes':
-      return (
-        <ClassManagementModal
-          isOpen={true}
-          onClose={() => setActiveTab('overview')}  // 👈 X ক্লিক করলে overview এ যাবে
-          institutionId={institutionData?.institutionsId}
-        />
-      );
-    case 'subjects':
-      return (
-        <SubjectManagementModal
-          isOpen={true}
-          onClose={() => setActiveTab('overview')}  // 👈 X ক্লিক করলে overview এ যাবে
-          institutionId={institutionData?.institutionsId}
-        />
-      );
+        return (
+          <ClassManagementModal
+            isOpen={true}
+            onClose={() => setActiveTab('overview')}
+            institutionId={institutionData?.institutionsId}
+          />
+        );
+      case 'subjects':
+        return (
+          <SubjectManagementModal
+            isOpen={true}
+            onClose={() => setActiveTab('overview')}
+            institutionId={institutionData?.institutionsId}
+          />
+        );
+      case 'classMonitor':
+        return <ClassMonitorPage />;
       case 'admission':
-      return <StudentAdmissionPage />;
+        return <StudentAdmissionPage />;
+      case 'fees':
+        return <FeeManagementPage />;
+        
+      // ✅ ২. নতুন Results কেস
+      case 'results':
+        return <AdminResultViewPage />;
+        
       case 'payments':
         return <div className="text-center py-12 text-gray-500">Payment Management (Coming Soon)</div>;
       case 'settings':
@@ -131,7 +143,6 @@ const InstitutionManageDashboard = () => {
           >
             <FaCalendarAlt className="text-sm" /> Academic Calendar
           </button>
-          {/* 👇 NEW: Teacher Management Tab */}
           <button
             onClick={() => setActiveTab('teachers')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -152,7 +163,6 @@ const InstitutionManageDashboard = () => {
           >
             <FaUsers className="text-sm" /> Students
           </button>
-          
           <button
             onClick={() => setActiveTab('classes')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -163,7 +173,6 @@ const InstitutionManageDashboard = () => {
           >
             <FaGraduationCap className="text-sm" /> Classes
           </button>
-
           <button
             onClick={() => setActiveTab('subjects')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -175,6 +184,16 @@ const InstitutionManageDashboard = () => {
             <FaBook className="text-sm" /> Subjects
           </button>
           <button
+            onClick={() => setActiveTab('classMonitor')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'classMonitor' 
+                ? 'bg-orange-50 text-orange-700' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <FaChalkboardTeacher className="text-sm" /> Class Monitor
+          </button>
+          <button
             onClick={() => setActiveTab('admission')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'admission' ? 'bg-teal-50 text-teal-700' : 'text-gray-600 hover:bg-gray-100'
@@ -182,6 +201,19 @@ const InstitutionManageDashboard = () => {
           >
             <FaUserPlus className="text-sm" /> Admission
           </button>
+
+          {/* ✅ ৩. নতুন Results ট্যাব বাটন */}
+          <button
+            onClick={() => setActiveTab('results')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'results' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <FaFileAlt className="text-sm" /> Results
+          </button>
+
           <button
             onClick={() => setActiveTab('payments')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -214,7 +246,7 @@ const InstitutionManageDashboard = () => {
 };
 
 // Overview Section Component (আপডেটেড)
-const OverviewSection = ({ institutionData }) => {
+const OverviewSection = ({ institutionData, setActiveTab }) => {
   const navigate = useNavigate();
   
   const stats = [
@@ -229,16 +261,16 @@ const OverviewSection = ({ institutionData }) => {
     { label: 'Add Teacher', icon: <FaChalkboardTeacher />, path: '/institution/manage/teachers', color: 'bg-purple-100 text-purple-700' },
     { label: 'Add Student', icon: <FaUserPlus />, path: '/institution/add-student', color: 'bg-blue-100 text-blue-700' },
     { label: 'View Students', icon: <FaUsers />, path: '/institution/student-list', color: 'bg-cyan-100 text-cyan-700' },
-     { label: 'Manage Classes', icon: <FaGraduationCap />, path: '/institution/manage/classes', color: 'bg-purple-100 text-purple-700' },
+    { label: 'Manage Classes', icon: <FaGraduationCap />, path: '/institution/manage/classes', color: 'bg-purple-100 text-purple-700' },
     { label: 'Manage Subjects', icon: <FaBook />, path: '/institution/manage/subjects', color: 'bg-indigo-100 text-indigo-700' },
     { label: 'Admit Students', icon: <FaUserPlus />, path: '/institution/manage/admission', color: 'bg-teal-100 text-teal-700' },
+    { label: 'Fee Management', icon: <FaMoneyBillWave />, path: '/institution/manage/fees', color: 'bg-green-100 text-green-700' },
     { label: 'Payments', icon: <FaMoneyBillWave />, path: '/institution/payment-confirmation', color: 'bg-green-100 text-green-700' },
-    { label: 'Results', icon: <FaFileAlt />, path: '/institution/result-upload', color: 'bg-yellow-100 text-yellow-700' },
+    { label: 'Results', icon: <FaFileAlt />, tab: 'results', color: 'bg-yellow-100 text-yellow-700' },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
       <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-xl p-6 text-white">
         <h2 className="text-2xl font-bold">Welcome to Institution Management</h2>
         <p className="text-teal-100 mt-1">
@@ -249,7 +281,6 @@ const OverviewSection = ({ institutionData }) => {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <div key={index} className={`${stat.color} rounded-xl p-4 border border-gray-100`}>
@@ -262,14 +293,13 @@ const OverviewSection = ({ institutionData }) => {
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {quickActions.map((action, index) => (
             <button
               key={index}
-              onClick={() => navigate(action.path)}
+             onClick={() => action.tab ? setActiveTab(action.tab) : navigate(action.path)}
               className={`${action.color} p-4 rounded-xl text-center hover:shadow-md transition-all transform hover:scale-105`}
             >
               <div className="text-2xl flex justify-center">{action.icon}</div>
